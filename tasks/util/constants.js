@@ -81,7 +81,7 @@ module.exports = {
     testContainerImage: 'plotly/testbed:latest',
     testContainerName: process.env.PLOTLYJS_TEST_CONTAINER_NAME || 'imagetest',
     testContainerPort: '9010',
-    testContainerUrl: 'http://localhost:9010/',
+    testContainerUrl: 'http://localhost:9091/',
     testContainerHome: '/var/www/streambed/image_server/plotly.js',
 
     uglifyOptions: {
