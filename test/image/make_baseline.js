@@ -42,6 +42,7 @@ if(mockList.length === 0) {
 }
 
 // main
+console.log('test run starting');
 runInQueue(mockList);
 
 function runInQueue(mockList) {
