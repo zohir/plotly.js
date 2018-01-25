@@ -29,6 +29,7 @@ module.exports = function getRequestOpts(specs) {
     return {
         method: 'POST',
         url: constants.testContainerUrl,
+        timeout: 30000,
         body: JSON.stringify(body)
     };
 };
