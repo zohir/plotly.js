@@ -30,6 +30,10 @@ var failReqs = getRequests(requestDir + '/failure/*', {'success': false});
 var successReqs = getRequests(requestDir + '/success/*', {'success': true});
 var allReqs = failReqs.concat(successReqs);
 
+var errors = 0;
+var successes = 0;
+var startTime = Date.now();
+
 /**
  * Return object containing paths to all requests matching the glob.
  *
@@ -84,19 +88,31 @@ function runInBatch(reqs) {
  * @param {function} completion - function to run on completion, no args
  */
 function runReq(req, completion) {
+    var totalReqs = successes + errors;
+    var totalTime = (Date.now() - startTime) / 1000;
+    var rps = totalReqs / totalTime;
+    console.log('successes: ' + successes + ', errors: ' + errors +
+                ', total: ' + totalReqs + ', time: ' + totalTime +
+                ', rps: ' + rps);
+
     function onResponse(response) {
         if(req.success && +response.statusCode !== 200) {
             console.log('Unexpected error response on ' + req.filename);
+            errors++;
+        } else {
+            console.log('Success on ' + req.filename);
+            successes++;
         }
-
         return completion();
     }
 
     function onError(err) {
         if(req.success) {
             console.log('Unexpected request failure on ' + req.filename + ': ' + err);
+            errors++;
         } else {
             console.log('Expected failure on ' + req.filename);
+            successes++;
         }
 
         return completion();
@@ -108,6 +124,10 @@ function runReq(req, completion) {
     catch(SyntaxError) {
         if(req.success) {
             console.log('Unexpected parse failure on ' + req.filename);
+            errors++;
+        } else {
+            console.log('Expected parse failure on ' + req.filename);
+            successes++;
         }
 
         return completion();
