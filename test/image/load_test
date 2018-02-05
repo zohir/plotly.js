@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var fs = require('fs');
 
 var getMockList = require('./assets/get_mock_list');
