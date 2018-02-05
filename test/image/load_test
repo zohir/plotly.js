@@ -1,84 +1,119 @@
 #!/usr/bin/env node
 
 var fs = require('fs');
-
-var getMockList = require('./assets/get_mock_list');
-var getRequestOpts = require('./assets/get_image_request_options');
-var getImagePaths = require('./assets/get_image_paths');
-
-// packages inside the image server docker
+var glob = require('glob');
+var shuffle = require('knuth-shuffle').knuthShuffle;
 var request = require('request');
 
-// wait time between each baseline generation
-var QUEUE_WAIT = 10;
+const BATCH_SIZE = 5;
+const BATCH_WAIT = 500;
+const REQ_TIMEOUT = 40000;
 
 /**
- *  Baseline image generation script.
+ *  Load Tester for imageservers
  *
- *  Called by `tasks/baseline.sh in `npm run baseline`.
+ *  Usage:
  *
- *  CLI arguments:
+ *      load_test ENDPOINT_URL REQUEST_DIR
  *
- *  1. 'pattern' : glob determining the baseline(s) to be generated
+ *      ENDPOINT_URL is the URL to the image generation endpoint.
  *
- *  Examples:
- *
- *  Generate or (re-generate) all baselines (in queue):
- *
- *      npm run baseline
- *
- *  Generate or (re-generate) the 'contour_nolines' baseline:
- *
- *      npm run baseline -- contour_nolines
- *
- *  Generate or (re-generate) all gl3d baseline (in queue):
- *
- *      npm run baseline -- gl3d_*
+ *      REQUEST_DIR is a directory containing sorted requests:
+ *        REQUEST_DIR/success/*  -  requests expected to succeed
+ *        REQUEST_DIR/failure/*  -  requests expected to fail
  *
  */
-var pattern = process.argv[2];
-var mockList = getMockList(pattern);
+var endpointUrl = process.argv[2];
+var requestDir = process.argv[3];
 
-if(mockList.length === 0) {
-    throw new Error('No mocks found with pattern ' + pattern);
+var failReqs = getRequests(requestDir + '/failure/*', {'success': false});
+var successReqs = getRequests(requestDir + '/success/*', {'success': true});
+var allReqs = failReqs.concat(successReqs);
+
+/**
+ * Return object containing paths to all requests matching the glob.
+ *
+ * @param {string} requestGlob
+ * @param {Object}  extraObj - data in this object will be appended to each match
+ */
+function getRequests(requestGlob, extraObj) {
+    var matches = glob.sync(requestGlob);
+
+    return matches.map(function(match) {
+        return Object.assign({"filename": match}, extraObj);
+    });
 }
 
-// main
+if(allReqs.length === 0) {
+    throw new Error('No requests found in ' + requestDir);
+}
+
+allReqs = shuffle(allReqs);
+
 console.log('test run starting');
-runInQueue(mockList);
+runInBatch(allReqs);
 
-function runInQueue(mockList) {
-    var index = 0;
+function runInBatch(reqs) {
+    var running = 0;
 
-    run(mockList[index]);
+    for(var i = 0; i < reqs.length; i++) {
+        queueReq(reqs[i]);
+    }
 
-    function run(mockName) {
-        makeBaseline(mockName, function() {
-            console.log('generated ' + mockName + ' successfully');
+    function queueReq(req) {
+        if(running >= BATCH_SIZE) {
+            setTimeout(function() {
+                queueReq(req);
+            }, BATCH_WAIT);
+            return;
+        }
+        running++;
 
-            index++;
-            if(index < mockList.length) {
-                setTimeout(function() {
-                    run(mockList[index]);
-                }, QUEUE_WAIT);
-            }
+        // throttle the number of tests running concurrently
+
+        runReq(req, function() {
+            running--;
         });
     }
 }
 
-function makeBaseline(mockName, cb) {
-    var requestOpts = getRequestOpts({ mockName: mockName }),
-        imagePaths = getImagePaths(mockName),
-        saveImageStream = fs.createWriteStream(imagePaths.baseline);
-
-    function checkFormat(err, res) {
-        if(err) throw err;
-        if(res.headers['content-type'] !== 'image/png') {
-            throw new Error('Generated image is not a valid png');
+/**
+ * Run a test based on the request, then call the completion function
+ *
+ * @param {Object}   req - the request
+ * @param {function} completion - function to run on completion, no args
+ */
+function runReq(req, completion) {
+    function onResponse(response) {
+        if(req.success && +response.statusCode !== 200) {
+            console.log('Unexpected error response on ' + req.filename);
         }
+
+        return completion();
     }
 
-    request(requestOpts, checkFormat)
-        .pipe(saveImageStream)
-        .on('close', cb);
+    function onError(err) {
+        if(req.success) {
+            console.log('Unexpected request failure on ' + req.filename + ': ' + err);
+        } else {
+            console.log('Expected failure on ' + req.filename);
+        }
+
+        return completion();
+    }
+
+    try {
+        var body = require(req.filename);
+    }
+    catch(SyntaxError) {
+        if(req.success) {
+            console.log('Unexpected parse failure on ' + req.filename);
+        }
+
+        return completion();
+    }
+
+    request.post({uri: endpointUrl, body: body, json: true, timeout: REQ_TIMEOUT})
+        .on('error', onError)
+        .on('response', onResponse);
 }
