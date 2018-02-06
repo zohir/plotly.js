@@ -15,7 +15,7 @@ const BATCH_WAIT = 500;
 // Request timeout, ms:
 const REQ_TIMEOUT = 40000;
 // Print more messages if true:
-const VERBOSE = false;
+const VERBOSE = true;
 // Randomize test ordering (otherwise glob sorting is used):
 const RANDOMIZE = false;
 
@@ -125,7 +125,8 @@ function runReq(req, completion) {
             successes++;
         }
         if (VERBOSE) {
-            console.log('  Service time: ' + (Date.now() - reqStart));
+            console.log('  Service time: ' + (Date.now() - reqStart) +
+                        ', Actual time: ' + Date.now());
         }
         return completion();
     }
@@ -141,7 +142,8 @@ function runReq(req, completion) {
             successes++;
         }
         if (VERBOSE) {
-            console.log('  Service time: ' + (Date.now() - reqStart));
+            console.log('  Service time: ' + (Date.now() - reqStart) +
+                        ', Actual time: ' + Date.now());
         }
 
         return completion();
