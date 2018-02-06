@@ -2,8 +2,11 @@
 
 var fs = require('fs');
 var glob = require('glob');
+var path = require('path');
 var shuffle = require('knuth-shuffle').knuthShuffle;
 var request = require('request');
+
+var getRequestOpts = require('./assets/get_image_request_options');
 
 // Number of requests in flight at any given time:
 const BATCH_SIZE = 1;
@@ -35,7 +38,8 @@ var requestDir = process.argv[3];
 
 var failReqs = getRequests(requestDir + '/failure/*', {'success': false});
 var successReqs = getRequests(requestDir + '/success/*', {'success': true});
-var allReqs = failReqs.concat(successReqs);
+var mockReqs = getRequests(requestDir + '/*', {'success': true, 'mock': true});
+var allReqs = failReqs.concat(successReqs, mockReqs);
 
 var errors = 0;
 var successes = 0;
@@ -143,24 +147,28 @@ function runReq(req, completion) {
         return completion();
     }
 
-    try {
-        var body = require(req.filename);
-    }
-    catch(SyntaxError) {
-        if(req.success) {
-            console.log('  Unexpected parse failure on ' + req.filename);
-            errors++;
-        } else {
-            if (VERBOSE) {
-                console.log('  Expected parse failure on ' + req.filename);
-            }
-            successes++;
+    if (req.mock) {
+        var body = getRequestOpts({ pathToMock: path.resolve(req.filename)}).body;
+    } else {
+        try {
+            var body = JSON.stringify(require(req.filename));
         }
+        catch(SyntaxError) {
+            if(req.success) {
+                console.log('  Unexpected parse failure on ' + req.filename);
+                errors++;
+            } else {
+                if (VERBOSE) {
+                    console.log('  Expected parse failure on ' + req.filename);
+                }
+                successes++;
+            }
 
-        return completion();
+            return completion();
+        }
     }
 
-    request.post({uri: endpointUrl, body: body, json: true, timeout: REQ_TIMEOUT})
+    request.post({uri: endpointUrl, body: body, timeout: REQ_TIMEOUT})
         .on('error', onError)
         .on('response', onResponse);
 }
