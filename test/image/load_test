@@ -36,9 +36,9 @@ const RANDOMIZE = false;
 var endpointUrl = process.argv[2];
 var requestDir = process.argv[3];
 
-var failReqs = getRequests(requestDir + '/failure/*', {'success': false});
-var successReqs = getRequests(requestDir + '/success/*', {'success': true});
-var mockReqs = getRequests(requestDir + '/*', {'success': true, 'mock': true});
+var failReqs = getRequests(requestDir + '/failure/*.json', {'success': false});
+var successReqs = getRequests(requestDir + '/success/*.json', {'success': true});
+var mockReqs = getRequests(requestDir + '/*.json', {'success': true, 'mock': true});
 var allReqs = failReqs.concat(successReqs, mockReqs);
 
 var errors = 0;
