@@ -91,29 +91,35 @@ function runReq(req, completion) {
     var totalReqs = successes + errors;
     var totalTime = (Date.now() - startTime) / 1000;
     var rps = totalReqs / totalTime;
-    console.log('successes: ' + successes + ', errors: ' + errors +
+    console.log('  successes: ' + successes + ', errors: ' + errors +
                 ', total: ' + totalReqs + ', time: ' + totalTime +
                 ', rps: ' + rps);
 
+    console.log('Starting ' + req.filename);
+
+    var reqStart = Date.now();
+
     function onResponse(response) {
         if(req.success && +response.statusCode !== 200) {
-            console.log('Unexpected error response on ' + req.filename);
+            console.log('  Unexpected error response on ' + req.filename);
             errors++;
         } else {
-            console.log('Success on ' + req.filename);
+            console.log('  Success on ' + req.filename);
             successes++;
         }
+        console.log('  Service time: ' + (Date.now() - reqStart));
         return completion();
     }
 
     function onError(err) {
         if(req.success) {
-            console.log('Unexpected request failure on ' + req.filename + ': ' + err);
+            console.log('  Unexpected request failure on ' + req.filename + ': ' + err);
             errors++;
         } else {
-            console.log('Expected failure on ' + req.filename);
+            console.log('  Expected failure on ' + req.filename);
             successes++;
         }
+        console.log('  Service time: ' + (Date.now() - reqStart));
 
         return completion();
     }
@@ -123,10 +129,10 @@ function runReq(req, completion) {
     }
     catch(SyntaxError) {
         if(req.success) {
-            console.log('Unexpected parse failure on ' + req.filename);
+            console.log('  Unexpected parse failure on ' + req.filename);
             errors++;
         } else {
-            console.log('Expected parse failure on ' + req.filename);
+            console.log('  Expected parse failure on ' + req.filename);
             successes++;
         }
 
