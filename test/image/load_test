@@ -5,9 +5,14 @@ var glob = require('glob');
 var shuffle = require('knuth-shuffle').knuthShuffle;
 var request = require('request');
 
-const BATCH_SIZE = 5;
+// Number of requests in flight at any given time:
+const BATCH_SIZE = 1;
+// Wait time before launching a new request, ms:
 const BATCH_WAIT = 500;
+// Request timeout, ms:
 const REQ_TIMEOUT = 40000;
+// Print more messages if true:
+const VERBOSE = false;
 
 /**
  *  Load Tester for imageservers
@@ -91,11 +96,13 @@ function runReq(req, completion) {
     var totalReqs = successes + errors;
     var totalTime = (Date.now() - startTime) / 1000;
     var rps = totalReqs / totalTime;
-    console.log('  successes: ' + successes + ', errors: ' + errors +
-                ', total: ' + totalReqs + ', time: ' + totalTime +
-                ', rps: ' + rps);
+    console.log((VERBOSE ? '  ' : '') + 'successes: ' + successes +
+                ', errors: ' + errors + ', total: ' + totalReqs +
+                ', time: ' + totalTime + ', rps: ' + rps);
 
-    console.log('Starting ' + req.filename);
+    if (VERBOSE) {
+        console.log('Starting ' + req.filename);
+    }
 
     var reqStart = Date.now();
 
@@ -104,10 +111,14 @@ function runReq(req, completion) {
             console.log('  Unexpected error response on ' + req.filename);
             errors++;
         } else {
-            console.log('  Success on ' + req.filename);
+            if (VERBOSE) {
+                console.log('  Success on ' + req.filename);
+            }
             successes++;
         }
-        console.log('  Service time: ' + (Date.now() - reqStart));
+        if (VERBOSE) {
+            console.log('  Service time: ' + (Date.now() - reqStart));
+        }
         return completion();
     }
 
@@ -116,10 +127,14 @@ function runReq(req, completion) {
             console.log('  Unexpected request failure on ' + req.filename + ': ' + err);
             errors++;
         } else {
-            console.log('  Expected failure on ' + req.filename);
+            if (VERBOSE) {
+                console.log('  Expected failure on ' + req.filename);
+            }
             successes++;
         }
-        console.log('  Service time: ' + (Date.now() - reqStart));
+        if (VERBOSE) {
+            console.log('  Service time: ' + (Date.now() - reqStart));
+        }
 
         return completion();
     }
@@ -132,7 +147,9 @@ function runReq(req, completion) {
             console.log('  Unexpected parse failure on ' + req.filename);
             errors++;
         } else {
-            console.log('  Expected parse failure on ' + req.filename);
+            if (VERBOSE) {
+                console.log('  Expected parse failure on ' + req.filename);
+            }
             successes++;
         }
 
