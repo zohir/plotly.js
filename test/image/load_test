@@ -13,6 +13,8 @@ const BATCH_WAIT = 500;
 const REQ_TIMEOUT = 40000;
 // Print more messages if true:
 const VERBOSE = false;
+// Randomize test ordering (otherwise glob sorting is used):
+const RANDOMIZE = false;
 
 /**
  *  Load Tester for imageservers
@@ -57,7 +59,9 @@ if(allReqs.length === 0) {
     throw new Error('No requests found in ' + requestDir);
 }
 
-allReqs = shuffle(allReqs);
+if (RANDOMIZE) {
+    allReqs = shuffle(allReqs);
+}
 
 console.log('test run starting');
 runInBatch(allReqs);
