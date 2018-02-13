@@ -18,6 +18,10 @@ const REQ_TIMEOUT = 40000;
 const VERBOSE = true;
 // Randomize test ordering (otherwise glob sorting is used):
 const RANDOMIZE = false;
+// Specify a username and API key to make requests via the streambed v2 API,
+// otherwise set falsy to make a direct request.
+const PLOTLY_USERNAME='._-aA1'
+const PLOTLY_API_KEY='testapikey'
 
 /**
  *  Load Tester for imageservers
@@ -170,7 +174,21 @@ function runReq(req, completion) {
         }
     }
 
-    request.post({uri: endpointUrl, body: body, timeout: REQ_TIMEOUT})
+    var postArgs = {uri: endpointUrl, body: body, timeout: REQ_TIMEOUT}
+
+    if (PLOTLY_USERNAME) {
+        postArgs.auth = {
+          user: PLOTLY_USERNAME,
+          pass: PLOTLY_API_KEY,
+          sendImmediately: true
+        }
+        postArgs.headers = {
+          'Content-Type': 'application/json',
+          'Plotly-Client-Platform': 'Load Test'
+        }
+    }
+
+    request.post(postArgs)
         .on('error', onError)
         .on('response', onResponse);
 }
