@@ -114,6 +114,7 @@ function calc(gd, trace) {
     // put point-cluster instance for optimized regl calc
     if(opts.marker) {
         opts.marker.snap = stash.tree || TOO_MANY_POINTS;
+        opts.marker.pixelRatio = 2.0; // should fix issue https://github.com/plotly/plotly.js/issues/3246
     }
 
     // save scene opts batch
