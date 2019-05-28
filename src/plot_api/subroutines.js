@@ -63,7 +63,7 @@ function lsInner(gd) {
     })
     .selectAll('.main-svg')
     .call(Drawing.setSize, fullLayout.width, fullLayout.height)
-    .attr('viewbox', '0 0 ' + fullLayout.width + ' ' + fullLayout.height)
+    .attr('viewbox', '0 0 ' + fullLayout.width + ' ' + fullLayout.height);
     gd._context.setBackground(gd, fullLayout.paper_bgcolor);
 
     exports.drawMainTitle(gd);
