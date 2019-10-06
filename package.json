@@ -70,6 +70,7 @@
     "d3-force": "^1.0.6",
     "d3-hierarchy": "^1.1.8",
     "d3-interpolate": "1",
+    "d3-voronoi-treemap": "^1.1.0",
     "delaunay-triangulate": "^1.1.6",
     "es6-promise": "^3.0.2",
     "fast-isnumeric": "^1.1.3",
