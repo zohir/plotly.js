@@ -251,25 +251,18 @@ function plotOne(gd, cd, element, transitionOpts) {
         var dy = _y1 - _y0;
         if(!dx || !dy) return '';
 
-        var FILLET = 0; // TODO: may expose this constant
-
-        var r = (
-            dx > 2 * FILLET &&
-            dy > 2 * FILLET
-        ) ? FILLET : 0;
-
-        var arc = function(rx, ry) { return r ? 'a' + pos(r, r) + ' 0 0 1 ' + pos(rx, ry) : ''; };
-
-        return (
-           'M' + pos(_x0, _y0 + r) +
-           arc(r, -r) +
-           'L' + pos(_x1 - r, _y0) +
-           arc(r, r) +
-           'L' + pos(_x1, _y1 - r) +
-           arc(-r, r) +
-           'L' + pos(_x0 + r, _y1) +
-           arc(-r, -r) + 'Z'
-        );
+        var path = '';
+        if(d.polygon) {
+            for(var i = 0; i < d.polygon.length; i++) {
+                path += i ? 'L' : 'M';
+                path += pos(
+                    viewMapX(d.polygon[i][0]),
+                    viewMapY(d.polygon[i][1])
+                );
+            }
+            path += 'Z';
+        }
+        return path;
     };
 
     var toMoveInsideSlice = function(pt, opts) {

@@ -249,11 +249,9 @@ module.exports = {
     textposition: {
         valType: 'enumerated',
         values: [
-            'top left', 'top center', 'top right',
-            'middle left', 'middle center', 'middle right',
-            'bottom left', 'bottom center', 'bottom right'
+            'middle center'
         ],
-        dflt: 'top left',
+        dflt: 'middle center',
         role: 'style',
         editType: 'plot',
         description: [

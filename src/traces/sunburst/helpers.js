@@ -134,6 +134,8 @@ exports.determineTextFont = function(trace, pt, layoutFont, cont) {
 };
 
 exports.hasTransition = function(transitionOpts) {
+    return false;
+
     // We could optimize hasTransition per trace,
     // as sunburst & treemap have no cross-trace logic!
     return !!(transitionOpts && transitionOpts.duration > 0);

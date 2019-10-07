@@ -13,7 +13,7 @@ var Lib = require('../../lib');
 var Drawing = require('../../components/drawing');
 var svgTextUtils = require('../../lib/svg_text_utils');
 
-var partition = require('./partition');
+var voronoiTreemap = require('d3-voronoi-treemap').voronoiTreemap;
 var styleOne = require('./style').styleOne;
 var constants = require('./constants');
 var helpers = require('../sunburst/helpers');
@@ -47,23 +47,32 @@ module.exports = function drawDescendants(gd, cd, entry, slices, opts) {
 
     var noRoomForHeader = (!hasBottom && !trace.marker.pad.t) || (hasBottom && !trace.marker.pad.b);
 
-    // N.B. slice data isn't the calcdata,
-    // grab corresponding calcdata item in sliceData[i].data.data
-    var allData = partition(entry, [width, height], {
-        packing: trace.tiling.packing,
-        squarifyratio: trace.tiling.squarifyratio,
-        flipX: trace.tiling.flip.indexOf('x') > -1,
-        flipY: trace.tiling.flip.indexOf('y') > -1,
-        pad: {
-            inner: trace.tiling.pad,
-            top: trace.marker.pad.t,
-            left: trace.marker.pad.l,
-            right: trace.marker.pad.r,
-            bottom: trace.marker.pad.b,
-        }
+    entry.each(function(pt) {
+        pt.weight = pt.value;
     });
 
-    var sliceData = allData.descendants();
+    voronoiTreemap().clip([[0, 0], [0, height], [width, height], [width, 0]])(entry);
+
+    entry.each(function(pt) {
+        var minX = Infinity;
+        var minY = Infinity;
+        var maxX = -Infinity;
+        var maxY = -Infinity;
+
+        for(var i = 0; i < pt.polygon.length; i++) {
+            minX = Math.min(minX, pt.polygon[i][0]);
+            maxX = Math.max(maxX, pt.polygon[i][0]);
+            minY = Math.min(minY, pt.polygon[i][1]);
+            maxY = Math.max(maxY, pt.polygon[i][1]);
+        }
+
+        pt.x0 = minX;
+        pt.x1 = maxX;
+        pt.y0 = minY;
+        pt.y1 = maxY;
+    });
+
+    var sliceData = entry.descendants();
 
     var minVisibleDepth = Infinity;
     var maxVisibleDepth = -Infinity;
