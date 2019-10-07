@@ -18,8 +18,8 @@ module.exports = function calc(gd, trace) {
 
     var x = trace.x;
     var y = trace.y;
-    var w = trace.z.length;
-    var h = trace.z[0].length;
+    var h = trace.z.length;
+    var w = trace.z[0].length;
 
     // xa.makeCalcdata(trace, 'x');
     // ya.makeCalcdata(trace, 'y');

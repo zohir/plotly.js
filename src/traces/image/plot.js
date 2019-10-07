@@ -15,7 +15,7 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
     var xa = plotinfo.xaxis;
     var ya = plotinfo.yaxis;
 
-    Lib.makeTraceGroups(imageLayer, cdimage, 'hm').each(function(cd) {
+    Lib.makeTraceGroups(imageLayer, cdimage, 'im').each(function(cd) {
         var plotGroup = d3.select(this);
         var cd0 = cd[0];
         var trace = cd0.trace;
@@ -43,8 +43,8 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         context.imageSmoothingEnabled = false;
         for(var i = 0; i < cd0.w - 1; i++) {
             for(var j = 0; j < cd0.h - 1; j++) {
-                context.fillStyle = trace.colormodel + '(' + z[i][j].slice(0, tupleLength).join(',') + ')';
-                context.fillRect(j, i, 1, 1);
+                context.fillStyle = trace.colormodel + '(' + z[j][i].slice(0, tupleLength).join(',') + ')';
+                context.fillRect(i, j, 1, 1);
             }
         }
 
@@ -64,8 +64,10 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
             'xlink:href': canvas.toDataURL('image/png')
         });
 
+        // TODO: support additional smoothing options
+        // https://developer.mozilla.org/en-US/docs/Web/CSS/image-rendering
         image3.style({
-            imageRendering: 'pixelated'
+            'image-rendering': 'pixelated'
         });
     });
 };
