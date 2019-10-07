@@ -20,8 +20,8 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         var cd0 = cd[0];
         var trace = cd0.trace;
 
-        var x = cd0.x;
-        var y = cd0.y;
+        var x = cd0.x - 0.5;
+        var y = cd0.y + 0.5;
         var z = cd0.z;
         var w = cd0.w;
         var h = cd0.h;
