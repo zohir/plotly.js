@@ -14,40 +14,25 @@ var Lib = require('../../lib');
 
 module.exports = function hoverPoints(pointData, xval, yval) {
     var cd0 = pointData.cd[0];
+    var trace = cd0.trace;
     var xa = pointData.xa;
     var ya = pointData.ya;
 
-    if(Fx.inbox(xval - cd0.x, xval - (cd0.x + cd0.w), 0) > 0 ||
-            Fx.inbox(yval - cd0.y, yval - (cd0.y - cd0.h), 0) > 0) {
+    if(Fx.inbox(xval - cd0.x, xval - (cd0.x + cd0.w * trace.xscale), 0) > 0 ||
+            Fx.inbox(yval - cd0.y, yval - (cd0.y - cd0.h * trace.yscale), 0) > 0) {
         return;
     }
 
     // Find nearest pixel's index and pixel center
-    var nx = Math.floor(xval - cd0.x);
-    var ny = Math.floor(Math.abs(yval - cd0.y));
+    var nx = Math.floor((xval - cd0.x) / trace.xscale);
+    var ny = Math.floor(Math.abs(yval - cd0.y) / trace.yscale);
 
-    var py = ya.c2p(cd0.y - (ny + 0.5));
+    var py = ya.c2p(cd0.y - (ny + 0.5) * trace.yscale);
     return [Lib.extendFlat(pointData, {
         index: [ny, nx], // FIXME
-        x0: xa.c2p(cd0.x + nx),
-        x1: xa.c2p(cd0.x + (nx + 1)),
+        x0: xa.c2p(cd0.x + nx * trace.xscale),
+        x1: xa.c2p(cd0.x + (nx + 1) * trace.xscale),
         y0: py,
         y1: py,
     })];
-
-    // return [Lib.extendFlat(pointData, {
-    //     index: [ny, nx],
-    //     // never let a 2D override 1D type as closest point
-    //     distance: pointData.maxHoverDistance,
-    //     spikeDistance: pointData.maxSpikeDistance,
-    //     x0: x0,
-    //     x1: x1,
-    //     y0: y0,
-    //     y1: y1,
-    //     xLabelVal: xl,
-    //     yLabelVal: yl,
-    //     zLabelVal: zVal,
-    //     zLabel: zLabel,
-    //     text: text
-    // })];
 };

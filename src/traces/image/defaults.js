@@ -18,8 +18,8 @@ module.exports = function supplyDefaults(traceIn, traceOut) {
     }
     coerce('x');
     coerce('y');
-    // coerce('xscale');
-    // coerce('yscale');
+    coerce('xscale');
+    coerce('yscale');
     coerce('z');
     coerce('colormodel');
     coerce('transpose');
