@@ -16,6 +16,8 @@
     "yaxis": "y2"
   }],
   "layout": {
-    "grid": {"rows": 2, "columns": 1, "pattern": "independent"}
+    "grid": {"rows": 2, "columns": 1, "pattern": "independent"},
+    "width": 600,
+    "height": 400
   }
 }
