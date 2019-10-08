@@ -26,13 +26,11 @@ module.exports = function hoverPoints(pointData, xval, yval) {
     var nx = Math.floor(xval - cd0.x);
     var ny = Math.floor(Math.abs(yval - cd0.y));
 
-    var px = xa.c2p(cd0.x + (nx + 0.5));
     var py = ya.c2p(cd0.y - (ny + 0.5));
-
     return [Lib.extendFlat(pointData, {
         index: [ny, nx], // FIXME
-        x0: px,
-        x1: px,
+        x0: xa.c2p(cd0.x + nx),
+        x1: xa.c2p(cd0.x + (nx + 1)),
         y0: py,
         y1: py,
     })];
