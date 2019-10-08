@@ -2,6 +2,8 @@
   "data": [{
     "type": "image",
     "colormodel": "rgb",
+    "yscale": 10,
+    "xscale": 0.5,
     "z": [[[255, 0, 0], [0, 255, 0], [0, 0, 255]]]
   }, {
     "type": "image",

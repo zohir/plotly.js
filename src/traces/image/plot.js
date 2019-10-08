@@ -22,22 +22,24 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
 
         var x = cd0.x;
         var y = cd0.y;
-        var z = cd0.z;
         var w = cd0.w;
         var h = cd0.h;
-        var tupleLength = trace.colormodel.length;
+        var xscale = trace.xscale;
+        var yscale = trace.yscale;
         var left = xa.c2p(x);
-        var right = xa.c2p(x + w);
+        var right = xa.c2p(x + w * xscale);
         var top = ya.c2p(y);
-        var bottom = ya.c2p(y + h);
+        var bottom = ya.c2p(y + h * yscale);
 
         var imageWidth = Math.round(right - left);
         var imageHeight = Math.round(top - bottom);
 
         var canvas = document.createElement('canvas');
+        var z = cd0.z;
         canvas.width = cd0.w;
         canvas.height = cd0.h;
         var context = canvas.getContext('2d');
+        var tupleLength = trace.colormodel.length;
         for(var i = 0; i < cd0.w; i++) {
             for(var j = 0; j < cd0.h; j++) {
                 context.fillStyle = trace.colormodel + '(' + z[j][i].slice(0, tupleLength).join(',') + ')';
