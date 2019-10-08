@@ -33,18 +33,20 @@ module.exports = extendFlat({
         editType: 'plot',
         description: 'Set the image\'s y position'
     },
-    // xscale: {
-    //     valType: 'number',
-    //     dflt: 1,
-    //     editType: 'plot',
-    //     description: 'Set the pixel horizontal size'
-    // },
-    // yscale: {
-    //     valType: 'number',
-    //     dflt: 1,
-    //     editType: 'plot',
-    //     description: 'Set the pixel vertical size'
-    // },
+    xscale: {
+        valType: 'number',
+        dflt: 1,
+        role: 'info',
+        editType: 'plot',
+        description: 'Set the pixel\'s horizontal size'
+    },
+    yscale: {
+        valType: 'number',
+        dflt: 1,
+        role: 'info',
+        editType: 'plot',
+        description: 'Set the pixel\'s vertical size'
+    },
     colormodel: {
         valType: 'enumerated',
         values: ['rgb', 'rgba', 'hsl', 'hsla'],
@@ -60,7 +62,5 @@ module.exports = extendFlat({
         editType: 'calc',
         description: 'Transposes the z data.'
     },
-    hovertemplate: hovertemplateAttrs({
-        dflt: '<span style="text-transform:uppercase">%{colormodel}</span>: [%{z[0]}, %{z[1]}, %{z[2]}]'
-    })
+    hovertemplate: hovertemplateAttrs({})
 });
