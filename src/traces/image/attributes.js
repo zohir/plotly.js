@@ -56,5 +56,7 @@ module.exports = extendFlat({
         editType: 'calc',
         description: 'Transposes the z data.'
     },
-    hovertemplate: hovertemplateAttrs()
+    hovertemplate: hovertemplateAttrs({
+        dflt: '<span style="text-transform:uppercase">%{colormodel}</span>: [%{z[0]}, %{z[1]}, %{z[2]}]'
+    })
 });

@@ -10,10 +10,27 @@
 
 var Fx = require('../../components/fx');
 var Lib = require('../../lib');
-var Axes = require('../../plots/cartesian/axes');
-var extractOpts = require('../../components/colorscale').extractOpts;
+// var Axes = require('../../plots/cartesian/axes');
 
-module.exports = function hoverPoints(pointData, xval, yval, hovermode, hoverLayer, contour) {
+module.exports = function hoverPoints(pointData, xval, yval, hovermode, hoverLayer) {
+    var cd0 = pointData.cd[0];
+    var trace = cd0.trace;
+    var xa = pointData.xa;
+    var ya = pointData.ya;
+
+    if(Fx.inbox(xval - cd0.x, xval - (cd0.x + cd0.w), 0) > 0 ||
+            Fx.inbox(yval - cd0.y, yval - (cd0.y - cd0.h), 0) > 0) {
+        return;
+    }
+
+    return [Lib.extendFlat(pointData, {
+        index: [Math.round(xval - cd0.x), Math.abs(Math.round(yval - cd0.y))], // FIXME
+        x0: xa.c2p(xval),
+        x1: xa.c2p(xval + 1),
+        y0: ya.c2p(yval),
+        y1: ya.c2p(yval + 1),
+    })];
+
     // return [Lib.extendFlat(pointData, {
     //     index: [ny, nx],
     //     // never let a 2D override 1D type as closest point

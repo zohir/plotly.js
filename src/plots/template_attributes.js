@@ -48,7 +48,7 @@ exports.hovertemplateAttrs = function(opts, extra) {
     var hovertemplate = {
         valType: 'string',
         role: 'info',
-        dflt: '',
+        dflt: opts.dflt || '',
         editType: opts.editType || 'none',
         description: [
             'Template string used for rendering the information that appear on hover box.',
@@ -78,7 +78,7 @@ exports.texttemplateAttrs = function(opts, extra) {
     var texttemplate = {
         valType: 'string',
         role: 'info',
-        dflt: '',
+        dflt: opts.dflt || '',
         editType: opts.editType || 'calc',
         description: [
             'Template string used for rendering the information text that appear on points.',
