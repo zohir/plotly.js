@@ -14,6 +14,7 @@ var extendFlat = require('../../lib/extend').extendFlat;
 module.exports = extendFlat({
     z: {
         valType: 'data_array',
+        role: 'info',
         editType: 'calc',
         // TODO: add description
         description: 'Values from 0 to 255'
@@ -21,12 +22,14 @@ module.exports = extendFlat({
     x: {
         valType: 'number',
         dflt: 0,
+        role: 'info',
         editType: 'plot',
         description: 'Set the image\'s x position'
     },
     y: {
         valType: 'number',
         dflt: 0,
+        role: 'info',
         editType: 'plot',
         description: 'Set the image\'s y position'
     },
@@ -46,6 +49,7 @@ module.exports = extendFlat({
         valType: 'enumerated',
         values: ['rgb', 'rgba', 'hsl', 'hsla'],
         dflt: 'rgb',
+        role: 'info',
         editType: 'calc',
         description: 'Color model'
     },
