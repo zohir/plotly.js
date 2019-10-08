@@ -22,12 +22,19 @@ module.exports = function hoverPoints(pointData, xval, yval) {
         return;
     }
 
+    // Find nearest pixel's index and pixel center
+    var nx = Math.floor(xval - cd0.x);
+    var ny = Math.floor(Math.abs(yval - cd0.y));
+
+    var px = xa.c2p(cd0.x + (nx + 0.5));
+    var py = ya.c2p(cd0.y - (ny + 0.5));
+
     return [Lib.extendFlat(pointData, {
-        index: [Math.round(xval - cd0.x), Math.abs(Math.round(yval - cd0.y))], // FIXME
-        x0: xa.c2p(xval),
-        x1: xa.c2p(xval + 1),
-        y0: ya.c2p(yval),
-        y1: ya.c2p(yval + 1),
+        index: [ny, nx], // FIXME
+        x0: px,
+        x1: px,
+        y0: py,
+        y1: py,
     })];
 
     // return [Lib.extendFlat(pointData, {

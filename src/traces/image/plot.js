@@ -20,8 +20,8 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         var cd0 = cd[0];
         var trace = cd0.trace;
 
-        var x = cd0.x - 0.5;
-        var y = cd0.y + 0.5;
+        var x = cd0.x;
+        var y = cd0.y;
         var z = cd0.z;
         var w = cd0.w;
         var h = cd0.h;
@@ -31,8 +31,6 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         var top = ya.c2p(y);
         var bottom = ya.c2p(y + h);
 
-        // TODO: do not draw image if it's out of range
-
         var imageWidth = Math.round(right - left);
         var imageHeight = Math.round(top - bottom);
 
@@ -40,9 +38,8 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         canvas.width = cd0.w;
         canvas.height = cd0.h;
         var context = canvas.getContext('2d');
-        context.imageSmoothingEnabled = false;
-        for(var i = 0; i < cd0.w - 1; i++) {
-            for(var j = 0; j < cd0.h - 1; j++) {
+        for(var i = 0; i < cd0.w; i++) {
+            for(var j = 0; j < cd0.h; j++) {
                 context.fillStyle = trace.colormodel + '(' + z[j][i].slice(0, tupleLength).join(',') + ')';
                 context.fillRect(i, j, 1, 1);
             }
