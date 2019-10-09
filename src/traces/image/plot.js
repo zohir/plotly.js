@@ -31,7 +31,20 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         var left = xa.c2p(x);
         var right = xa.c2p(x + w * xscale);
         var top = ya.c2p(y);
-        var bottom = ya.c2p(y + h * yscale);
+        var bottom = ya.c2p(y - h * yscale);
+
+        var temp;
+        if(right < left) {
+            temp = right;
+            right = left;
+            left = temp;
+        }
+
+        if(bottom < top) {
+            temp = top;
+            top = bottom;
+            bottom = temp;
+        }
 
         var imageWidth = Math.round(right - left);
         var imageHeight = Math.round(top - bottom);
