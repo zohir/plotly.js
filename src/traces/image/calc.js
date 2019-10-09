@@ -21,9 +21,6 @@ module.exports = function calc(gd, trace) {
     var h = trace.z.length;
     var w = trace.z[0].length;
 
-    // xa.makeCalcdata(trace, 'x');
-    // ya.makeCalcdata(trace, 'y');
-
     trace._extremes[xa._id] = Axes.findExtremes(xa, [x, x + w * trace.xscale]);
     trace._extremes[ya._id] = Axes.findExtremes(ya, [y, y - h * trace.yscale]);
 
