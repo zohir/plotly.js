@@ -46,34 +46,31 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
             bottom = temp;
         }
 
-        var imageWidth = Math.round(right - left);
-        var imageHeight = Math.round(bottom - top);
-
-        // if image is entirely off-screen, don't even draw it
-        var isOffScreen = (imageWidth <= 0 || imageHeight <= 0);
-
-        if(isOffScreen) {
-            var noImage = plotGroup.selectAll('image').data([]);
-            noImage.exit().remove();
-            return;
-        }
-
         // Reduce image size when zoomed in to save memory
         var extra = 0.5; // half the axis size
         left = Math.max(-extra * xa._length, left);
         right = Math.min((1 + extra) * xa._length, right);
         top = Math.max(-extra * ya._length, top);
         bottom = Math.min((1 + extra) * ya._length, bottom);
+        var imageWidth = Math.round(right - left);
+        var imageHeight = Math.round(bottom - top);
 
-        imageWidth = Math.round(right - left);
-        imageHeight = Math.round(bottom - top);
+        // if image is entirely off-screen, don't even draw it
+        var isOffScreen = (imageWidth <= 0 || imageHeight <= 0);
+        if(isOffScreen) {
+            var noImage = plotGroup.selectAll('image').data([]);
+            noImage.exit().remove();
+            return;
+        }
 
+        // Draw each pixel
         var canvas = document.createElement('canvas');
         canvas.width = imageWidth;
         canvas.height = imageHeight;
         var context = canvas.getContext('2d');
         var ipx = function(i) {return Lib.constrain(Math.round(xa.c2p(x + i * xscale) - left), 0, imageWidth);};
         var jpx = function(j) {return Lib.constrain(Math.round(ya.c2p(y - j * yscale) - top), 0, imageHeight);};
+        // TODO: for performance, when image size is reduced, only loop over pixels of interest
         for(var i = 0; i < cd0.w; i++) {
             for(var j = 0; j < cd0.h; j++) {
                 context.fillStyle = trace.colormodel + '(' + z[j][i].slice(0, tupleLength).join(',') + ')';
