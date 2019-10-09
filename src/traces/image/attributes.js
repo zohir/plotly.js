@@ -23,14 +23,14 @@ module.exports = extendFlat({
         valType: 'number',
         dflt: 0,
         role: 'info',
-        editType: 'plot',
+        editType: 'calc',
         description: 'Set the image\'s x position'
     },
     y: {
         valType: 'number',
         dflt: 0,
         role: 'info',
-        editType: 'plot',
+        editType: 'calc',
         description: 'Set the image\'s y position'
     },
     xscale: {
