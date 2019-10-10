@@ -22,16 +22,16 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
 
         var z = cd0.z;
         var tupleLength = trace.colormodel.length;
-        var x = cd0.x;
-        var y = cd0.y;
+        var x0 = cd0.x0;
+        var y0 = cd0.y0;
         var w = cd0.w;
         var h = cd0.h;
-        var xscale = trace.xscale;
-        var yscale = trace.yscale;
-        var left = xa.c2p(x);
-        var right = xa.c2p(x + w * xscale);
-        var top = ya.c2p(y);
-        var bottom = ya.c2p(y - h * yscale);
+        var dx = trace.dx;
+        var dy = trace.dy;
+        var left = xa.c2p(x0);
+        var right = xa.c2p(x0 + w * dx);
+        var top = ya.c2p(y0);
+        var bottom = ya.c2p(y0 - h * dy);
 
         var temp;
         if(right < left) {
@@ -68,8 +68,8 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         canvas.width = imageWidth;
         canvas.height = imageHeight;
         var context = canvas.getContext('2d');
-        var ipx = function(i) {return Lib.constrain(Math.round(xa.c2p(x + i * xscale) - left), 0, imageWidth);};
-        var jpx = function(j) {return Lib.constrain(Math.round(ya.c2p(y - j * yscale) - top), 0, imageHeight);};
+        var ipx = function(i) {return Lib.constrain(Math.round(xa.c2p(x0 + i * dx) - left), 0, imageWidth);};
+        var jpx = function(j) {return Lib.constrain(Math.round(ya.c2p(y0 - j * dy) - top), 0, imageHeight);};
         // TODO: for performance, when image size is reduced, only loop over pixels of interest
         for(var i = 0; i < cd0.w; i++) {
             for(var j = 0; j < cd0.h; j++) {

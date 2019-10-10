@@ -16,10 +16,10 @@ module.exports = function supplyDefaults(traceIn, traceOut) {
     function coerce(attr, dflt) {
         return Lib.coerce(traceIn, traceOut, attributes, attr, dflt);
     }
-    coerce('x');
-    coerce('y');
-    coerce('xscale');
-    coerce('yscale');
+    coerce('x0');
+    coerce('y0');
+    coerce('dx');
+    coerce('dy');
     coerce('z');
     coerce('colormodel');
     coerce('transpose');

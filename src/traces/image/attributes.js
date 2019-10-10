@@ -19,28 +19,28 @@ module.exports = extendFlat({
         // TODO: add description
         description: 'Values from 0 to 255'
     },
-    x: {
+    x0: {
         valType: 'number',
         dflt: 0,
         role: 'info',
         editType: 'calc',
         description: 'Set the image\'s x position'
     },
-    y: {
+    y0: {
         valType: 'number',
         dflt: 0,
         role: 'info',
         editType: 'calc',
         description: 'Set the image\'s y position'
     },
-    xscale: {
+    dx: {
         valType: 'number',
         dflt: 1,
         role: 'info',
         editType: 'plot',
         description: 'Set the pixel\'s horizontal size'
     },
-    yscale: {
+    dy: {
         valType: 'number',
         dflt: 1,
         role: 'info',

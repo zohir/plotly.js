@@ -16,17 +16,17 @@ module.exports = function calc(gd, trace) {
     var xa = Axes.getFromId(gd, trace.xaxis || 'x');
     var ya = Axes.getFromId(gd, trace.yaxis || 'y');
 
-    var x = trace.x - trace.xscale / 2;
-    var y = trace.y + trace.yscale / 2;
+    var x0 = trace.x0 - trace.dx / 2;
+    var y0 = trace.y0 + trace.dy / 2;
     var h = trace.z.length;
     var w = trace.z[0].length;
 
-    trace._extremes[xa._id] = Axes.findExtremes(xa, [x, x + w * trace.xscale]);
-    trace._extremes[ya._id] = Axes.findExtremes(ya, [y, y - h * trace.yscale]);
+    trace._extremes[xa._id] = Axes.findExtremes(xa, [x0, x0 + w * trace.dx]);
+    trace._extremes[ya._id] = Axes.findExtremes(ya, [y0, y0 - h * trace.dy]);
 
     var cd0 = {
-        x: x,
-        y: y,
+        x0: x0,
+        y0: y0,
         z: trace.z,
         w: w,
         h: h
