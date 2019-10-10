@@ -54,12 +54,5 @@ module.exports = extendFlat({
         editType: 'calc',
         description: 'Color model'
     },
-    transpose: {
-        valType: 'boolean',
-        dflt: false,
-        role: 'info',
-        editType: 'calc',
-        description: 'Transposes the z data.'
-    },
     hovertemplate: hovertemplateAttrs({})
 });
