@@ -16,7 +16,6 @@ module.exports = extendFlat({
         valType: 'data_array',
         role: 'info',
         editType: 'calc',
-        // TODO: add description
         description: 'Values from 0 to 255'
     },
     x0: {

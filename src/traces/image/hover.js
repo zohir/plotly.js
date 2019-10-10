@@ -29,7 +29,7 @@ module.exports = function hoverPoints(pointData, xval, yval) {
 
     var py = ya.c2p(cd0.y0 - (ny + 0.5) * trace.dy);
     return [Lib.extendFlat(pointData, {
-        index: [ny, nx], // FIXME
+        index: [ny, nx],
         x0: xa.c2p(cd0.x0 + nx * trace.dx),
         x1: xa.c2p(cd0.x0 + (nx + 1) * trace.dx),
         y0: py,
