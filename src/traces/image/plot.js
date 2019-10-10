@@ -10,6 +10,7 @@
 var d3 = require('d3');
 var Lib = require('../../lib');
 var xmlnsNamespaces = require('../../constants/xmlns_namespaces');
+var constants = require('./constants');
 
 module.exports = function(gd, plotinfo, cdimage, imageLayer) {
     var xa = plotinfo.xaxis;
@@ -70,10 +71,28 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         var context = canvas.getContext('2d');
         var ipx = function(i) {return Lib.constrain(Math.round(xa.c2p(x0 + i * dx) - left), 0, imageWidth);};
         var jpx = function(j) {return Lib.constrain(Math.round(ya.c2p(y0 + j * dy) - top), 0, imageHeight);};
+
+        // Check which channel needs to be scaled
+        var cr = constants.colormodel[trace.colormodel];
+        var scale = [];
+        var k;
+        for(k = 0; k < tupleLength; k++) {
+            if(cr[0][k] !== trace.zmin[k] || cr[1][k] !== trace.zmax[k]) {
+                scale.push([k, (cr[1][k] - cr[0][k]) / (trace.zmax[k] - trace.zmin[k])]);
+            }
+        }
+
         // TODO: for performance, when image size is reduced, only loop over pixels of interest
+        var c = []; var ch;
         for(var i = 0; i < cd0.w; i++) {
             for(var j = 0; j < cd0.h; j++) {
-                context.fillStyle = trace.colormodel + '(' + z[j][i].slice(0, tupleLength).join(',') + ')';
+                c = z[j][i];
+                for(k = 0; k < scale.length; k++) {
+                    ch = scale[k][0];
+                    c[ch] = (c[ch] - trace.zmin[ch]) * scale[k][1];
+                    c[ch] = Lib.constrain(c[ch], cr[0][k], cr[1][k]);
+                }
+                context.fillStyle = trace.colormodel + '(' + cr[2](c).join(',') + ')';
                 context.fillRect(ipx(i), jpx(j), ipx(i + 1) - ipx(i), jpx(j + 1) - jpx(j));
             }
         }
@@ -86,23 +105,6 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
             preserveAspectRatio: 'none'
         });
 
-        // var canvas = document.createElement('canvas');
-        // canvas.width = cd0.w;
-        // canvas.height = cd0.h;
-        // var context = canvas.getContext('2d');
-        // for(var i = 0; i < cd0.w; i++) {
-        //     for(var j = 0; j < cd0.h; j++) {
-        //         context.fillStyle = trace.colormodel + '(' + z[j][i].slice(0, tupleLength).join(',') + ')';
-        //         context.fillRect(i, j, 1, 1);
-        //     }
-        // }
-        //
-        // TODO: support additional smoothing options
-        // https://developer.mozilla.org/en-US/docs/Web/CSS/image-rendering
-        // http://phrogz.net/tmp/canvas_image_zoom.html
-        // image3
-         // .attr('style', 'image-rendering: optimizeSpeed; image-rendering: -o-crisp-edges; image-rendering: -webkit-optimize-contrast; image-rendering: optimize-contrast; image-rendering: crisp-edges; image-rendering: pixelated;');
-
         image3.attr({
             height: imageHeight,
             width: imageWidth,
@@ -112,3 +114,20 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         });
     });
 };
+
+// var canvas = document.createElement('canvas');
+// canvas.width = cd0.w;
+// canvas.height = cd0.h;
+// var context = canvas.getContext('2d');
+// for(var i = 0; i < cd0.w; i++) {
+//     for(var j = 0; j < cd0.h; j++) {
+//         context.fillStyle = trace.colormodel + '(' + z[j][i].slice(0, tupleLength).join(',') + ')';
+//         context.fillRect(i, j, 1, 1);
+//     }
+// }
+//
+// TODO: support additional smoothing options
+// https://developer.mozilla.org/en-US/docs/Web/CSS/image-rendering
+// http://phrogz.net/tmp/canvas_image_zoom.html
+// image3
+ // .attr('style', 'image-rendering: optimizeSpeed; image-rendering: -o-crisp-edges; image-rendering: -webkit-optimize-contrast; image-rendering: optimize-contrast; image-rendering: crisp-edges; image-rendering: pixelated;');

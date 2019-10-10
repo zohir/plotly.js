@@ -16,20 +16,32 @@ module.exports = extendFlat({
         valType: 'data_array',
         role: 'info',
         editType: 'calc',
-        description: 'Values from 0 to 255'
+        description: 'A 2-dimensional array where each element is a color represented by 3 or 4 numbers in an array.'
+    },
+    zmin: {
+        valType: 'data_array',
+        role: 'info',
+        editType: 'calc',
+        description: 'Lower bound of colors in z' // TODO
+    },
+    zmax: {
+        valType: 'data_array',
+        role: 'info',
+        editType: 'calc',
+        description: 'Higher bound of colors in z' // TODO
     },
     x0: {
         valType: 'number',
         dflt: 0,
         role: 'info',
-        editType: 'calc',
+        editType: 'plot',
         description: 'Set the image\'s x position'
     },
     y0: {
         valType: 'number',
         dflt: 0,
         role: 'info',
-        editType: 'calc',
+        editType: 'plot',
         description: 'Set the image\'s y position'
     },
     dx: {

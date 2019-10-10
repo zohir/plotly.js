@@ -1,0 +1,21 @@
+{
+  "data": [{
+    "type": "image",
+    "z": [[[255, 0, 0], [0, 255, 0], [0, 0, 255]]],
+    "zmin": [0, 0, 0],
+    "zmax": [255, 255, 255]
+    }, {
+      "type": "image",
+      "z": [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]],
+      "zmax": [1, 1, 1],
+      "yaxis": "y3",
+      "xaxis": "x3"
+      }],
+    "layout": {
+      "width": 400, "height": 400,
+      "grid": {"rows": 2, "columns": 2, "pattern": "independent"},
+      "title": {
+        "text": "zmin zmax"
+      }
+    }
+}

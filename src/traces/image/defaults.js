@@ -11,6 +11,7 @@
 
 var Lib = require('../../lib');
 var attributes = require('./attributes');
+var constants = require('./constants');
 
 module.exports = function supplyDefaults(traceIn, traceOut) {
     function coerce(attr, dflt) {
@@ -22,6 +23,9 @@ module.exports = function supplyDefaults(traceIn, traceOut) {
     coerce('dy');
     coerce('z');
     coerce('colormodel');
+
+    coerce('zmin', constants.colormodel[traceOut.colormodel][0]);
+    coerce('zmax', constants.colormodel[traceOut.colormodel][1]);
     var dims = traceOut.colormodel.length;
     var dfltHovertemplate = '<span style="text-transform:uppercase">%{colormodel}</span>: [%{z[0]}, %{z[1]}, %{z[2]}' + (dims === 4 ? ', %{z[3]}' : '') + ']';
     coerce('hovertemplate', dfltHovertemplate);
