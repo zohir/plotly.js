@@ -77,8 +77,8 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         var scale = [];
         var k;
         for(k = 0; k < tupleLength; k++) {
-            if(cr[0][k] !== trace.zmin[k] || cr[1][k] !== trace.zmax[k]) {
-                scale.push([k, (cr[1][k] - cr[0][k]) / (trace.zmax[k] - trace.zmin[k])]);
+            if(cr.min[k] !== trace.zmin[k] || cr.max[k] !== trace.zmax[k]) {
+                scale.push([k, (cr.max[k] - cr.min[k]) / (trace.zmax[k] - trace.zmin[k])]);
             }
         }
 
@@ -90,9 +90,9 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
                 for(k = 0; k < scale.length; k++) {
                     ch = scale[k][0];
                     c[ch] = (c[ch] - trace.zmin[ch]) * scale[k][1];
-                    c[ch] = Lib.constrain(c[ch], cr[0][k], cr[1][k]);
+                    c[ch] = Lib.constrain(c[ch], cr.min[k], cr.max[k]);
                 }
-                context.fillStyle = trace.colormodel + '(' + cr[2](c).join(',') + ')';
+                context.fillStyle = trace.colormodel + '(' + cr.fmt(c).join(',') + ')';
                 context.fillRect(ipx(i), jpx(j), ipx(i + 1) - ipx(i), jpx(j + 1) - jpx(j));
             }
         }

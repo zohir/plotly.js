@@ -11,17 +11,19 @@
 
 module.exports = {
     colormodel: {
-        'rgb': [[0, 0, 0], [255, 255, 255], function(c) {return c.slice(0, 3);}],
-        'rgba': [[0, 0, 0, 0], [255, 255, 255, 1], function(c) {return c.slice(0, 4);}],
-        'hsl': [[0, 0, 0], [360, 100, 100], function(c) {
-            c[1] = c[1] + '%';
-            c[2] = c[2] + '%';
-            return c.slice(0, 3);
-        }],
-        'hsla': [[0, 0, 0, 0], [360, 100, 100, 1], function(c) {
-            c[1] = c[1] + '%';
-            c[2] = c[2] + '%';
-            return c.slice(0, 4);
+        rgb: {min: [0, 0, 0], max: [255, 255, 255], fmt: function(c) {return c.slice(0, 3);}},
+        rgba: {min: [0, 0, 0, 0], max: [255, 255, 255, 1], fmt: function(c) {return c.slice(0, 4);}},
+        hsl: {min: [0, 0, 0], max: [360, 100, 100], fmt: function(c) {
+            var p = c.slice(0, 3);
+            p[1] = p[1] + '%';
+            p[2] = p[2] + '%';
+            return p;
+        }},
+        hsla: [[0, 0, 0, 0], [360, 100, 100, 1], function(c) {
+            var p = c.slice(0, 4);
+            p[1] = p[1] + '%';
+            p[2] = p[2] + '%';
+            return p.slice(0, 4);
         }]
     }
 };
