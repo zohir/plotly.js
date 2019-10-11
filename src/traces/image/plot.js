@@ -31,7 +31,7 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         var left = xa.c2p(x0);
         var right = xa.c2p(x0 + w * dx);
         var top = ya.c2p(y0);
-        var bottom = ya.c2p(y0 - h * dy);
+        var bottom = ya.c2p(y0 + h * dy);
 
         var temp;
         if(right < left) {
@@ -69,7 +69,7 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         canvas.height = imageHeight;
         var context = canvas.getContext('2d');
         var ipx = function(i) {return Lib.constrain(Math.round(xa.c2p(x0 + i * dx) - left), 0, imageWidth);};
-        var jpx = function(j) {return Lib.constrain(Math.round(ya.c2p(y0 - j * dy) - top), 0, imageHeight);};
+        var jpx = function(j) {return Lib.constrain(Math.round(ya.c2p(y0 + j * dy) - top), 0, imageHeight);};
         // TODO: for performance, when image size is reduced, only loop over pixels of interest
         for(var i = 0; i < cd0.w; i++) {
             for(var j = 0; j < cd0.h; j++) {

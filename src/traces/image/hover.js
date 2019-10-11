@@ -19,7 +19,7 @@ module.exports = function hoverPoints(pointData, xval, yval) {
     var ya = pointData.ya;
 
     if(Fx.inbox(xval - cd0.x0, xval - (cd0.x0 + cd0.w * trace.dx), 0) > 0 ||
-            Fx.inbox(yval - cd0.y0, yval - (cd0.y0 - cd0.h * trace.dy), 0) > 0) {
+            Fx.inbox(yval - cd0.y0, yval - (cd0.y0 + cd0.h * trace.dy), 0) > 0) {
         return;
     }
 
@@ -27,7 +27,7 @@ module.exports = function hoverPoints(pointData, xval, yval) {
     var nx = Math.floor((xval - cd0.x0) / trace.dx);
     var ny = Math.floor(Math.abs(yval - cd0.y0) / trace.dy);
 
-    var py = ya.c2p(cd0.y0 - (ny + 0.5) * trace.dy);
+    var py = ya.c2p(cd0.y0 + (ny + 0.5) * trace.dy);
     return [Lib.extendFlat(pointData, {
         index: [ny, nx],
         x0: xa.c2p(cd0.x0 + nx * trace.dx),

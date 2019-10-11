@@ -22,7 +22,7 @@ module.exports = function calc(gd, trace) {
     var w = trace.z[0].length;
 
     trace._extremes[xa._id] = Axes.findExtremes(xa, [x0, x0 + w * trace.dx]);
-    trace._extremes[ya._id] = Axes.findExtremes(ya, [y0, y0 - h * trace.dy]);
+    trace._extremes[ya._id] = Axes.findExtremes(ya, [y0, y0 + h * trace.dy]);
 
     var cd0 = {
         x0: x0,

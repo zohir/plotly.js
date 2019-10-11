@@ -13,8 +13,8 @@
     "width": 600, "height": 600,
     "margin": {"t": 35, "l": 35, "b": 35, "r": 35},
     "xaxis2": {"autorange": "reversed"},
-    "yaxis3": {"autorange": "reversed"},
-    "yaxis4": {"autorange": "reversed"},
+    "yaxis3": {"autorange": true},
+    "yaxis4": {"autorange": true},
     "xaxis4": {"autorange": "reversed"}
   }
 }
