@@ -17,7 +17,7 @@ module.exports = function calc(gd, trace) {
     var ya = Axes.getFromId(gd, trace.yaxis || 'y');
 
     var x0 = trace.x0 - trace.dx / 2;
-    var y0 = trace.y0 + trace.dy / 2;
+    var y0 = trace.y0 - trace.dy / 2;
     var h = trace.z.length;
     var w = trace.z[0].length;
 
