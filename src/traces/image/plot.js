@@ -12,7 +12,44 @@ var Lib = require('../../lib');
 var xmlnsNamespaces = require('../../constants/xmlns_namespaces');
 var constants = require('./constants');
 
-module.exports = function(gd, plotinfo, cdimage, imageLayer) {
+module.exports = {};
+module.exports.scaler = function(trace) {
+    var colormodel = trace.colormodel;
+    var n = colormodel.length;
+    var cr = constants.colormodel[colormodel];
+
+    function scale(zero, factor, min, max) {
+        return function(c) {
+            c = (c - zero) * factor;
+            c = Lib.constrain(c, min, max);
+            return c;
+        };
+    }
+
+    var s = [];
+    for(var k = 0; k < n; k++) {
+        if(cr.min[k] !== trace.zmin[k] || cr.max[k] !== trace.zmax[k]) {
+            s.push(scale(
+                trace.zmin[k],
+                (cr.max[k] - cr.min[k]) / (trace.zmax[k] - trace.zmin[k]),
+                cr.min[k],
+                cr.max[k]
+            ));
+        } else {
+            s.push(false);
+        }
+    }
+
+    return function(pixel) {
+        var c = pixel.slice();
+        for(var k = 0; k < n; k++) {
+            if(!s[k]) continue;
+            c[k] = s[k](c[k]);
+        }
+        return c;
+    };
+};
+module.exports.plot = function(gd, plotinfo, cdimage, imageLayer) {
     var xa = plotinfo.xaxis;
     var ya = plotinfo.yaxis;
 
@@ -22,7 +59,6 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         var trace = cd0.trace;
 
         var z = cd0.z;
-        var tupleLength = trace.colormodel.length;
         var x0 = cd0.x0;
         var y0 = cd0.y0;
         var w = cd0.w;
@@ -72,27 +108,14 @@ module.exports = function(gd, plotinfo, cdimage, imageLayer) {
         var ipx = function(i) {return Lib.constrain(Math.round(xa.c2p(x0 + i * dx) - left), 0, imageWidth);};
         var jpx = function(j) {return Lib.constrain(Math.round(ya.c2p(y0 + j * dy) - top), 0, imageHeight);};
 
-        // Check which channel needs to be scaled
-        var cr = constants.colormodel[trace.colormodel];
-        var scale = [];
-        var k;
-        for(k = 0; k < tupleLength; k++) {
-            if(cr.min[k] !== trace.zmin[k] || cr.max[k] !== trace.zmax[k]) {
-                scale.push([k, (cr.max[k] - cr.min[k]) / (trace.zmax[k] - trace.zmin[k])]);
-            }
-        }
-
+        trace._scaler = module.exports.scaler(trace);
+        var strfmt = constants.colormodel[trace.colormodel].fmt;
         // TODO: for performance, when image size is reduced, only loop over pixels of interest
-        var c = []; var ch;
+        var c;
         for(var i = 0; i < cd0.w; i++) {
             for(var j = 0; j < cd0.h; j++) {
-                c = z[j][i];
-                for(k = 0; k < scale.length; k++) {
-                    ch = scale[k][0];
-                    c[ch] = (c[ch] - trace.zmin[ch]) * scale[k][1];
-                    c[ch] = Lib.constrain(c[ch], cr.min[k], cr.max[k]);
-                }
-                context.fillStyle = trace.colormodel + '(' + cr.fmt(c).join(',') + ')';
+                c = trace._scaler(z[j][i]);
+                context.fillStyle = trace.colormodel + '(' + strfmt(c).join(',') + ')';
                 context.fillRect(ipx(i), jpx(j), ipx(i + 1) - ipx(i), jpx(j + 1) - jpx(j));
             }
         }

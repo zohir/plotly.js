@@ -287,7 +287,7 @@ describe('image hover', function() {
             .then(function() {_hover(205, 125);})
             .then(function() {
                 assertHoverLabelContent({
-                    nums: '<tspan style="text-transform:uppercase">rgb</tspan>: [54, 136, 153]',
+                    nums: 'z: [54, 136, 153]\n<tspan style="text-transform:uppercase">rgb</tspan>: [54, 136, 153]',
                     name: 'trace 0'
                 });
             })
@@ -301,7 +301,7 @@ describe('image hover', function() {
             .then(function() {_hover(255, 295);})
             .then(function() {
                 assertHoverLabelContent({
-                    nums: '<tspan style="text-transform:uppercase">rgba</tspan>: [128, 77, 54, 254]',
+                    nums: '[128, 77, 54, 254]\n<tspan style="text-transform:uppercase">rgba</tspan>: [128, 77, 54, 254]',
                     name: 'trace 0'
                 });
             })

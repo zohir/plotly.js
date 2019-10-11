@@ -27,6 +27,11 @@ module.exports = function supplyDefaults(traceIn, traceOut) {
     coerce('zmin', constants.colormodel[traceOut.colormodel].min);
     coerce('zmax', constants.colormodel[traceOut.colormodel].max);
     var dims = traceOut.colormodel.length;
-    var dfltHovertemplate = '<span style="text-transform:uppercase">%{colormodel}</span>: [%{z[0]}, %{z[1]}, %{z[2]}' + (dims === 4 ? ', %{z[3]}' : '') + ']';
+    var dfltHovertemplate;
+    if(traceOut.colormodel === 'hsl' || traceOut.colormodel === 'hsla') {
+        dfltHovertemplate = 'z: [%{z[0]}, %{z[1]}, %{z[2]}' + (dims === 4 ? ', %{z[3]}' : '') + ']' + '<br><span style="text-transform:uppercase">%{colormodel}</span>: [%{c[0]}°, %{c[1]}%, %{c[2]}%' + (dims === 4 ? ', %{c[3]}' : '') + ']';
+    } else {
+        dfltHovertemplate = 'z: [%{z[0]}, %{z[1]}, %{z[2]}' + (dims === 4 ? ', %{z[3]}' : '') + ']' + '<br><span style="text-transform:uppercase">%{colormodel}</span>: [%{c[0]}, %{c[1]}, %{c[2]}' + (dims === 4 ? ', %{c[3]}' : '') + ']';
+    }
     coerce('hovertemplate', dfltHovertemplate);
 };
