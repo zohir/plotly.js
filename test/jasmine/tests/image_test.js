@@ -301,7 +301,7 @@ describe('image hover', function() {
             .then(function() {_hover(255, 295);})
             .then(function() {
                 assertHoverLabelContent({
-                    nums: '[128, 77, 54, 254]\n<tspan style="text-transform:uppercase">rgba</tspan>: [128, 77, 54, 254]',
+                    nums: 'z: [128, 77, 54, 254]\n<tspan style="text-transform:uppercase">rgba</tspan>: [128, 77, 54, 254]',
                     name: 'trace 0'
                 });
             })
