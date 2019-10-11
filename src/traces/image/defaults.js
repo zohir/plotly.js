@@ -24,8 +24,8 @@ module.exports = function supplyDefaults(traceIn, traceOut) {
     coerce('z');
     coerce('colormodel');
 
-    coerce('zmin', constants.colormodel[traceOut.colormodel][0]);
-    coerce('zmax', constants.colormodel[traceOut.colormodel][1]);
+    coerce('zmin', constants.colormodel[traceOut.colormodel].min);
+    coerce('zmax', constants.colormodel[traceOut.colormodel].max);
     var dims = traceOut.colormodel.length;
     var dfltHovertemplate = '<span style="text-transform:uppercase">%{colormodel}</span>: [%{z[0]}, %{z[1]}, %{z[2]}' + (dims === 4 ? ', %{z[3]}' : '') + ']';
     coerce('hovertemplate', dfltHovertemplate);
