@@ -12,7 +12,6 @@ var failTest = require('../assets/fail_test');
 var customAssertions = require('../assets/custom_assertions');
 var assertHoverLabelContent = customAssertions.assertHoverLabelContent;
 var Fx = require('@src/components/fx');
-// var mouseEvent = require('../assets/mouse_event');
 
 describe('image supplyDefaults', function() {
     'use strict';
@@ -79,34 +78,6 @@ describe('image supplyDefaults', function() {
         });
     });
 });
-//
-// describe('image calc', function() {
-//     'use strict';
-//
-//     function _calc(opts, layout) {
-//         var base = { type: 'image' };
-//         var trace = Lib.extendFlat({}, base, opts);
-//         var gd = { data: [trace] };
-//         if(layout) gd.layout = layout;
-//
-//         supplyAllDefaults(gd);
-//         var fullTrace = gd._fullData[0];
-//         var fullLayout = gd._fullLayout;
-//
-//         fullTrace._extremes = {};
-//
-//         // we used to call ax.setScale during supplyDefaults, and this had a
-//         // fallback to provide _categories and _categoriesMap. Now neither of
-//         // those is true... anyway the right way to do this though is
-//         // ax.clearCalc.
-//         fullLayout.xaxis.clearCalc();
-//         fullLayout.yaxis.clearCalc();
-//
-//         var out = Image.calc(gd, fullTrace)[0];
-//
-//         return out;
-//     }
-// });
 
 describe('image plot', function() {
     'use strict';
@@ -364,136 +335,3 @@ describe('image hover:', function() {
         });
     });
 });
-
-// describe('image hover/click event data:', function() {
-//     var gd;
-//     var mock = require('@mocks/image_adventurer.json');
-//
-//     beforeEach(function() {
-//         gd = createGraphDiv();
-//     });
-//
-//     afterEach(destroyGraphDiv);
-//
-//     function _makeWrapper(eventType, mouseFn) {
-//         var posByElementType = {
-//             node: [404, 302],
-//             link: [450, 300]
-//         };
-//
-//         return function(elType) {
-//             return new Promise(function(resolve, reject) {
-//                 gd.once(eventType, function(d) {
-//                     Lib.clearThrottle();
-//                     resolve(d);
-//                 });
-//
-//                 mouseFn(posByElementType[elType]);
-//                 setTimeout(function() {
-//                     reject(eventType + ' did not get called!');
-//                 }, 100);
-//             });
-//         };
-//     }
-//
-//     var _hover = _makeWrapper('plotly_hover', function(pos) {
-//         mouseEvent('mouseover', pos[0], pos[1]);
-//     });
-//
-//     var _click = _makeWrapper('plotly_click', function(pos) {
-//         mouseEvent('click', pos[0], pos[1]);
-//     });
-//
-//     var _unhover = _makeWrapper('plotly_unhover', function(pos) {
-//         mouseEvent('mouseover', pos[0], pos[1]);
-//         mouseEvent('mouseout', pos[0], pos[1]);
-//     });
-//
-//     function _assert(d, expectedPtData) {
-//         expect(d.event).toBeDefined('original event reference');
-//
-//         var ptData = d.points[0];
-//         Object.keys(expectedPtData).forEach(function(k) {
-//             expect(ptData[k]).toBe(expectedPtData[k], 'point data for ' + k);
-//         });
-//     }
-//
-//     it('should output correct click event data', function(done) {
-//         var fig = Lib.extendDeep({}, mock);
-//
-//         Plotly.plot(gd, fig)
-//         .then(function() { return _click('node'); })
-//         .then(function(d) {
-//             _assert(d, {
-//                 curveNumber: 0,
-//                 pointNumber: 4,
-//                 label: 'Solid'
-//             });
-//         })
-//         .catch(failTest)
-//         .then(done);
-//     });
-//
-//     it('should output correct hover/unhover event data', function(done) {
-//         var fig = Lib.extendDeep({}, mock);
-//
-//         Plotly.plot(gd, fig)
-//         .then(function() { return Plotly.restyle(gd, 'hoverinfo', 'none'); })
-//         .then(function() { return _hover('node'); })
-//         .then(function(d) {
-//             _assert(d, {
-//                 curveNumber: 0,
-//                 pointNumber: 4,
-//                 label: 'Solid',
-//                 value: 447.48
-//             });
-//             var pt = d.points[0];
-//             expect(pt.sourceLinks.length).toBe(3);
-//             expect(pt.targetLinks.length).toBe(4);
-//         })
-//         .then(function() { return _unhover('node'); })
-//         .then(function(d) {
-//             _assert(d, {
-//                 curveNumber: 0,
-//                 pointNumber: 4,
-//                 label: 'Solid'
-//             });
-//         })
-//         .catch(failTest)
-//         .then(done);
-//     });
-//
-//     function assertNoHoverEvents(type) {
-//         return function() {
-//             return Promise.resolve()
-//             .then(function() { return _hover(type); })
-//             .then(failTest).catch(function(err) {
-//                 expect(err).toBe('plotly_hover did not get called!');
-//             })
-//             .then(function() { return _unhover(type); })
-//             .then(failTest).catch(function(err) {
-//                 expect(err).toBe('plotly_unhover did not get called!');
-//             });
-//         };
-//     }
-//
-//     it('should not output hover/unhover event data when hovermode is false', function(done) {
-//         var fig = Lib.extendDeep({}, mock);
-//
-//         Plotly.plot(gd, fig)
-//         .then(function() { return Plotly.relayout(gd, 'hovermode', false); })
-//         .then(assertNoHoverEvents('node'))
-//         .catch(failTest)
-//         .then(done);
-//     });
-//
-//     it('should not output hover/unhover event data when trace hoverinfo is skip', function(done) {
-//         var fig = Lib.extendDeep({}, mock);
-//
-//         Plotly.plot(gd, fig)
-//         .then(function() { return Plotly.restyle(gd, 'hoverinfo', 'skip'); })
-//         .then(assertNoHoverEvents('node'))
-//         .catch(failTest)
-//         .then(done);
-//     });
-// });
