@@ -28,6 +28,10 @@ module.exports.scaler = function(trace) {
         };
     }
 
+    function constrain(min, max) {
+        return function(c) { return Lib.constrain(c, min, max);};
+    }
+
     var s = [];
     // Loop over all color components
     for(var k = 0; k < n; k++) {
@@ -39,14 +43,13 @@ module.exports.scaler = function(trace) {
                 cr.max[k]
             ));
         } else {
-            s.push(false);
+            s.push(constrain(cr.min[k], cr.max[k]));
         }
     }
 
     return function(pixel) {
         var c = pixel.slice();
         for(var k = 0; k < n; k++) {
-            if(!s[k]) continue; // no rescale necessary for this component
             c[k] = s[k](c[k]);
         }
         return c;

@@ -12,6 +12,7 @@ var failTest = require('../assets/fail_test');
 var customAssertions = require('../assets/custom_assertions');
 var assertHoverLabelContent = customAssertions.assertHoverLabelContent;
 var Fx = require('@src/components/fx');
+var mouseEvent = require('../assets/mouse_event');
 
 describe('image supplyDefaults', function() {
     'use strict';
@@ -54,6 +55,28 @@ describe('image supplyDefaults', function() {
         };
         traceOut = Plots.supplyTraceDefaults(traceIn, {type: 'image'}, 0, layout);
         expect(traceOut.visible).toBe(true);
+    });
+
+    it('should set proper zmin/zmax depending on colormodel', function() {
+        var tests = [
+          ['rgb', [0, 0, 0], [255, 255, 255]],
+          ['rgba', [0, 0, 0, 0], [255, 255, 255, 1]],
+          ['hsl', [0, 0, 0], [360, 100, 100]],
+          ['hsla', [0, 0, 0, 0], [360, 100, 100, 1]]
+        ];
+
+        expect(tests.map(function(t) {return t[0];})).toEqual(Image.attributes.colormodel.values, 'zmin/zmax test coverage');
+
+        tests.forEach(function(test) {
+            traceIn = {
+                z: [[[1, 1, 1, 1]]],
+                colormodel: test[0]
+            };
+            supplyDefaults(traceIn, traceOut);
+            expect(traceOut.zmin).toEqual(test[1], 'default zmin for ' + test[0]);
+            expect(traceOut.zmax).toEqual(test[2], 'default zmax for ' + test[0]);
+            supplyDefaults(traceIn, traceOut);
+        });
     });
 });
 //
@@ -218,7 +241,7 @@ describe('image plot', function() {
     });
 });
 
-describe('image hover', function() {
+describe('image hover:', function() {
     'use strict';
 
     var gd;
@@ -302,7 +325,37 @@ describe('image hover', function() {
             .then(function() {_hover(255, 295);})
             .then(function() {
                 assertHoverLabelContent({
-                    nums: 'z: [128, 77, 54, 254]\n<tspan style="text-transform:uppercase">rgba</tspan>: [128, 77, 54, 254]',
+                    nums: 'z: [128, 77, 54, 254]\n<tspan style="text-transform:uppercase">rgba</tspan>: [128, 77, 54, 1]',
+                    name: 'trace 0'
+                });
+            })
+            .catch(failTest)
+            .then(done);
+        });
+
+        it('should display HSL channel values', function(done) {
+            var mockCopy = Lib.extendDeep({}, mock);
+            mockCopy.data[0].colormodel = 'hsl';
+            Plotly.newPlot(gd, mockCopy)
+            .then(function() {_hover(255, 295);})
+            .then(function() {
+                assertHoverLabelContent({
+                    nums: 'z: [128, 77, 54]\n<tspan style="text-transform:uppercase">hsl</tspan>: [128°, 77%, 54%]',
+                    name: 'trace 0'
+                });
+            })
+            .catch(failTest)
+            .then(done);
+        });
+
+        it('should display HSLA channel values', function(done) {
+            var mockCopy = Lib.extendDeep({}, mock);
+            mockCopy.data[0].colormodel = 'hsla';
+            Plotly.newPlot(gd, mockCopy)
+            .then(function() {_hover(255, 295);})
+            .then(function() {
+                assertHoverLabelContent({
+                    nums: 'z: [128, 77, 54, 254]\n<tspan style="text-transform:uppercase">hsla</tspan>: [128°, 77%, 54%, 1]',
                     name: 'trace 0'
                 });
             })
@@ -311,3 +364,136 @@ describe('image hover', function() {
         });
     });
 });
+
+// describe('image hover/click event data:', function() {
+//     var gd;
+//     var mock = require('@mocks/image_adventurer.json');
+//
+//     beforeEach(function() {
+//         gd = createGraphDiv();
+//     });
+//
+//     afterEach(destroyGraphDiv);
+//
+//     function _makeWrapper(eventType, mouseFn) {
+//         var posByElementType = {
+//             node: [404, 302],
+//             link: [450, 300]
+//         };
+//
+//         return function(elType) {
+//             return new Promise(function(resolve, reject) {
+//                 gd.once(eventType, function(d) {
+//                     Lib.clearThrottle();
+//                     resolve(d);
+//                 });
+//
+//                 mouseFn(posByElementType[elType]);
+//                 setTimeout(function() {
+//                     reject(eventType + ' did not get called!');
+//                 }, 100);
+//             });
+//         };
+//     }
+//
+//     var _hover = _makeWrapper('plotly_hover', function(pos) {
+//         mouseEvent('mouseover', pos[0], pos[1]);
+//     });
+//
+//     var _click = _makeWrapper('plotly_click', function(pos) {
+//         mouseEvent('click', pos[0], pos[1]);
+//     });
+//
+//     var _unhover = _makeWrapper('plotly_unhover', function(pos) {
+//         mouseEvent('mouseover', pos[0], pos[1]);
+//         mouseEvent('mouseout', pos[0], pos[1]);
+//     });
+//
+//     function _assert(d, expectedPtData) {
+//         expect(d.event).toBeDefined('original event reference');
+//
+//         var ptData = d.points[0];
+//         Object.keys(expectedPtData).forEach(function(k) {
+//             expect(ptData[k]).toBe(expectedPtData[k], 'point data for ' + k);
+//         });
+//     }
+//
+//     it('should output correct click event data', function(done) {
+//         var fig = Lib.extendDeep({}, mock);
+//
+//         Plotly.plot(gd, fig)
+//         .then(function() { return _click('node'); })
+//         .then(function(d) {
+//             _assert(d, {
+//                 curveNumber: 0,
+//                 pointNumber: 4,
+//                 label: 'Solid'
+//             });
+//         })
+//         .catch(failTest)
+//         .then(done);
+//     });
+//
+//     it('should output correct hover/unhover event data', function(done) {
+//         var fig = Lib.extendDeep({}, mock);
+//
+//         Plotly.plot(gd, fig)
+//         .then(function() { return Plotly.restyle(gd, 'hoverinfo', 'none'); })
+//         .then(function() { return _hover('node'); })
+//         .then(function(d) {
+//             _assert(d, {
+//                 curveNumber: 0,
+//                 pointNumber: 4,
+//                 label: 'Solid',
+//                 value: 447.48
+//             });
+//             var pt = d.points[0];
+//             expect(pt.sourceLinks.length).toBe(3);
+//             expect(pt.targetLinks.length).toBe(4);
+//         })
+//         .then(function() { return _unhover('node'); })
+//         .then(function(d) {
+//             _assert(d, {
+//                 curveNumber: 0,
+//                 pointNumber: 4,
+//                 label: 'Solid'
+//             });
+//         })
+//         .catch(failTest)
+//         .then(done);
+//     });
+//
+//     function assertNoHoverEvents(type) {
+//         return function() {
+//             return Promise.resolve()
+//             .then(function() { return _hover(type); })
+//             .then(failTest).catch(function(err) {
+//                 expect(err).toBe('plotly_hover did not get called!');
+//             })
+//             .then(function() { return _unhover(type); })
+//             .then(failTest).catch(function(err) {
+//                 expect(err).toBe('plotly_unhover did not get called!');
+//             });
+//         };
+//     }
+//
+//     it('should not output hover/unhover event data when hovermode is false', function(done) {
+//         var fig = Lib.extendDeep({}, mock);
+//
+//         Plotly.plot(gd, fig)
+//         .then(function() { return Plotly.relayout(gd, 'hovermode', false); })
+//         .then(assertNoHoverEvents('node'))
+//         .catch(failTest)
+//         .then(done);
+//     });
+//
+//     it('should not output hover/unhover event data when trace hoverinfo is skip', function(done) {
+//         var fig = Lib.extendDeep({}, mock);
+//
+//         Plotly.plot(gd, fig)
+//         .then(function() { return Plotly.restyle(gd, 'hoverinfo', 'skip'); })
+//         .then(assertNoHoverEvents('node'))
+//         .catch(failTest)
+//         .then(done);
+//     });
+// });
