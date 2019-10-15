@@ -13,6 +13,8 @@ var xmlnsNamespaces = require('../../constants/xmlns_namespaces');
 var constants = require('./constants');
 
 module.exports = {};
+
+// Generate a function to scale color components according to zmin/zmax and the colormodel
 module.exports.scaler = function(trace) {
     var colormodel = trace.colormodel;
     var n = colormodel.length;
@@ -27,6 +29,7 @@ module.exports.scaler = function(trace) {
     }
 
     var s = [];
+    // Loop over all color components
     for(var k = 0; k < n; k++) {
         if(cr.min[k] !== trace.zmin[k] || cr.max[k] !== trace.zmax[k]) {
             s.push(scale(
@@ -43,7 +46,7 @@ module.exports.scaler = function(trace) {
     return function(pixel) {
         var c = pixel.slice();
         for(var k = 0; k < n; k++) {
-            if(!s[k]) continue;
+            if(!s[k]) continue; // no rescale necessary for this component
             c[k] = s[k](c[k]);
         }
         return c;

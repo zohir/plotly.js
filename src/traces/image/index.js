@@ -24,6 +24,7 @@ module.exports = {
     animatable: false,
     meta: {
         description: [
+            'Display an image, i.e. data on a 2D regular raster.'
         ].join(' ')
     }
 };

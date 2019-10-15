@@ -16,47 +16,9 @@ module.exports = extendFlat({
         valType: 'data_array',
         role: 'info',
         editType: 'calc',
-        description: 'A 2-dimensional array where each element is a color represented by 3 or 4 numbers in an array.'
-    },
-    zmin: {
-        valType: 'data_array',
-        role: 'info',
-        editType: 'calc',
-        description: 'Lower bound of colors in z' // TODO
-    },
-    zmax: {
-        valType: 'data_array',
-        role: 'info',
-        editType: 'calc',
-        description: 'Higher bound of colors in z' // TODO
-    },
-    x0: {
-        valType: 'number',
-        dflt: 0,
-        role: 'info',
-        editType: 'plot',
-        description: 'Set the image\'s x position'
-    },
-    y0: {
-        valType: 'number',
-        dflt: 0,
-        role: 'info',
-        editType: 'plot',
-        description: 'Set the image\'s y position'
-    },
-    dx: {
-        valType: 'number',
-        dflt: 1,
-        role: 'info',
-        editType: 'plot',
-        description: 'Set the pixel\'s horizontal size'
-    },
-    dy: {
-        valType: 'number',
-        dflt: 1,
-        role: 'info',
-        editType: 'plot',
-        description: 'Set the pixel\'s vertical size'
+        description: [
+            'A 2-dimensional array in which each element is an array of 3 or 4 numbers representing a color.',
+        ].join(' ')
     },
     colormodel: {
         valType: 'enumerated',
@@ -64,7 +26,53 @@ module.exports = extendFlat({
         dflt: 'rgb',
         role: 'info',
         editType: 'calc',
-        description: 'Color model'
+        description: 'Color model used to map the numerical color components described in `z` into colors.'
+    },
+    zmin: {
+        valType: 'data_array',
+        role: 'info',
+        editType: 'calc',
+        description: [
+            'Array defining the lower bound for each color component.',
+            'For example, for the `rgba` colormodel, the default value is [0, 0, 0, 0].'
+        ].join(' ')
+    },
+    zmax: {
+        valType: 'data_array',
+        role: 'info',
+        editType: 'calc',
+        description: [
+            'Array defining the higher bound for each color component.',
+            'For example, for the `rgba` colormodel, the default value is [255, 255, 255, 1].'
+        ].join(' ')
+    },
+    x0: {
+        valType: 'number',
+        dflt: 0,
+        role: 'info',
+        editType: 'plot',
+        description: 'Set the image\'s x position.'
+    },
+    y0: {
+        valType: 'number',
+        dflt: 0,
+        role: 'info',
+        editType: 'plot',
+        description: 'Set the image\'s y position.'
+    },
+    dx: {
+        valType: 'number',
+        dflt: 1,
+        role: 'info',
+        editType: 'plot',
+        description: 'Set the pixel\'s horizontal size.'
+    },
+    dy: {
+        valType: 'number',
+        dflt: 1,
+        role: 'info',
+        editType: 'plot',
+        description: 'Set the pixel\'s vertical size'
     },
     hovertemplate: hovertemplateAttrs({})
 });
