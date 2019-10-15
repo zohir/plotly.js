@@ -143,20 +143,3 @@ module.exports.plot = function(gd, plotinfo, cdimage, imageLayer) {
         });
     });
 };
-
-// var canvas = document.createElement('canvas');
-// canvas.width = cd0.w;
-// canvas.height = cd0.h;
-// var context = canvas.getContext('2d');
-// for(var i = 0; i < cd0.w; i++) {
-//     for(var j = 0; j < cd0.h; j++) {
-//         context.fillStyle = trace.colormodel + '(' + z[j][i].slice(0, tupleLength).join(',') + ')';
-//         context.fillRect(i, j, 1, 1);
-//     }
-// }
-//
-// TODO: support additional smoothing options
-// https://developer.mozilla.org/en-US/docs/Web/CSS/image-rendering
-// http://phrogz.net/tmp/canvas_image_zoom.html
-// image3
- // .attr('style', 'image-rendering: optimizeSpeed; image-rendering: -o-crisp-edges; image-rendering: -webkit-optimize-contrast; image-rendering: optimize-contrast; image-rendering: crisp-edges; image-rendering: pixelated;');
