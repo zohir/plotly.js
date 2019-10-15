@@ -12,7 +12,7 @@ var failTest = require('../assets/fail_test');
 var customAssertions = require('../assets/custom_assertions');
 var assertHoverLabelContent = customAssertions.assertHoverLabelContent;
 var Fx = require('@src/components/fx');
-var mouseEvent = require('../assets/mouse_event');
+// var mouseEvent = require('../assets/mouse_event');
 
 describe('image supplyDefaults', function() {
     'use strict';
