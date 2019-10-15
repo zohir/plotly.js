@@ -1,4 +1,5 @@
 var Plotly = require('@lib/index');
+var Plots = require('@src/plots/plots');
 var Lib = require('@src/lib');
 
 var Image = require('@src/traces/image');
@@ -6,83 +7,55 @@ var Image = require('@src/traces/image');
 var d3 = require('d3');
 var createGraphDiv = require('../assets/create_graph_div');
 var destroyGraphDiv = require('../assets/destroy_graph_div');
-// var supplyAllDefaults = require('../assets/supply_defaults');
 var failTest = require('../assets/fail_test');
 
 var customAssertions = require('../assets/custom_assertions');
 var assertHoverLabelContent = customAssertions.assertHoverLabelContent;
 var Fx = require('@src/components/fx');
 
-// describe('image supplyDefaults', function() {
-//     'use strict';
-//
-//     var traceIn;
-//     var traceOut;
-//
-//     var layout = {
-//         _subplots: {cartesian: ['xy'], xaxis: ['x'], yaxis: ['y']}
-//     };
-//
-//     var supplyDefaults = Image.supplyDefaults;
-//
-//     beforeEach(function() {
-//         traceOut = {};
-//     });
-//
-//     it('should set visible to false when z is empty', function() {
-//         traceIn = {
-//             z: []
-//         };
-//         supplyDefaults(traceIn, traceOut);
-//         expect(traceOut.visible).toBe(false);
-//
-//         traceIn = {
-//             z: [[]]
-//         };
-//         supplyDefaults(traceIn, traceOut);
-//         expect(traceOut.visible).toBe(false);
-//
-//         traceIn = {
-//             z: [[], [], []]
-//         };
-//         supplyDefaults(traceIn, traceOut);
-//         expect(traceOut.visible).toBe(false);
-//
-//         traceIn = {
-//             type: 'image',
-//             z: [[[255, 0, 0]]]
-//         };
-//         traceOut = Plots.supplyTraceDefaults(traceIn, {type: 'image'}, 0, layout);
-//         expect(traceOut.visible).toBe(true);
-//     });
-//
-//     it('should set visible to false when z is non-numeric', function() {
-//         traceIn = {
-//             type: 'heatmap',
-//             z: [['a', 'b'], ['c', 'd']]
-//         };
-//         supplyDefaults(traceIn, traceOut, defaultColor, layout);
-//         expect(traceOut.visible).toBe(false);
-//     });
-//
-//     it('should set visible to false when z isn\'t column not a 2d array', function() {
-//         traceIn = {
-//             x: [1, 1, 1, 2, 2],
-//             y: [1, 2, 3, 1, 2],
-//             z: [1, ['this is considered a column'], 1, 2, 3]
-//         };
-//         supplyDefaults(traceIn, traceOut, defaultColor, layout);
-//         expect(traceOut.visible).not.toBe(false);
-//
-//         traceIn = {
-//             x: [1, 1, 1, 2, 2],
-//             y: [1, 2, 3, 1, 2],
-//             z: [[0], ['this is not considered a column'], 1, ['nor 2d']]
-//         };
-//         supplyDefaults(traceIn, traceOut, defaultColor, layout);
-//         expect(traceOut.visible).toBe(false);
-//     });
-// });
+describe('image supplyDefaults', function() {
+    'use strict';
+
+    var traceIn;
+    var traceOut;
+
+    var layout = {
+        _subplots: {cartesian: ['xy'], xaxis: ['x'], yaxis: ['y']}
+    };
+
+    var supplyDefaults = Image.supplyDefaults;
+
+    beforeEach(function() {
+        traceOut = {};
+    });
+
+    it('should set visible to false when z is empty', function() {
+        traceIn = {
+            z: []
+        };
+        supplyDefaults(traceIn, traceOut);
+        expect(traceOut.visible).toBe(false);
+
+        traceIn = {
+            z: [[]]
+        };
+        supplyDefaults(traceIn, traceOut);
+        expect(traceOut.visible).toBe(false);
+
+        traceIn = {
+            z: [[], [], []]
+        };
+        supplyDefaults(traceIn, traceOut);
+        expect(traceOut.visible).toBe(false);
+
+        traceIn = {
+            type: 'image',
+            z: [[[255, 0, 0]]]
+        };
+        traceOut = Plots.supplyTraceDefaults(traceIn, {type: 'image'}, 0, layout);
+        expect(traceOut.visible).toBe(true);
+    });
+});
 //
 // describe('image calc', function() {
 //     'use strict';
@@ -148,15 +121,15 @@ describe('image plot', function() {
         .then(done);
     });
 
+    function getImageURL() {
+        return d3.select('.im > image').attr('href');
+    }
+
     [['dx', 2, 4], ['dy', 2, 4], ['z[5][5]', [[0, 0, 0, 1]], [[255, 0, 0, 1]]]].forEach(function(test) {
         var attr = test[0];
         it('should be able to restyle ' + attr, function(done) {
             var mock = require('@mocks/image_adventurer.json');
             var mockCopy = Lib.extendDeep({}, mock);
-
-            function getImageURL() {
-                return d3.select('.im > image').attr('href');
-            }
 
             var imageURLs = [];
 
@@ -186,35 +159,63 @@ describe('image plot', function() {
         });
     });
 
-    // it('keeps the correct ordering after hide and show', function(done) {
-    //     function getIndices() {
-    //         var out = [];
-    //         d3.selectAll('.im image').each(function(d) { out.push(d.trace.index); });
-    //         return out;
-    //     }
-    //
-    //     Plotly.newPlot(gd, [{
-    //         type: 'heatmap',
-    //         z: [[1, 2], [3, 4]]
-    //     }, {
-    //         type: 'heatmap',
-    //         z: [[2, 1], [4, 3]],
-    //         contours: {coloring: 'lines'}
-    //     }])
-    //     .then(function() {
-    //         expect(getIndices()).toEqual([0, 1]);
-    //         return Plotly.restyle(gd, 'visible', false, [0]);
-    //     })
-    //     .then(function() {
-    //         expect(getIndices()).toEqual([1]);
-    //         return Plotly.restyle(gd, 'visible', true, [0]);
-    //     })
-    //     .then(function() {
-    //         expect(getIndices()).toEqual([0, 1]);
-    //     })
-    //     .catch(failTest)
-    //     .then(done);
-    // });
+    it('should rescale pixels according to zmin/zmax', function(done) {
+        var imageURLs = [];
+        Plotly.newPlot(gd, [{
+            type: 'image',
+            z: [[[255, 0, 0], [0, 255, 0], [0, 0, 255]]]
+        }]).then(function() {
+            imageURLs.push(getImageURL());
+
+            return Plotly.restyle(gd, {
+                z: [[[[1.5, 0, 0], [0, 1.5, 0], [0, 0, 1.5]]]],
+                zmin: [[0.5, 0.5, 0.5]],
+                zmax: [[1.5, 1.5, 1.5]],
+            });
+        }).then(function() {
+            imageURLs.push(getImageURL());
+            expect(imageURLs[1]).toEqual(imageURLs[0]);
+
+            return Plotly.restyle(gd, {
+                z: [[[[50, 0, 0], [0, 50, 0], [0, 0, 50]]]]
+            });
+        }).then(function() {
+            imageURLs.push(getImageURL());
+            expect(imageURLs[2]).toEqual(imageURLs[1]);
+        })
+        .catch(failTest)
+        .then(done);
+    });
+
+    it('keeps the correct ordering after hide and show', function(done) {
+        function getIndices() {
+            var out = [];
+            d3.selectAll('.im image').each(function(d) { out.push(d.trace.index); });
+            return out;
+        }
+
+        Plotly.newPlot(gd, [{
+            type: 'image',
+            z: [[[1, 2], [3, 4]]]
+        }, {
+            type: 'image',
+            z: [[[2, 1], [4, 3]]],
+            contours: {coloring: 'lines'}
+        }])
+        .then(function() {
+            expect(getIndices()).toEqual([0, 1]);
+            return Plotly.restyle(gd, 'visible', false, [0]);
+        })
+        .then(function() {
+            expect(getIndices()).toEqual([1]);
+            return Plotly.restyle(gd, 'visible', true, [0]);
+        })
+        .then(function() {
+            expect(getIndices()).toEqual([0, 1]);
+        })
+        .catch(failTest)
+        .then(done);
+    });
 });
 
 describe('image hover', function() {
