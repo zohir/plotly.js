@@ -25,13 +25,13 @@ module.exports = extendFlat({
         values: ['rgb', 'rgba', 'hsl', 'hsla'],
         dflt: 'rgb',
         role: 'info',
-        editType: 'calc',
+        editType: 'plot',
         description: 'Color model used to map the numerical color components described in `z` into colors.'
     },
     zmin: {
         valType: 'data_array',
         role: 'info',
-        editType: 'calc',
+        editType: 'plot',
         description: [
             'Array defining the lower bound for each color component.',
             'For example, for the `rgba` colormodel, the default value is [0, 0, 0, 0].'
@@ -40,7 +40,7 @@ module.exports = extendFlat({
     zmax: {
         valType: 'data_array',
         role: 'info',
-        editType: 'calc',
+        editType: 'plot',
         description: [
             'Array defining the higher bound for each color component.',
             'For example, for the `rgba` colormodel, the default value is [255, 255, 255, 1].'
@@ -50,28 +50,28 @@ module.exports = extendFlat({
         valType: 'number',
         dflt: 0,
         role: 'info',
-        editType: 'plot',
+        editType: 'calc',
         description: 'Set the image\'s x position.'
     },
     y0: {
         valType: 'number',
         dflt: 0,
         role: 'info',
-        editType: 'plot',
+        editType: 'calc',
         description: 'Set the image\'s y position.'
     },
     dx: {
         valType: 'number',
         dflt: 1,
         role: 'info',
-        editType: 'plot',
+        editType: 'calc',
         description: 'Set the pixel\'s horizontal size.'
     },
     dy: {
         valType: 'number',
         dflt: 1,
         role: 'info',
-        editType: 'plot',
+        editType: 'calc',
         description: 'Set the pixel\'s vertical size'
     },
     hovertemplate: hovertemplateAttrs({})

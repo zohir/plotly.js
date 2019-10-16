@@ -83,6 +83,7 @@ describe('image plot', function() {
     'use strict';
 
     var gd;
+    var sel = '.im > image';
 
     beforeEach(function() {
         gd = createGraphDiv();
@@ -95,7 +96,7 @@ describe('image plot', function() {
         var mockCopy = Lib.extendDeep({}, mock);
 
         function assertImageCnt(cnt) {
-            var images = d3.selectAll('.im image');
+            var images = d3.selectAll(sel);
 
             expect(images.size()).toEqual(cnt);
         }
@@ -116,66 +117,81 @@ describe('image plot', function() {
     });
 
     function getImageURL() {
-        return d3.select('.im > image').attr('href');
+        return d3.select(sel).attr('href');
     }
 
-    [['dx', 2, 4], ['dy', 2, 4], ['z[5][5]', [[0, 0, 0, 1]], [[255, 0, 0, 1]]]].forEach(function(test) {
+    [
+      ['colormodel', 'rgb', 'hsla'],
+      ['zmin', [[50, 50, 50, 0]], [[100, 100, 100, 0]]],
+      ['zmax', [[50, 50, 50, 1]], [[100, 100, 100, 1]]],
+      ['dx', 2, 4],
+      ['dy', 2, 4],
+      ['z[5][5]', [[0, 0, 0, 1]], [[255, 0, 0, 1]]]
+    ].forEach(function(test) {
         var attr = test[0];
         it('should be able to restyle ' + attr, function(done) {
             var mock = require('@mocks/image_adventurer.json');
             var mockCopy = Lib.extendDeep({}, mock);
-
+            mockCopy.layout = {
+                width: 400,
+                height: 400,
+                margin: {l: 50, b: 50, t: 0, r: 0},
+                xaxis: {range: [0, 50]},
+                yaxis: {range: [0, 40]}
+            };
             var imageURLs = [];
 
-            Plotly.plot(gd, mockCopy).then(function() {
+            Plotly.newPlot(gd, mockCopy).then(function() {
                 imageURLs.push(getImageURL());
 
                 return Plotly.restyle(gd, attr, test[1]);
             }).then(function() {
                 imageURLs.push(getImageURL());
 
-                expect(imageURLs[0]).not.toEqual(imageURLs[1]);
+                expect(imageURLs[0]).not.toEqual(imageURLs[1], 'image should restyle to step 1');
 
                 return Plotly.restyle(gd, attr, test[2]);
             }).then(function() {
                 imageURLs.push(getImageURL());
 
-                expect(imageURLs[1]).not.toEqual(imageURLs[2]);
+                expect(imageURLs[1]).not.toEqual(imageURLs[2], 'image should restyle to step 2');
 
                 return Plotly.restyle(gd, attr, test[1]);
             }).then(function() {
                 imageURLs.push(getImageURL());
 
-                expect(imageURLs[1]).toEqual(imageURLs[3]);
+                expect(imageURLs[1]).toEqual(imageURLs[3], 'image should restyle step 1');
             })
             .catch(failTest)
             .then(done);
         });
     });
 
-    it('should rescale pixels according to zmin/zmax', function(done) {
-        var imageURLs = [];
-        Plotly.newPlot(gd, [{
-            type: 'image',
-            z: [[[255, 0, 0], [0, 255, 0], [0, 0, 255]]]
-        }]).then(function() {
-            imageURLs.push(getImageURL());
+    it('should be able to restyle x0/y0', function(done) {
+        var mock = require('@mocks/image_cat.json');
+        var mockCopy = Lib.extendDeep({}, mock);
 
-            return Plotly.restyle(gd, {
-                z: [[[[1.5, 0, 0], [0, 1.5, 0], [0, 0, 1.5]]]],
-                zmin: [[0.5, 0.5, 0.5]],
-                zmax: [[1.5, 1.5, 1.5]],
-            });
-        }).then(function() {
-            imageURLs.push(getImageURL());
-            expect(imageURLs[1]).toEqual(imageURLs[0]);
+        var x = []; var y = [];
+        Plotly.newPlot(gd, mockCopy).then(function() {
+            x.push(d3.select(sel).attr('x'));
+            y.push(d3.select(sel).attr('y'));
 
-            return Plotly.restyle(gd, {
-                z: [[[[50, 0, 0], [0, 50, 0], [0, 0, 50]]]]
-            });
+            return Plotly.restyle(gd, {x0: 50, y0: 50});
         }).then(function() {
-            imageURLs.push(getImageURL());
-            expect(imageURLs[2]).toEqual(imageURLs[1]);
+            x.push(d3.select(sel).attr('x'));
+            y.push(d3.select(sel).attr('y'));
+            expect(x[1]).not.toEqual(x[0], 'image element should have a different x position');
+            expect(y[1]).not.toEqual(y[0], 'image element should have a different y position');
+
+            return Plotly.restyle(gd, {x0: 0, y0: 0});
+        }).then(function() {
+            x.push(d3.select(sel).attr('x'));
+            y.push(d3.select(sel).attr('y'));
+            expect(x[2]).not.toEqual(x[1], 'image element should have a different x position (step 2)');
+            expect(y[2]).not.toEqual(y[1], 'image element should have a different y position (step 2)');
+
+            expect(x[2]).toEqual(x[0]);
+            expect(y[2]).toEqual(y[0]);
         })
         .catch(failTest)
         .then(done);
