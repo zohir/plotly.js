@@ -116,10 +116,11 @@ module.exports.plot = function(gd, plotinfo, cdimage, imageLayer) {
 
         trace._scaler = module.exports.scaler(trace);
         var strfmt = constants.colormodel[trace.colormodel].fmt;
-        // TODO: for performance, when image size is reduced, only loop over pixels of interest
         var c;
         for(var i = 0; i < cd0.w; i++) {
+            if(ipx(i + 1) === ipx(i)) continue;
             for(var j = 0; j < cd0.h; j++) {
+                if(jpx(j + 1) === jpx(j)) continue;
                 c = trace._scaler(z[j][i]);
                 context.fillStyle = trace.colormodel + '(' + strfmt(c).join(',') + ')';
                 context.fillRect(ipx(i), jpx(j), ipx(i + 1) - ipx(i), jpx(j + 1) - jpx(j));
