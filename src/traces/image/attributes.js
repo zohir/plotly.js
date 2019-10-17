@@ -8,6 +8,7 @@
 
 'use strict';
 
+var plotAttrs = require('../../plots/attributes');
 var hovertemplateAttrs = require('../../plots/template_attributes').hovertemplateAttrs;
 var extendFlat = require('../../lib/extend').extendFlat;
 
@@ -74,5 +75,9 @@ module.exports = extendFlat({
         editType: 'calc',
         description: 'Set the pixel\'s vertical size'
     },
+    hoverinfo: extendFlat({}, plotAttrs.hoverinfo, {
+        flags: ['x', 'y', 'z', 'color'],
+        dflt: 'all'
+    }),
     hovertemplate: hovertemplateAttrs({})
 });

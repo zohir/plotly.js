@@ -32,11 +32,27 @@ module.exports = function supplyDefaults(traceIn, traceOut) {
     coerce('zmin', constants.colormodel[colormodel].min);
     coerce('zmax', constants.colormodel[colormodel].max);
     var dims = traceOut.colormodel.length;
-    var dfltHovertemplate;
-    if(colormodel === 'hsl' || colormodel === 'hsla') {
-        dfltHovertemplate = 'x: %{x}<br>y: %{y}<br>z: [%{z[0]}, %{z[1]}, %{z[2]}' + (dims === 4 ? ', %{z[3]}' : '') + ']' + '<br><span style="text-transform:uppercase">%{colormodel}</span>: [%{c[0]}°, %{c[1]}%, %{c[2]}%' + (dims === 4 ? ', %{c[3]}' : '') + ']';
-    } else {
-        dfltHovertemplate = 'x: %{x}<br>y: %{y}<br>z: [%{z[0]}, %{z[1]}, %{z[2]}' + (dims === 4 ? ', %{z[3]}' : '') + ']' + '<br><span style="text-transform:uppercase">%{colormodel}</span>: [%{c[0]}, %{c[1]}, %{c[2]}' + (dims === 4 ? ', %{c[3]}' : '') + ']';
+
+    var ht = coerce('hovertemplate');
+    if(!ht) {
+        var hoverinfo = coerce('hoverinfo');
+        var parts = hoverinfo.split('+');
+
+        if(parts.indexOf('all') !== -1) parts = attributes.hoverinfo.flags;
+        ht = [];
+        if(parts.indexOf('x') !== -1) ht.push('x: %{x}');
+        if(parts.indexOf('y') !== -1) ht.push('y: %{y}');
+        if(parts.indexOf('z') !== -1) ht.push('z: [%{z[0]}, %{z[1]}, %{z[2]}' + (dims === 4 ? ', %{z[3]}' : '') + ']');
+        if(parts.indexOf('color') !== -1) {
+            var colorstring = [];
+            colorstring.push('<span style="text-transform:uppercase">%{colormodel}</span>: ');
+            if(colormodel === 'hsl' || colormodel === 'hsla') {
+                colorstring.push('[%{c[0]}°, %{c[1]}%, %{c[2]}%' + (dims === 4 ? ', %{c[3]}' : '') + ']');
+            } else {
+                colorstring.push('[%{c[0]}, %{c[1]}, %{c[2]}' + (dims === 4 ? ', %{c[3]}' : '') + ']');
+            }
+            ht.push(colorstring.join(''));
+        }
+        traceOut.hovertemplate = ht.join('<br>');
     }
-    coerce('hovertemplate', dfltHovertemplate);
 };
