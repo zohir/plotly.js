@@ -10,10 +10,10 @@
 
 module.exports = function eventData(out, pt) {
     out.colormodel = pt.trace.colormodel;
-    var cd0 = pt.cd[0];
-    var trace = cd0.trace;
-    out.x = trace.x0 + trace.dx * pt.index[1];
-    out.y = trace.y0 + trace.dy * pt.index[0];
-    out.c = trace._scaler(cd0.z[pt.index[0]][pt.index[1]]);
+    if('xVal' in pt) out.x = pt.xVal;
+    if('yVal' in pt) out.y = pt.yVal;
+    if(pt.xa) out.xaxis = pt.xa;
+    if(pt.ya) out.yaxis = pt.ya;
+    out.c = pt.c;
     return out;
 };

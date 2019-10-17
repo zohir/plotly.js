@@ -349,5 +349,33 @@ describe('image hover:', function() {
             .catch(failTest)
             .then(done);
         });
+
+        [
+          ['x', '25.5'],
+          ['y', '14.5'],
+          ['z', '[54, 136, 153]'],
+          ['c', '[54, 136, 153]'],
+          ['c[0]', '54'],
+          ['c[0]', '54°', 'hsl'],
+          ['c[1]', '100%', 'hsl'],
+          ['c[2]', '100%', 'hsl'],
+          ['c[3]', '1', 'hsla'],
+        ].forEach(function(test) {
+            it('should support hovertemplate variable ' + test[0], function(done) {
+                var mockCopy = Lib.extendDeep({}, mock);
+                mockCopy.data[0].colormodel = test[2] || 'rgb';
+                mockCopy.data[0].hovertemplate = '%{' + test[0] + '}<extra></extra>';
+                Plotly.newPlot(gd, mockCopy)
+                .then(function() {_hover(205, 125);})
+                .then(function() {
+                    assertHoverLabelContent({
+                        nums: test[1],
+                        name: ''
+                    }, 'variable `' + test[0] + '` should be available!');
+                })
+                .catch(failTest)
+                .then(done);
+            });
+        });
     });
 });

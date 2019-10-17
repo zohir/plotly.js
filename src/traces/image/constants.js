@@ -11,19 +11,39 @@
 
 module.exports = {
     colormodel: {
-        rgb: {min: [0, 0, 0], max: [255, 255, 255], fmt: function(c) {return c.slice(0, 3);}},
-        rgba: {min: [0, 0, 0, 0], max: [255, 255, 255, 1], fmt: function(c) {return c.slice(0, 4);}},
-        hsl: {min: [0, 0, 0], max: [360, 100, 100], fmt: function(c) {
-            var p = c.slice(0, 3);
-            p[1] = p[1] + '%';
-            p[2] = p[2] + '%';
-            return p;
-        }},
-        hsla: {min: [0, 0, 0, 0], max: [360, 100, 100, 1], fmt: function(c) {
-            var p = c.slice(0, 4);
-            p[1] = p[1] + '%';
-            p[2] = p[2] + '%';
-            return p;
-        }}
+        rgb: {
+            min: [0, 0, 0],
+            max: [255, 255, 255],
+            fmt: function(c) {return c.slice(0, 3);},
+            suffix: ['', '', '']
+        },
+        rgba: {
+            min: [0, 0, 0, 0],
+            max: [255, 255, 255, 1],
+            fmt: function(c) {return c.slice(0, 4);},
+            suffix: ['', '', '', '']
+        },
+        hsl: {
+            min: [0, 0, 0],
+            max: [360, 100, 100],
+            fmt: function(c) {
+                var p = c.slice(0, 3);
+                p[1] = p[1] + '%';
+                p[2] = p[2] + '%';
+                return p;
+            },
+            suffix: ['°', '%', '%']
+        },
+        hsla: {
+            min: [0, 0, 0, 0],
+            max: [360, 100, 100, 1],
+            fmt: function(c) {
+                var p = c.slice(0, 4);
+                p[1] = p[1] + '%';
+                p[2] = p[2] + '%';
+                return p;
+            },
+            suffix: ['°', '%', '%', '']
+        }
     }
 };

@@ -115,14 +115,14 @@ module.exports.plot = function(gd, plotinfo, cdimage, imageLayer) {
         var jpx = function(j) {return Lib.constrain(Math.round(ya.c2p(y0 + j * dy) - top), 0, imageHeight);};
 
         trace._scaler = module.exports.scaler(trace);
-        var strfmt = constants.colormodel[trace.colormodel].fmt;
+        var fmt = constants.colormodel[trace.colormodel].fmt;
         var c;
         for(var i = 0; i < cd0.w; i++) {
             if(ipx(i + 1) === ipx(i)) continue;
             for(var j = 0; j < cd0.h; j++) {
                 if(jpx(j + 1) === jpx(j)) continue;
                 c = trace._scaler(z[j][i]);
-                context.fillStyle = trace.colormodel + '(' + strfmt(c).join(',') + ')';
+                context.fillStyle = trace.colormodel + '(' + fmt(c).join(',') + ')';
                 context.fillRect(ipx(i), jpx(j), ipx(i + 1) - ipx(i), jpx(j + 1) - jpx(j));
             }
         }
