@@ -30,14 +30,21 @@ module.exports = function hoverPoints(pointData, xval, yval) {
     var nx = Math.floor((xval - cd0.x0) / trace.dx);
     var ny = Math.floor(Math.abs(yval - cd0.y0) / trace.dy);
 
+    var hoverinfo = cd0.hi || trace.hoverinfo;
+    var fmtColor;
+    if(hoverinfo) {
+        var parts = hoverinfo.split('+');
+        if(parts.indexOf('all') !== -1) parts = ['color'];
+        if(parts.indexOf('color') !== -1) fmtColor = true;
+    }
+
     var colormodel = trace.colormodel;
     var dims = colormodel.length;
-    var hoverinfo = cd0.hi || trace.hoverinfo;
     var c = trace._scaler(cd0.z[ny][nx]);
     var s = constants.colormodel[colormodel].suffix;
 
     var colorstring = [];
-    if(trace.hovertemplate || hoverinfo && hoverinfo.split('+').indexOf('color') !== -1) {
+    if(trace.hovertemplate || fmtColor) {
         colorstring.push('[' + [c[0] + s[0], c[1] + s[1], c[2] + s[2]].join(', '));
         if(dims === 4) colorstring.push(', ' + c[3] + s[3]);
         colorstring.push(']');
