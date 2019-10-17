@@ -78,5 +78,7 @@ module.exports = extendFlat({
     hoverinfo: extendFlat({}, plotAttrs.hoverinfo, {
         flags: ['x', 'y', 'z', 'color', 'name']
     }),
-    hovertemplate: hovertemplateAttrs({})
+    hovertemplate: hovertemplateAttrs({}, {
+        keys: ['z', 'c', 'colormodel']
+    })
 });
