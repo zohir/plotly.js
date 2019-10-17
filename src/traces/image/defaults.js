@@ -34,9 +34,9 @@ module.exports = function supplyDefaults(traceIn, traceOut) {
     var dims = traceOut.colormodel.length;
     var dfltHovertemplate;
     if(colormodel === 'hsl' || colormodel === 'hsla') {
-        dfltHovertemplate = 'z: [%{z[0]}, %{z[1]}, %{z[2]}' + (dims === 4 ? ', %{z[3]}' : '') + ']' + '<br><span style="text-transform:uppercase">%{colormodel}</span>: [%{c[0]}°, %{c[1]}%, %{c[2]}%' + (dims === 4 ? ', %{c[3]}' : '') + ']';
+        dfltHovertemplate = 'x: %{x}<br>y: %{y}<br>z: [%{z[0]}, %{z[1]}, %{z[2]}' + (dims === 4 ? ', %{z[3]}' : '') + ']' + '<br><span style="text-transform:uppercase">%{colormodel}</span>: [%{c[0]}°, %{c[1]}%, %{c[2]}%' + (dims === 4 ? ', %{c[3]}' : '') + ']';
     } else {
-        dfltHovertemplate = 'z: [%{z[0]}, %{z[1]}, %{z[2]}' + (dims === 4 ? ', %{z[3]}' : '') + ']' + '<br><span style="text-transform:uppercase">%{colormodel}</span>: [%{c[0]}, %{c[1]}, %{c[2]}' + (dims === 4 ? ', %{c[3]}' : '') + ']';
+        dfltHovertemplate = 'x: %{x}<br>y: %{y}<br>z: [%{z[0]}, %{z[1]}, %{z[2]}' + (dims === 4 ? ', %{z[3]}' : '') + ']' + '<br><span style="text-transform:uppercase">%{colormodel}</span>: [%{c[0]}, %{c[1]}, %{c[2]}' + (dims === 4 ? ', %{c[3]}' : '') + ']';
     }
     coerce('hovertemplate', dfltHovertemplate);
 };
