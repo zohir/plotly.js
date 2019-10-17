@@ -76,8 +76,7 @@ module.exports = extendFlat({
         description: 'Set the pixel\'s vertical size'
     },
     hoverinfo: extendFlat({}, plotAttrs.hoverinfo, {
-        flags: ['x', 'y', 'z', 'color'],
-        dflt: 'all'
+        flags: ['x', 'y', 'z', 'color', 'name']
     }),
     hovertemplate: hovertemplateAttrs({})
 });

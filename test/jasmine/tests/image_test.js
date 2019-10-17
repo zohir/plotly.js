@@ -299,7 +299,7 @@ describe('image hover:', function() {
             .then(function() {
                 assertHoverLabelContent({
                     nums: 'x: 25.5\ny: 14.5\nz: [54, 136, 153]\n<tspan style="text-transform:uppercase">rgb</tspan>: [54, 136, 153]',
-                    name: 'trace 0'
+                    name: ''
                 });
             })
             .catch(failTest)
@@ -313,7 +313,7 @@ describe('image hover:', function() {
             .then(function() {
                 assertHoverLabelContent({
                     nums: 'x: 31.5\ny: 35.5\nz: [128, 77, 54, 254]\n<tspan style="text-transform:uppercase">rgba</tspan>: [128, 77, 54, 1]',
-                    name: 'trace 0'
+                    name: ''
                 });
             })
             .catch(failTest)
@@ -328,7 +328,7 @@ describe('image hover:', function() {
             .then(function() {
                 assertHoverLabelContent({
                     nums: 'x: 31.5\ny: 35.5\nz: [128, 77, 54]\n<tspan style="text-transform:uppercase">hsl</tspan>: [128°, 77%, 54%]',
-                    name: 'trace 0'
+                    name: ''
                 });
             })
             .catch(failTest)
@@ -343,7 +343,7 @@ describe('image hover:', function() {
             .then(function() {
                 assertHoverLabelContent({
                     nums: 'x: 31.5\ny: 35.5\nz: [128, 77, 54, 254]\n<tspan style="text-transform:uppercase">hsla</tspan>: [128°, 77%, 54%, 1]',
-                    name: 'trace 0'
+                    name: ''
                 });
             })
             .catch(failTest)

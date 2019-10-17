@@ -10,6 +10,7 @@
 
 var Fx = require('../../components/fx');
 var Lib = require('../../lib');
+var attributes = require('./attributes');
 // var Axes = require('../../plots/cartesian/axes');
 
 module.exports = function hoverPoints(pointData, xval, yval) {
@@ -18,9 +19,34 @@ module.exports = function hoverPoints(pointData, xval, yval) {
     var xa = pointData.xa;
     var ya = pointData.ya;
 
+    // Return early if not on image
     if(Fx.inbox(xval - cd0.x0, xval - (cd0.x0 + cd0.w * trace.dx), 0) > 0 ||
             Fx.inbox(yval - cd0.y0, yval - (cd0.y0 + cd0.h * trace.dy), 0) > 0) {
         return;
+    }
+    var ht;
+    if(!trace.hovertemplate) {
+        var colormodel = trace.colormodel;
+        var dims = colormodel.length;
+        var hoverinfo = cd0.hi || trace.hoverinfo;
+        var parts = hoverinfo.split('+');
+
+        ht = [];
+        if(parts.indexOf('all') !== -1) parts = attributes.hoverinfo.flags;
+        if(parts.indexOf('x') !== -1) ht.push('x: %{x}');
+        if(parts.indexOf('y') !== -1) ht.push('y: %{y}');
+        if(parts.indexOf('z') !== -1) ht.push('z: [%{z[0]}, %{z[1]}, %{z[2]}' + (dims === 4 ? ', %{z[3]}' : '') + ']');
+        if(parts.indexOf('color') !== -1) {
+            var colorstring = [];
+            colorstring.push('<span style="text-transform:uppercase">%{colormodel}</span>: ');
+            if(colormodel === 'hsl' || colormodel === 'hsla') {
+                colorstring.push('[%{c[0]}°, %{c[1]}%, %{c[2]}%' + (dims === 4 ? ', %{c[3]}' : '') + ']');
+            } else {
+                colorstring.push('[%{c[0]}, %{c[1]}, %{c[2]}' + (dims === 4 ? ', %{c[3]}' : '') + ']');
+            }
+            ht.push(colorstring.join(''));
+        }
+        ht = ht.join('<br>');
     }
 
     // Find nearest pixel's index and pixel center
@@ -34,5 +60,6 @@ module.exports = function hoverPoints(pointData, xval, yval) {
         x1: xa.c2p(cd0.x0 + (nx + 1) * trace.dx),
         y0: py,
         y1: py,
+        hovertemplate: ht
     })];
 };

@@ -630,7 +630,7 @@ function _hover(gd, evt, subplot, noHoverEvent) {
             if(pt.cd[pt.index] && pt.cd[pt.index].ht) {
                 ht = pt.cd[pt.index].ht;
             }
-            pt.hovertemplate = ht || pt.trace.hovertemplate || false;
+            pt.hovertemplate = ht || pt.trace.hovertemplate || pt.hovertemplate;
         }
 
         pt.eventData = [eventData];
