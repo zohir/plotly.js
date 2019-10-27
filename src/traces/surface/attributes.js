@@ -216,7 +216,7 @@ colorScaleAttrs('', {
             role: 'style',
             min: -1e5,
             max: 1e5,
-            dflt: 10,
+            dflt: 1e5,
             description: 'Numeric vector, representing the X coordinate for each vertex.'
         },
         y: {
@@ -224,7 +224,7 @@ colorScaleAttrs('', {
             role: 'style',
             min: -1e5,
             max: 1e5,
-            dflt: 1e4,
+            dflt: 1e5,
             description: 'Numeric vector, representing the Y coordinate for each vertex.'
         },
         z: {

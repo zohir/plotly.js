@@ -210,12 +210,7 @@ colorScaleAttrs('', {
         editType: 'calc'
     },
 
-    lightposition: {
-        x: extendFlat({}, surfaceAttrs.lightposition.x, {dflt: 1e5}),
-        y: extendFlat({}, surfaceAttrs.lightposition.y, {dflt: 1e5}),
-        z: extendFlat({}, surfaceAttrs.lightposition.z, {dflt: 0}),
-        editType: 'calc'
-    },
+    lightposition: surfaceAttrs.lightposition,
     lighting: extendFlat({
         vertexnormalsepsilon: {
             valType: 'number',
