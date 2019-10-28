@@ -191,7 +191,7 @@ colorScaleAttrs('', {
     flatshading: {
         valType: 'boolean',
         role: 'style',
-        dflt: false,
+        dflt: true,
         editType: 'calc',
         description: [
             'Determines whether or not normal smoothing is applied to the meshes,',
@@ -215,18 +215,18 @@ colorScaleAttrs('', {
         vertexnormalsepsilon: {
             valType: 'number',
             role: 'style',
-            min: 0.00,
+            min: 0,
             max: 1,
-            dflt: 1e-12, // otherwise finely tessellated things eg. the brain will have no specular light reflection
+            dflt: 0,
             editType: 'calc',
             description: 'Epsilon for vertex normals calculation avoids math issues arising from degenerate geometry.'
         },
         facenormalsepsilon: {
             valType: 'number',
             role: 'style',
-            min: 0.00,
+            min: 0,
             max: 1,
-            dflt: 1e-6, // even the brain model doesn't appear to need finer than this
+            dflt: 0,
             editType: 'calc',
             description: 'Epsilon for face normals calculation avoids math issues arising from degenerate geometry.'
         },

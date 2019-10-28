@@ -249,8 +249,5 @@ colorScaleAttrs('', {
     hoverinfo: extendFlat({}, baseAttrs.hoverinfo)
 }), 'calc', 'nested');
 
-// required defaults to speed up surface normal calculations
-attrs.flatshading.dflt = true; attrs.lighting.facenormalsepsilon.dflt = 0;
-
 attrs.x.editType = attrs.y.editType = attrs.z.editType = attrs.value.editType = 'calc+clearAxisTypes';
 attrs.transforms = undefined;
