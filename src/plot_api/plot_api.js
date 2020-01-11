@@ -403,6 +403,16 @@ function setPlotConfig(obj) {
     return Lib.extendFlat(dfltConfig, obj);
 }
 
+function updatePlotConfigOnly(config) {
+    if(config && config.hasOwnProperty('logging')) {
+        setPlotConfig(config.logging);
+    }
+
+    if(config && config.hasOwnProperty('notifyOnLogging')) {
+        setPlotConfig(config.notifyOnLogging);
+    }
+}
+
 function setBackground(gd, bgColor) {
     try {
         gd._fullLayout._paper.style('background', bgColor);
@@ -650,6 +660,9 @@ function newPlot(gd, data, layout, config) {
     Plots.cleanPlot([], {}, gd._fullData || [], gd._fullLayout || {});
 
     Plots.purge(gd);
+
+    updatePlotConfigOnly(config);
+
     return exports.plot(gd, data, layout, config);
 }
 
