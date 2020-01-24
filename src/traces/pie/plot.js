@@ -690,8 +690,14 @@ function calcRadTransform(textBB, r, ring, halfAngle, midAngle) {
     // max size if text is rotated radially
     var a = textBB.width / textBB.height;
     var s = calcMaxHalfSize(a, halfAngle, r, ring);
+    var scale = s * 2 / textBB.height;
+    if(scale > 1) {
+        scale = 1;
+        s = textBB.height / 2;
+    }
+
     return {
-        scale: s * 2 / textBB.height,
+        scale: scale,
         rCenter: calcRCenter(a, s / r),
         rotate: calcRotate(midAngle)
     };
@@ -703,8 +709,14 @@ function calcTanTransform(textBB, r, ring, halfAngle, midAngle) {
     // max size if text is rotated tangentially
     var a = textBB.height / textBB.width;
     var s = calcMaxHalfSize(a, halfAngle, r, ring);
+    var scale = s * 2 / textBB.width;
+    if(scale > 1) {
+        scale = 1;
+        s = textBB.width / 2;
+    }
+
     return {
-        scale: s * 2 / textBB.width,
+        scale: scale,
         rCenter: calcRCenter(a, s / r),
         rotate: calcRotate(midAngle + Math.PI / 2)
     };
