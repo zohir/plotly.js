@@ -23,9 +23,7 @@ try {
     ].join('\n'));
 }
 
-var partialBundleNames = [
-    'basic', 'cartesian', 'geo', 'gl3d', 'gl2d', 'mapbox', 'finance'
-];
+var partialBundleNames = [];
 
 var partialBundlePaths = partialBundleNames.map(function(name) {
     return {
