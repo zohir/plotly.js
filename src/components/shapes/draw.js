@@ -124,8 +124,8 @@ function setClipPath(shapePath, gd, shapeOptions) {
 }
 
 function setupDragElement(gd, shapePath, shapeOptions, index, shapeLayer) {
-    var MINWIDTH = 10;
-    var MINHEIGHT = 10;
+    var MINWIDTH = 1;
+    var MINHEIGHT = 1;
 
     var xPixelSized = shapeOptions.xsizemode === 'pixel';
     var yPixelSized = shapeOptions.ysizemode === 'pixel';
