@@ -57,7 +57,7 @@ module.exports = {
     hovermode: {
         valType: 'enumerated',
         role: 'info',
-        values: ['x', 'y', 'closest', false],
+        values: ['x', 'y', 'closest', false, 'xunified', 'yunified'],
         editType: 'modebar',
         description: [
             'Determines the mode of hover interactions.',

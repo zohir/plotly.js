@@ -25,6 +25,8 @@ var Registry = require('../../registry');
 var helpers = require('./helpers');
 var constants = require('./constants');
 
+var legend = require('../legend');
+
 // hover labels for multiple horizontal bars get tilted by some angle,
 // then need to be offset differently if they overlap
 var YANGLE = constants.YANGLE;
@@ -244,7 +246,7 @@ function _hover(gd, evt, subplot, noHoverEvent) {
 
     if(hovermode && !supportsCompare) hovermode = 'closest';
 
-    if(['x', 'y', 'closest'].indexOf(hovermode) === -1 || !gd.calcdata ||
+    if(['x', 'y', 'closest', 'xunified', 'yunified'].indexOf(hovermode) === -1 || !gd.calcdata ||
             gd.querySelector('.zoombox') || gd._dragging) {
         return dragElement.unhoverRaw(gd, evt);
     }
@@ -661,9 +663,10 @@ function _hover(gd, evt, subplot, noHoverEvent) {
 
     var hoverLabels = createHoverText(hoverData, labelOpts, gd);
 
-    hoverAvoidOverlaps(hoverLabels, rotateLabels ? 'xa' : 'ya', fullLayout);
-
-    alignHoverText(hoverLabels, rotateLabels);
+    if(['xunified', 'yunified'].indexOf(hovermode) === -1) {
+        hoverAvoidOverlaps(hoverLabels, rotateLabels ? 'xa' : 'ya', fullLayout);
+        alignHoverText(hoverLabels, rotateLabels);
+    }
 
     // TODO: tagName hack is needed to appease geo.js's hack of using evt.target=true
     // we should improve the "fx" API so other plots can use it without these hack.
@@ -696,7 +699,7 @@ var EXTRA_STRING_REGEX = /<extra>([\s\S]*)<\/extra>/;
 
 function createHoverText(hoverData, opts, gd) {
     var fullLayout = gd._fullLayout;
-    var hovermode = opts.hovermode;
+    var hovermode = fullLayout.hovermode;
     var rotateLabels = opts.rotateLabels;
     var bgColor = opts.bgColor;
     var container = opts.container;
@@ -712,7 +715,7 @@ function createHoverText(hoverData, opts, gd) {
     var c0 = hoverData[0];
     var xa = c0.xa;
     var ya = c0.ya;
-    var commonAttr = hovermode === 'y' ? 'yLabel' : 'xLabel';
+    var commonAttr = hovermode.charAt(0) === 'y' ? 'yLabel' : 'xLabel';
     var t0 = c0[commonAttr];
     var t00 = (String(t0) || '').split(' ')[0];
     var outerContainerBB = outerContainer.node().getBoundingClientRect();
@@ -793,7 +796,7 @@ function createHoverText(hoverData, opts, gd) {
         var tbb = ltext.node().getBoundingClientRect();
         var lx, ly;
 
-        if(hovermode === 'x') {
+        if(hovermode.charAt(0) === 'x') {
             var topsign = xa.side === 'top' ? '-' : '';
 
             ltext.attr('text-anchor', 'middle')
@@ -911,6 +914,32 @@ function createHoverText(hoverData, opts, gd) {
                 (d[commonAttr] || '').split(' ')[0] === t00;
         });
     });
+
+    // Show a single hover label
+    if(hovermode === 'xunified') {
+        var mockLayoutIn = {
+            showlegend: true,
+            legend: {
+                title: {text: t0},
+                bgcolor: '#fff',
+                borderwidth: 1,
+                bordercolor: '#aaa'
+            }
+        };
+        var mockLayoutOut = {};
+        legend.supplyLayoutDefaults(mockLayoutIn, mockLayoutOut, gd._fullData, fullLayout);
+        var legendOpts = mockLayoutOut.legend;
+        legend.draw(gd, container, legendOpts);
+        var ly = Lib.mean(hoverData.map(function(c) {return (c.y0 + c.y1) / 2;}));
+        var lx = Lib.mean(hoverData.map(function(c) {return (c.x0 + c.x1) / 2;}));
+        var legendContainer = container.select('g.legend');
+        var tbb = legendContainer.node().getBoundingClientRect();
+        lx += tbb.width;
+        ly += tbb.height;
+        legendContainer.attr('transform', 'translate(' + lx + ',' + ly + ')');
+
+        return legendContainer;
+    }
 
     // show all the individual labels
 

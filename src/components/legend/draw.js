@@ -30,26 +30,31 @@ var getLegendData = require('./get_legend_data');
 var style = require('./style');
 var helpers = require('./helpers');
 
-module.exports = function draw(gd) {
+module.exports = function draw(gd, layer, opts) {
+    var main;
     var fullLayout = gd._fullLayout;
     var clipId = 'legend' + fullLayout._uid;
 
-    if(!fullLayout._infolayer || !gd.calcdata) return;
+    if(!layer) layer = fullLayout._infolayer;
+    if(!layer || !gd.calcdata) return;
 
     if(!gd._legendMouseDownTime) gd._legendMouseDownTime = 0;
 
-    var opts = fullLayout.legend;
-    var legendData = fullLayout.showlegend && getLegendData(gd.calcdata, opts);
+    if(!opts) {
+        main = true;
+        opts = fullLayout.legend;
+    }
+    var legendData = (!main || fullLayout.showlegend) && getLegendData(gd.calcdata, opts);
     var hiddenSlices = fullLayout.hiddenlabels || [];
 
-    if(!fullLayout.showlegend || !legendData.length) {
-        fullLayout._infolayer.selectAll('.legend').remove();
+    if(main && (!fullLayout.showlegend || !legendData.length)) {
+        layer.selectAll('.legend').remove();
         fullLayout._topdefs.select('#' + clipId).remove();
         return Plots.autoMargin(gd, 'legend');
     }
 
-    var legend = Lib.ensureSingle(fullLayout._infolayer, 'g', 'legend', function(s) {
-        s.attr('pointer-events', 'all');
+    var legend = Lib.ensureSingle(layer, 'g', 'legend', function(s) {
+        if(main) s.attr('pointer-events', 'all');
     });
 
     var clipPath = Lib.ensureSingleById(fullLayout._topdefs, 'clipPath', clipId, function(s) {
@@ -75,7 +80,7 @@ module.exports = function draw(gd) {
             .call(Drawing.font, title.font)
             .text(title.text);
 
-        textLayout(titleEl, scrollBox, gd); // handle mathjax or multi-line text and compute title height
+        textLayout(titleEl, scrollBox, gd, opts); // handle mathjax or multi-line text and compute title height
     }
 
     var scrollBar = Lib.ensureSingle(legend, 'rect', 'scrollbar', function(s) {
@@ -99,18 +104,18 @@ module.exports = function draw(gd) {
             return trace.visible === 'legendonly' ? 0.5 : 1;
         }
     })
-    .each(function() { d3.select(this).call(drawTexts, gd); })
-    .call(style, gd)
-    .each(function() { d3.select(this).call(setupTraceToggle, gd); });
+    .each(function() { d3.select(this).call(drawTexts, gd, opts); })
+    .call(style, gd, opts)
+    .each(function() { if(main) d3.select(this).call(setupTraceToggle, gd); });
 
     Lib.syncOrAsync([
         Plots.previousPromises,
-        function() { return computeLegendDimensions(gd, groups, traces); },
+        function() { return computeLegendDimensions(gd, groups, traces, opts); },
         function() {
             // IF expandMargin return a Promise (which is truthy),
             // we're under a doAutoMargin redraw, so we don't have to
             // draw the remaining pieces below
-            if(expandMargin(gd)) return;
+            if(main && expandMargin(gd)) return;
 
             var gs = fullLayout._size;
             var bw = opts.borderwidth;
@@ -118,7 +123,7 @@ module.exports = function draw(gd) {
             var lx = gs.l + gs.w * opts.x - FROM_TL[getXanchor(opts)] * opts._width;
             var ly = gs.t + gs.h * (1 - opts.y) - FROM_TL[getYanchor(opts)] * opts._effHeight;
 
-            if(fullLayout.margin.autoexpand) {
+            if(main && fullLayout.margin.autoexpand) {
                 var lx0 = lx;
                 var ly0 = ly;
 
@@ -310,7 +315,7 @@ module.exports = function draw(gd) {
                         }
                     },
                     clickFn: function(numClicks, e) {
-                        var clickedTrace = fullLayout._infolayer.selectAll('g.traces').filter(function() {
+                        var clickedTrace = layer.selectAll('g.traces').filter(function() {
                             var bbox = this.getBoundingClientRect();
                             return (
                                 e.clientX >= bbox.left && e.clientX <= bbox.right &&
@@ -364,10 +369,10 @@ function clickOrDoubleClick(gd, legend, legendItem, numClicks, evt) {
     }
 }
 
-function drawTexts(g, gd) {
+function drawTexts(g, gd, opts) {
     var legendItem = g.data()[0][0];
     var fullLayout = gd._fullLayout;
-    var opts = fullLayout.legend;
+    if(!opts) opts = fullLayout.legend;
     var trace = legendItem.trace;
     var isPieLike = Registry.traceIs(trace, 'pie-like');
     var traceIndex = trace.index;
@@ -414,7 +419,7 @@ function drawTexts(g, gd) {
                 return Registry.call('_guiRestyle', gd, update, traceIndex);
             });
     } else {
-        textLayout(textEl, g, gd);
+        textLayout(textEl, g, gd, opts);
     }
 }
 
@@ -467,13 +472,13 @@ function setupTraceToggle(g, gd) {
     });
 }
 
-function textLayout(s, g, gd) {
+function textLayout(s, g, gd, opts) {
     svgTextUtils.convertToTspans(s, gd, function() {
-        computeTextDimensions(g, gd);
+        computeTextDimensions(g, gd, opts);
     });
 }
 
-function computeTextDimensions(g, gd) {
+function computeTextDimensions(g, gd, opts) {
     var legendItem = g.data()[0][0];
     if(legendItem && !legendItem.trace.showlegend) {
         g.remove();
@@ -482,8 +487,8 @@ function computeTextDimensions(g, gd) {
 
     var mathjaxGroup = g.select('g[class*=math-group]');
     var mathjaxNode = mathjaxGroup.node();
-    var bw = gd._fullLayout.legend.borderwidth;
-    var opts = gd._fullLayout.legend;
+    if(!opts) opts = gd._fullLayout.legend;
+    var bw = opts.borderwidth;
     var lineHeight = (legendItem ? opts : opts.title).font.size * LINE_SPACING;
     var height, width;
 
@@ -555,9 +560,9 @@ function getTitleSize(opts) {
  *  - _width: legend width
  *  - _maxWidth (for orientation:h only): maximum width before starting new row
  */
-function computeLegendDimensions(gd, groups, traces) {
+function computeLegendDimensions(gd, groups, traces, opts) {
     var fullLayout = gd._fullLayout;
-    var opts = fullLayout.legend;
+    if(!opts) opts = fullLayout.legend;
     var gs = fullLayout._size;
 
     var isVertical = helpers.isVertical(opts);
