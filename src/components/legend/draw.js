@@ -379,10 +379,7 @@ function drawTexts(g, gd, opts) {
     var legendItem = g.data()[0][0];
     var fullLayout = gd._fullLayout;
     var main;
-    if(!opts) {
-        main = true;
-        opts = fullLayout.legend;
-    }
+    if(!opts) opts = fullLayout.legend;
     var trace = legendItem.trace;
     var isPieLike = Registry.traceIs(trace, 'pie-like');
     var traceIndex = trace.index;
@@ -390,7 +387,7 @@ function drawTexts(g, gd, opts) {
     var maxNameLength = opts._maxNameLength;
 
     var name;
-    if(main) {
+    if(!opts.entries) {
         name = isPieLike ? legendItem.label : trace.name;
         if(trace._meta) {
             name = Lib.templateString(name, trace._meta);
