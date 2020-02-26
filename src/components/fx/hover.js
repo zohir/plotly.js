@@ -934,7 +934,9 @@ function createHoverText(hoverData, opts, gd) {
             var texts = getHoverLabelText(hoverData[j], true, hovermode, fullLayout, t0);
             var text = texts[0];
             var name = texts[1];
-            legendOpts.entries.push({d: hoverData[j], text: text, name: name});
+            hoverData[j].text = text;
+            hoverData[j].name = name;
+            legendOpts.entries.push([hoverData[j]]);
         }
 
         // Draw unified hover label
@@ -945,8 +947,8 @@ function createHoverText(hoverData, opts, gd) {
         var lx = Lib.mean(hoverData.map(function(c) {return (c.x0 + c.x1) / 2;}));
         var legendContainer = container.select('g.legend');
         var tbb = legendContainer.node().getBoundingClientRect();
-        lx += tbb.width;
-        ly += tbb.height;
+        lx += xa._offset;
+        ly += ya._offset - tbb.height / 2;
         legendContainer.attr('transform', 'translate(' + lx + ',' + ly + ')');
 
         return legendContainer;

@@ -44,7 +44,13 @@ module.exports = function draw(gd, layer, opts) {
         main = true;
         opts = fullLayout.legend;
     }
-    var legendData = (!main || fullLayout.showlegend) && getLegendData(gd.calcdata, opts);
+    var legendData;
+    if(main) {
+        legendData = fullLayout.showlegend && getLegendData(gd.calcdata, opts);
+    } else {
+        legendData = opts.entries && [opts.entries];
+    }
+
     var hiddenSlices = fullLayout.hiddenlabels || [];
 
     if(main && (!fullLayout.showlegend || !legendData.length)) {
@@ -372,16 +378,25 @@ function clickOrDoubleClick(gd, legend, legendItem, numClicks, evt) {
 function drawTexts(g, gd, opts) {
     var legendItem = g.data()[0][0];
     var fullLayout = gd._fullLayout;
-    if(!opts) opts = fullLayout.legend;
+    var main;
+    if(!opts) {
+        main = true;
+        opts = fullLayout.legend;
+    }
     var trace = legendItem.trace;
     var isPieLike = Registry.traceIs(trace, 'pie-like');
     var traceIndex = trace.index;
-    var isEditable = gd._context.edits.legendText && !isPieLike;
+    var isEditable = main && gd._context.edits.legendText && !isPieLike;
     var maxNameLength = opts._maxNameLength;
 
-    var name = isPieLike ? legendItem.label : trace.name;
-    if(trace._meta) {
-        name = Lib.templateString(name, trace._meta);
+    var name;
+    if(main) {
+        name = isPieLike ? legendItem.label : trace.name;
+        if(trace._meta) {
+            name = Lib.templateString(name, trace._meta);
+        }
+    } else {
+        name = legendItem.text;
     }
 
     var textEl = Lib.ensureSingle(g, 'text', 'legendtext');
