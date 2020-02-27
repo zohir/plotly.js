@@ -10,14 +10,21 @@
 
 var mapboxgl = require('mapbox-gl');
 
-var Fx = require('../../components/fx');
 var Lib = require('../../lib');
 var geoUtils = require('../../lib/geo_location_utils');
 var Registry = require('../../registry');
 var Axes = require('../cartesian/axes');
 var dragElement = require('../../components/dragelement');
+
+var Fx = require('../../components/fx');
+var fxHelpers = require('../../components/fx/helpers');
+var rectMode = fxHelpers.rectMode;
+var drawMode = fxHelpers.drawMode;
+var selectMode = fxHelpers.selectMode;
+
 var prepSelect = require('../cartesian/select').prepSelect;
 var clearSelect = require('../cartesian/select').clearSelect;
+var clearSelectionsCache = require('../cartesian/select').clearSelectionsCache;
 var selectOnClick = require('../cartesian/select').selectOnClick;
 
 var constants = require('./constants');
@@ -375,13 +382,15 @@ proto.createFramework = function(fullLayout) {
     div.style.position = 'absolute';
     self.container.appendChild(div);
 
-    // create mock x/y axes for hover routine
+    // create mock x/y axes for draw shape & hover routines
     self.xaxis = {
         _id: 'x',
+        p2r: function(v) { return self.map.unproject(v).lng; },
         c2p: function(v) { return self.project(v).x; }
     };
     self.yaxis = {
         _id: 'y',
+        p2r: function(v) { return self.map.unproject(v).lat; },
         c2p: function(v) { return self.project(v).y; }
     };
 
@@ -507,7 +516,10 @@ proto.initFx = function(calcData, fullLayout) {
 
     // define event handlers on map creation, to keep one ref per map,
     // so that map.on / map.off in updateFx works as expected
-    self.clearSelect = clearSelect;
+    self.clearSelect = function(e) {
+        clearSelectionsCache(self.dragOptions);
+        clearSelect(e);
+    };
 
     /**
      * Returns a click handler function that is supposed
@@ -548,7 +560,7 @@ proto.updateFx = function(fullLayout) {
     var dragMode = fullLayout.dragmode;
     var fillRangeItems;
 
-    if(dragMode === 'select') {
+    if(rectMode(dragMode)) {
         fillRangeItems = function(eventData, poly) {
             var ranges = eventData.range = {};
             ranges[self.id] = [
@@ -569,6 +581,7 @@ proto.updateFx = function(fullLayout) {
     // persistent selection state.
     var oldDragOptions = self.dragOptions;
     self.dragOptions = Lib.extendDeep(oldDragOptions || {}, {
+        dragmode: fullLayout.dragmode,
         element: self.div,
         gd: gd,
         plotinfo: {
@@ -586,7 +599,7 @@ proto.updateFx = function(fullLayout) {
     // a new one. Otherwise multiple click handlers might
     // be registered resulting in unwanted behavior.
     map.off('click', self.onClickInPanHandler);
-    if(dragMode === 'select' || dragMode === 'lasso') {
+    if(selectMode(dragMode) || drawMode(dragMode)) {
         map.dragPan.disable();
         map.on('zoomstart', self.clearSelect);
 
