@@ -47,6 +47,8 @@ module.exports = {
         values: [
             'zoom',
             'pan',
+            'sizedraw',
+            'freedraw',
             'select',
             'lasso',
             'orbit',
@@ -169,9 +171,19 @@ module.exports = {
         values: ['h', 'v', 'd', 'any'],
         dflt: 'any',
         description: [
-            'When "dragmode" is set to "select", this limits the selection of the drag to',
-            'horizontal, vertical or diagonal. "h" only allows horizontal selection,',
-            '"v" only vertical, "d" only diagonal and "any" sets no limit.'
+            'When `dragmode` is set to *select*, this limits the selection of the drag to',
+            'horizontal, vertical or diagonal. *h* only allows horizontal selection,',
+            '*v* only vertical, *d* only diagonal and *any* sets no limit.'
+        ].join(' '),
+        editType: 'none'
+    },
+    selectshape: {
+        valType: 'enumerated',
+        role: 'info',
+        values: ['box', 'circular'],
+        dflt: 'box',
+        description: [
+            'When `dragmode` is set to *select*, this determines the shape of selection.'
         ].join(' '),
         editType: 'none'
     }

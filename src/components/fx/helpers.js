@@ -10,6 +10,41 @@
 
 var Lib = require('../../lib');
 
+exports.selectMode = function(dragmode) {
+    return (
+        dragmode === 'lasso' ||
+        dragmode === 'select'
+    );
+};
+
+exports.drawMode = function(dragmode) {
+    return (
+        dragmode === 'freedraw' ||
+        dragmode === 'sizedraw'
+    );
+};
+
+exports.rectMode = function(dragmode) {
+    return (
+        dragmode === 'select' ||
+        dragmode === 'sizedraw'
+    );
+};
+
+exports.freeMode = function(dragmode) {
+    return (
+        dragmode === 'lasso' ||
+        dragmode === 'freedraw'
+    );
+};
+
+exports.selectingOrDrawing = function(dragmode) {
+    return (
+        exports.freeMode(dragmode) ||
+        exports.rectMode(dragmode)
+    );
+};
+
 // look for either subplot or xaxis and yaxis attributes
 // does not handle splom case
 exports.getSubplot = function getSubplot(trace) {
