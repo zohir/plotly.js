@@ -33,9 +33,11 @@ function handleShapeDefaults(shapeIn, shapeOut, fullLayout) {
 
     if(!visible) return;
 
+    coerce('editable');
     coerce('layer');
     coerce('opacity');
     coerce('fillcolor');
+    coerce('fillrule');
     var lineWidth = coerce('line.width');
     if(lineWidth) {
         coerce('line.color');

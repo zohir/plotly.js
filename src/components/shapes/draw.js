@@ -22,7 +22,6 @@ var setCursor = require('../../lib/setcursor');
 var constants = require('./constants');
 var helpers = require('./helpers');
 
-
 // Shapes are stored in gd.layout.shapes, an array of objects
 // index can point to one item in this array,
 //  or non-numeric to simply add a new one
@@ -92,7 +91,7 @@ function drawOne(gd, index) {
     function drawShape(shapeLayer) {
         var attrs = {
             'data-index': index,
-            'fill-rule': 'evenodd',
+            'fill-rule': options.fillrule,
             d: getPathString(gd, options)
         };
         var lineColor = options.line.width ? options.line.color : 'rgba(0,0,0,0)';
@@ -106,7 +105,9 @@ function drawOne(gd, index) {
 
         setClipPath(path, gd, options);
 
-        if(gd._context.edits.shapePosition) setupDragElement(gd, path, options, index, shapeLayer);
+        if(gd._context.edits.shapePosition || options.editable) {
+            setupDragElement(gd, path, options, index, shapeLayer);
+        }
     }
 }
 
@@ -305,6 +306,24 @@ function setupDragElement(gd, shapePath, shapeOptions, index, shapeLayer) {
 
     function abortDrag() {
         removeVisualCues(shapeLayer);
+
+        if(shapeOptions.editable) {
+            var element = dragOptions.element;
+            var id = +element.getAttribute('data-index');
+
+            if(confirm('Delete clicked shape?')) {
+                var fullLayout = gd._fullLayout;
+
+                var newShapes = [];
+                for(var q = 0; q < fullLayout.shapes.length; q++) {
+                    if(q !== id) newShapes.push(fullLayout.shapes[q]._input);
+                }
+
+                Registry.call('relayout', gd, {
+                    shapes: newShapes
+                });
+            }
+        }
     }
 
     function moveShape(dx, dy) {
