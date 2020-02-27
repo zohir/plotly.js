@@ -168,6 +168,13 @@ function getButtonGroups(gd) {
     if(isSelectable(fullData)) {
         dragModeGroup.push('select2d', 'lasso2d');
     }
+    if(
+        // fullLayout._has('mapbox') ||
+        // fullLayout._has('ternary') ||
+        fullLayout._has('cartesian')
+    ) {
+        dragModeGroup.push('sizedraw', 'freedraw');
+    }
 
     addGroup(dragModeGroup);
     addGroup(zoomGroup.concat(resetGroup));
