@@ -11,6 +11,7 @@
 var fontAttrs = require('./font_attributes');
 var animationAttrs = require('./animation_attributes');
 var colorAttrs = require('../components/color/attributes');
+var dash = require('../components/drawing/attributes').dash;
 var padAttrs = require('./pad_attributes');
 var extendFlat = require('../lib/extend').extendFlat;
 
@@ -442,6 +443,122 @@ module.exports = {
             ].join(' ')
         },
         editType: 'modebar'
+    },
+
+    newshape: {
+        line: {
+            color: {
+                valType: 'color',
+                editType: 'plot',
+                role: 'info',
+                description: [
+                    'Sets the line color.',
+                    'By default uses either dark grey or white',
+                    'to increase contrast with background color.'
+                ].join(' ')
+            },
+            width: {
+                valType: 'number',
+                min: 0,
+                dflt: 3,
+                role: 'info',
+                editType: 'none',
+                description: 'Sets the line width (in px).'
+            },
+            dash: extendFlat({}, dash, {
+                dflt: 'dash',
+                editType: 'none'
+            }),
+            role: 'info',
+            editType: 'none'
+        },
+        fillcolor: {
+            valType: 'color',
+            dflt: 'rgb(191,191,191)',
+            role: 'info',
+            editType: 'none',
+            description: 'Sets the color filling new shapes\' interior.'
+        },
+        fillrule: {
+            valType: 'enumerated',
+            values: ['evenodd', 'nonzero'],
+            dflt: 'evenodd',
+            role: 'info',
+            editType: 'none',
+            description: [
+                'Determines the shape\'s interior.',
+                'For more info please visit https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/fill-rule'
+            ].join(' ')
+        },
+        opacity: {
+            valType: 'number',
+            min: 0,
+            max: 1,
+            dflt: 0.5,
+            role: 'info',
+            editType: 'none',
+            description: 'Sets the opacity of new shapes.'
+        },
+        layer: {
+            valType: 'enumerated',
+            values: ['below', 'above'],
+            dflt: 'above',
+            role: 'info',
+            editType: 'none',
+            description: 'Specifies whether new shapes are drawn below or above traces.'
+        },
+        order: {
+            valType: 'enumerated',
+            values: ['front', 'back'],
+            dflt: 'front',
+            role: 'info',
+            editType: 'none',
+            description: 'Specifies whether new shapes are drawn below or above previous shapes in the `layer`.'
+        },
+        closed: {
+            valType: 'boolean',
+            dflt: true,
+            role: 'info',
+            editType: 'none',
+            description: 'Specifies whether new shapes are drawn as open or closed paths.'
+        },
+        drawshape: { // similar to selectshape
+            valType: 'enumerated',
+            values: ['box', 'circular'],
+            dflt: 'box',
+            role: 'info',
+            editType: 'none',
+            description: [
+                'Specifies whether ellipses are drawn instead of rectangles,',
+                'when using *sizedraw* `dragmode`.'
+            ].join(' ')
+        },
+        drawdirection: {
+            valType: 'enumerated',
+            role: 'info',
+            values: ['ortho', 'horizontal', 'vertical', 'diagonal'],
+            dflt: 'diagonal',
+            editType: 'none',
+            description: [
+                'When `dragmode` is set to *sizedraw*, this limits the drag to be',
+                'horizontal, vertical or diagonal.',
+                'Using *diagonal* there is no limit e.g. in drawing lines in any direction.',
+                '*ortho* limits the draw to be either horizontal or vertical.',
+                '*horizontal* allows horizontal extend.',
+                '*vertical* allows vertical extend.'
+            ].join(' ')
+        },
+        editable: {
+            valType: 'boolean',
+            role: 'info',
+            dflt: true,
+            editType: 'none',
+            description: [
+                'Determines whether new shapes are editable or not.'
+            ].join(' ')
+        },
+
+        editType: 'none'
     },
 
     meta: {
