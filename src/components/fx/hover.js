@@ -390,6 +390,9 @@ function _hover(gd, evt, subplot, noHoverEvent) {
 
         // within one trace mode can sometimes be overridden
         mode = hovermode;
+        if(['xunified', 'yunified'].indexOf(mode) !== -1) {
+            mode = mode.charAt(0);
+        }
 
         // container for new point, also used to pass info into module.hoverPoints
         pointData = {
@@ -796,7 +799,7 @@ function createHoverText(hoverData, opts, gd) {
         var tbb = ltext.node().getBoundingClientRect();
         var lx, ly;
 
-        if(hovermode.charAt(0) === 'x') {
+        if(hovermode === 'x') {
             var topsign = xa.side === 'top' ? '-' : '';
 
             ltext.attr('text-anchor', 'middle')
@@ -909,14 +912,20 @@ function createHoverText(hoverData, opts, gd) {
 
         // remove the "close but not quite" points
         // because of error bars, only take up to a space
-        hoverData = hoverData.filter(function(d) {
+        hoverData = filterClosePoints(hoverData);
+    });
+
+    function filterClosePoints(hoverData) {
+        return hoverData.filter(function(d) {
             return (d.zLabelVal !== undefined) ||
                 (d[commonAttr] || '').split(' ')[0] === t00;
         });
-    });
+    }
 
     // Show a single hover label
     if(['xunified', 'yunified'].indexOf(hovermode) !== -1) {
+        // similarly to compare mode, we remove the "close but not quite" points
+        hoverData = filterClosePoints(hoverData);
         var mockLayoutIn = {
             showlegend: true,
             legend: {
