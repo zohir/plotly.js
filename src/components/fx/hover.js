@@ -924,6 +924,9 @@ function createHoverText(hoverData, opts, gd) {
 
     // Show a single hover label
     if(['xunified', 'yunified'].indexOf(hovermode) !== -1) {
+        // Delete leftover hover labels from other hovermodes
+        container.selectAll('g.hovertext').remove();
+
         // similarly to compare mode, we remove the "close but not quite together" points
         hoverData = filterClosePoints(hoverData);
         var mockLayoutIn = {
