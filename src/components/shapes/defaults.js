@@ -30,12 +30,15 @@ function handleShapeDefaults(shapeIn, shapeOut, fullLayout) {
     }
 
     var visible = coerce('visible');
-
     if(!visible) return;
+
+    var editable = coerce('editable');
+    if(editable) coerce('editing');
 
     coerce('layer');
     coerce('opacity');
     coerce('fillcolor');
+    coerce('fillrule');
     var lineWidth = coerce('line.width');
     if(lineWidth) {
         coerce('line.color');
