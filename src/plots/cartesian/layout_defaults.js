@@ -249,13 +249,14 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
         handleTypeDefaults(axLayoutIn, axLayoutOut, coerce, defaultOptions);
         handleAxisDefaults(axLayoutIn, axLayoutOut, coerce, defaultOptions, layoutOut);
 
-        var unifiedHoverSpike = layoutIn.hovermode && ['xunified', 'yunified'].indexOf(layoutIn.hovermode) !== -1 && axLetter === layoutIn.hovermode.charAt(0);
+        var unifiedHover = layoutIn.hovermode && ['xunified', 'yunified'].indexOf(layoutIn.hovermode) !== -1;
+        var unifiedSpike = unifiedHover && axLetter === layoutIn.hovermode.charAt(0);
         var spikecolor = coerce2('spikecolor');
-        var spikethickness = coerce2('spikethickness', unifiedHoverSpike ? 1 : undefined);
+        var spikethickness = coerce2('spikethickness', unifiedHover ? 1 : undefined);
         var spikedash = coerce2('spikedash');
-        var spikemode = coerce2('spikemode', unifiedHoverSpike ? 'across' : undefined);
+        var spikemode = coerce2('spikemode', unifiedHover ? 'across' : undefined);
         var spikesnap = coerce2('spikesnap');
-        var showSpikes = coerce('showspikes', unifiedHoverSpike || !!spikecolor || !!spikethickness || !!spikedash || !!spikemode || !!spikesnap);
+        var showSpikes = coerce('showspikes', unifiedSpike || !!spikecolor || !!spikethickness || !!spikedash || !!spikemode || !!spikesnap);
 
         if(!showSpikes) {
             delete axLayoutOut.spikecolor;
