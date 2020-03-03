@@ -134,6 +134,60 @@ modeBarButtons.lasso2d = {
     click: handleCartesian
 };
 
+modeBarButtons.closedfreedraw = {
+    name: 'closedfreedraw',
+    title: function(gd) { return _(gd, 'Draw Closed Freeform'); },
+    attr: 'dragmode',
+    val: 'closedfreedraw',
+    icon: Icons.closedfreedraw,
+    click: handleCartesian
+};
+
+modeBarButtons.openfreedraw = {
+    name: 'openfreedraw',
+    title: function(gd) { return _(gd, 'Draw Open Freeform'); },
+    attr: 'dragmode',
+    val: 'openfreedraw',
+    icon: Icons.openfreedraw,
+    click: handleCartesian
+};
+
+modeBarButtons.linedraw = {
+    name: 'linedraw',
+    title: function(gd) { return _(gd, 'Draw Line'); },
+    attr: 'dragmode',
+    val: 'linedraw',
+    icon: Icons.linedraw,
+    click: handleCartesian
+};
+
+modeBarButtons.rectdraw = {
+    name: 'rectdraw',
+    title: function(gd) { return _(gd, 'Draw Rectangle'); },
+    attr: 'dragmode',
+    val: 'rectdraw',
+    icon: Icons.rectdraw,
+    click: handleCartesian
+};
+
+modeBarButtons.ellipsedraw = {
+    name: 'ellipsedraw',
+    title: function(gd) { return _(gd, 'Draw Ellipse'); },
+    attr: 'dragmode',
+    val: 'ellipsedraw',
+    icon: Icons.ellipsedraw,
+    click: handleCartesian
+};
+
+modeBarButtons.eraseshape = {
+    name: 'eraseshape',
+    title: function(gd) { return _(gd, 'Erase Shape'); },
+    attr: 'dragmode',
+    val: 'eraseshape',
+    icon: Icons.eraseshape,
+    click: handleCartesian
+};
+
 modeBarButtons.zoomIn2d = {
     name: 'zoomIn2d',
     title: function(gd) { return _(gd, 'Zoom in'); },
