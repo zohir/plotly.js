@@ -924,15 +924,15 @@ function createHoverText(hoverData, opts, gd) {
 
     // Show a single hover label
     if(['xunified', 'yunified'].indexOf(hovermode) !== -1) {
-        // similarly to compare mode, we remove the "close but not quite" points
+        // similarly to compare mode, we remove the "close but not quite together" points
         hoverData = filterClosePoints(hoverData);
         var mockLayoutIn = {
             showlegend: true,
             legend: {
                 title: {text: t0},
-                bgcolor: '#fff',
-                borderwidth: 1,
-                bordercolor: '#aaa'
+                bgcolor: '#fff', // TODO: use layout.hoverlabel.bg or layout.paper_bgcolor
+                borderwidth: 1, // TODO: use default or 1
+                bordercolor: '#aaa' // TODO: use default
             }
         };
         var mockLayoutOut = {};
@@ -958,6 +958,29 @@ function createHoverText(hoverData, opts, gd) {
         var tbb = legendContainer.node().getBoundingClientRect();
         lx += xa._offset;
         ly += ya._offset - tbb.height / 2;
+
+        // Change horizontal alignment to end up on screen
+        var txWidth = tbb.width + 2 * HOVERTEXTPAD;
+        var anchorStartOK = lx + txWidth <= outerWidth;
+        var anchorEndOK = lx - txWidth >= 0;
+        if(!anchorStartOK && anchorEndOK) {
+            lx -= txWidth;
+        } else {
+            lx += 2 * HOVERTEXTPAD;
+        }
+
+        // Change vertical alignement to end up on screen
+        var txHeight = tbb.height + 2 * HOVERTEXTPAD;
+        var overflowTop = ly <= outerTop;
+        var overflowBottom = ly + txHeight >= outerHeight;
+        var canFit = txHeight <= outerHeight;
+        if(canFit) {
+            if(overflowTop) {
+                ly = outerTop - tbb.top + 2 * HOVERTEXTPAD;
+            } else if(overflowBottom) {
+                ly = outerHeight - txHeight;
+            }
+        }
         legendContainer.attr('transform', 'translate(' + lx + ',' + ly + ')');
 
         return legendContainer;
@@ -1180,6 +1203,7 @@ function getHoverLabelText(d, showCommonLabel, hovermode, fullLayout, t0, g) {
     }
     return [text, name];
 }
+
 // Make groups of touching points, and within each group
 // move each point so that no labels overlap, but the average
 // label position is the same as it was before moving. Indicentally,

@@ -159,7 +159,7 @@ module.exports = function draw(gd, layer, opts) {
             scrollBar.on('.drag', null);
             legend.on('wheel', null);
 
-            if(opts._height <= opts._maxHeight || gd._context.staticPlot) {
+            if(!main || opts._height <= opts._maxHeight || gd._context.staticPlot) {
                 // if scrollbar should not be shown.
                 bg.attr({
                     width: opts._width - bw,
