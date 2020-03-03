@@ -34,6 +34,8 @@
     }
   ],
   "layout": {
+    "width": 600,
+    "height": 400,
     "margin": {"t": 0, "l": 0, "r": 0, "b": 0},
     "xaxis": {"range": [0, 10]},
     "yaxis": {"range": [0, 10]},
