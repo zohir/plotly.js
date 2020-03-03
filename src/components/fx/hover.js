@@ -702,7 +702,7 @@ var EXTRA_STRING_REGEX = /<extra>([\s\S]*)<\/extra>/;
 
 function createHoverText(hoverData, opts, gd) {
     var fullLayout = gd._fullLayout;
-    var hovermode = fullLayout.hovermode;
+    var hovermode = opts.hovermode;
     var rotateLabels = opts.rotateLabels;
     var bgColor = opts.bgColor;
     var container = opts.container;
