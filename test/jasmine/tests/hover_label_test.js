@@ -3646,3 +3646,134 @@ describe('dragmode: false', function() {
             .then(done);
     });
 });
+
+describe('hovermode: (x|y)unified', function() {
+    var gd;
+    var mock = require('@mocks/hovermode_xunified.json');
+
+    beforeEach(function() {
+        gd = createGraphDiv();
+    });
+
+    afterEach(destroyGraphDiv);
+
+    function _hover(gd, opts) {
+        Fx.hover(gd, opts);
+        Lib.clearThrottle();
+    }
+
+    function assertElementCount(className, size) {
+        var g = d3.selectAll('g.' + className);
+        expect(g.size()).toBe(size);
+    }
+
+    function assertLabel(expectation) {
+        var hover = d3.select('g.legend');
+        var title = hover.select('text.legendtitletext');
+        var traces = hover.selectAll('g.traces');
+
+        if(expectation.title) {
+            expect(title.text()).toBe(expectation.title);
+        }
+
+        expect(traces.size()).toBe(expectation.items.length, 'has the incorrect number of items');
+        traces.each(function(_, i) {
+            var e = d3.select(this);
+            expect(e.select('text').text()).toBe(expectation.items[i]);
+        });
+    }
+
+    it('set smart defaults for spikeline in xunified', function(done) {
+        Plotly.newPlot(gd, [{y: [4, 6, 5]}], {'hovermode': 'xunified', 'xaxis': {'color': 'red'}})
+            .then(function(gd) {
+                expect(gd._fullLayout.hovermode).toBe('xunified');
+                var ax = gd._fullLayout.xaxis;
+                expect(ax.showspike).toBeTrue;
+                expect(ax.spikemode).toBe('across');
+                expect(ax.spikedash).toBe('dot');
+                expect(ax.spikecolor).toBe('red');
+                expect(gd._fullLayout.yaxis.showspike).toBeFalse;
+            })
+            .catch(failTest)
+            .then(done);
+    });
+
+    it('set smart defaults for spikeline in yunified', function(done) {
+        Plotly.newPlot(gd, [{y: [4, 6, 5]}], {'hovermode': 'yunified', 'yaxis': {'color': 'red'}})
+            .then(function(gd) {
+                expect(gd._fullLayout.hovermode).toBe('yunified');
+                var ax = gd._fullLayout.yaxis;
+                expect(ax.showspike).toBeTrue;
+                expect(ax.spikemode).toBe('across');
+                expect(ax.spikedash).toBe('dot');
+                expect(ax.spikecolor).toBe('red');
+                expect(gd._fullLayout.yaxis.showspike).toBeFalse;
+            })
+            .catch(failTest)
+            .then(done);
+    });
+
+    it('xunified should work for x/y cartesian traces', function(done) {
+        var mockCopy = Lib.extendDeep({}, mock);
+        Plotly.newPlot(gd, mockCopy)
+            .then(function(gd) {
+                _hover(gd, { xval: 3 });
+
+                assertLabel({title: '3', items: ['trace 0 : 4', 'trace 1 : 8']});
+            })
+            .catch(failTest)
+            .then(done);
+    });
+
+    it('yunified should work for x/y cartesian traces', function(done) {
+        var mockCopy = Lib.extendDeep({}, mock);
+        mockCopy.layout.hovermode = 'yunified';
+        Plotly.newPlot(gd, mockCopy)
+            .then(function(gd) {
+                _hover(gd, { yval: 6 });
+
+                assertLabel({title: '6', items: ['trace 0 : 2', 'trace 1 : 5']});
+            })
+            .catch(failTest)
+            .then(done);
+    });
+
+    it('should work with hovertemplate', function(done) {
+        var mockCopy = Lib.extendDeep({}, mock);
+        mockCopy.data[0].hovertemplate = 'hovertemplate: %{y:0.2f}';
+        mockCopy.data[1].hovertemplate = '<extra>name</extra>%{x:0.2f} %{y:0.2f}';
+        Plotly.newPlot(gd, mockCopy)
+            .then(function(gd) {
+                _hover(gd, { xval: 3 });
+
+                assertLabel({title: '3', items: [
+                    'trace 0 : hovertemplate: 4.00',
+                    'name : 3.00 8.00'
+                ]});
+            })
+            .catch(failTest)
+            .then(done);
+    });
+
+    it('on relayout, it deletes existing hover', function(done) {
+        var mockCopy = Lib.extendDeep({}, mock);
+        mockCopy.layout.hovermode = 'x';
+        Plotly.newPlot(gd, mockCopy)
+            .then(function(gd) {
+                _hover(gd, { xval: 3 });
+
+                assertElementCount('hovertext', 2);
+                assertElementCount('legend', 0);
+
+                return Plotly.relayout(gd, 'hovermode', 'xunified');
+            })
+            .then(function(gd) {
+                _hover(gd, { xval: 3 });
+
+                assertElementCount('hovertext', 0);
+                assertElementCount('legend', 1);
+            })
+            .catch(failTest)
+            .then(done);
+    });
+});
