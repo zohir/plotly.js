@@ -37,7 +37,7 @@ module.exports = function draw(gd, opts) {
 
     // Check whether this is the main legend (ie. called without any opts)
     if(!opts) {
-        opts = fullLayout.legend;
+        opts = fullLayout.legend || {};
         opts._main = true;
         layer = fullLayout._infolayer;
     } else {
