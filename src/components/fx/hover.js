@@ -979,7 +979,7 @@ function createHoverText(hoverData, opts, gd) {
         var canFit = txHeight <= outerHeight;
         if(canFit) {
             if(overflowTop) {
-                ly = outerTop - tbb.top + 2 * HOVERTEXTPAD;
+                ly = tbb.top - outerTop + 2 * HOVERTEXTPAD;
             } else if(overflowBottom) {
                 ly = outerHeight - txHeight;
             }
