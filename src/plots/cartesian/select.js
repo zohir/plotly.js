@@ -12,13 +12,22 @@
 var polybool = require('polybooljs');
 
 var Registry = require('../../registry');
+var dragElement = require('../../components/dragelement');
+var dashStyle = require('../../components/drawing').dashStyle;
 var Color = require('../../components/color');
 var Fx = require('../../components/fx');
+var makeEventData = require('../../components/fx/helpers').makeEventData;
+var dragHelpers = require('../../components/dragelement/helpers');
+var freeMode = dragHelpers.freeMode;
+var rectMode = dragHelpers.rectMode;
+var drawMode = dragHelpers.drawMode;
+var openMode = dragHelpers.openMode;
+var selectMode = dragHelpers.selectMode;
 
 var Lib = require('../../lib');
 var polygon = require('../../lib/polygon');
 var throttle = require('../../lib/throttle');
-var makeEventData = require('../../components/fx/helpers').makeEventData;
+var setCursor = require('../../lib/setcursor');
 var getFromId = require('./axis_ids').getFromId;
 var clearGlCanvases = require('../../lib/clear_gl_canvases');
 
@@ -26,20 +35,55 @@ var redrawReglTraces = require('../../plot_api/subroutines').redrawReglTraces;
 
 var constants = require('./constants');
 var MINSELECT = constants.MINSELECT;
+var CIRCLE_SIDES = 32; // should be divisible by 8
+var SQRT2 = Math.sqrt(2);
 
 var filteredPolygon = polygon.filter;
 var polygonTester = polygon.tester;
 
 function getAxId(ax) { return ax._id; }
 
+// in v2 (once log ranges are fixed),
+// we'll be able to p2r here for all axis types
+function p2r(ax, v) {
+    switch(ax.type) {
+        case 'log':
+            return ax.p2d(v);
+        case 'date':
+            return ax.p2r(v, 0, ax.calendar);
+        default:
+            return ax.p2r(v);
+    }
+}
+
+function axValue(ax) {
+    var index = (ax._id.charAt(0) === 'y') ? 1 : 0;
+    return function(v) { return p2r(ax, v[index]); };
+}
+
+function getTransform(plotinfo) {
+    return 'translate(' +
+        plotinfo.xaxis._offset + ',' +
+        plotinfo.yaxis._offset + ')';
+}
+
 function prepSelect(e, startX, startY, dragOptions, mode) {
+    var isFreeMode = freeMode(mode);
+    var isRectMode = rectMode(mode);
+    var isOpenMode = openMode(mode);
+    var isDrawMode = drawMode(mode);
+    var isSelectMode = selectMode(mode);
+
+    var isLine = mode === 'linedraw';
+    var isEllipse = mode === 'ellipsedraw';
+    var isLineOrEllipse = isLine || isEllipse; // cases with two start & end positions
+
     var gd = dragOptions.gd;
     var fullLayout = gd._fullLayout;
     var zoomLayer = fullLayout._zoomlayer;
     var dragBBox = dragOptions.element.getBoundingClientRect();
     var plotinfo = dragOptions.plotinfo;
-    var xs = plotinfo.xaxis._offset;
-    var ys = plotinfo.yaxis._offset;
+    var transform = getTransform(plotinfo);
     var x0 = startX - dragBBox.left;
     var y0 = startY - dragBBox.top;
     var x1 = x0;
@@ -48,23 +92,34 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
     var pw = dragOptions.xaxes[0]._length;
     var ph = dragOptions.yaxes[0]._length;
     var allAxes = dragOptions.xaxes.concat(dragOptions.yaxes);
-    var subtract = e.altKey;
+    var subtract = e.altKey &&
+        !(drawMode(mode) && isOpenMode);
 
     var filterPoly, selectionTester, mergedPolygons, currentPolygon;
     var i, searchInfo, eventData;
 
     coerceSelectionsCache(e, gd, dragOptions);
 
-    if(mode === 'lasso') {
+    if(isFreeMode) {
         filterPoly = filteredPolygon([[x0, y0]], constants.BENDPX);
     }
 
-    var outlines = zoomLayer.selectAll('path.select-outline-' + plotinfo.id).data([1, 2]);
+    var outlines = zoomLayer.selectAll('path.select-outline-' + plotinfo.id).data(isDrawMode ? [0] : [1, 2]);
+    var drwStyle = fullLayout.newshape;
 
     outlines.enter()
         .append('path')
         .attr('class', function(d) { return 'select-outline select-outline-' + d + ' select-outline-' + plotinfo.id; })
-        .attr('transform', 'translate(' + xs + ', ' + ys + ')')
+        .style(isDrawMode ? {
+            opacity: drwStyle.opacity / 2,
+            fill: isOpenMode ? undefined : drwStyle.fillcolor,
+            stroke: drwStyle.line.color,
+            'stroke-dasharray': dashStyle(drwStyle.line.dash, drwStyle.line.width),
+            'stroke-width': drwStyle.line.width + 'px'
+        } : {})
+        .attr('fill-rule', drwStyle.fillrule)
+        .classed('cursor-move', isDrawMode ? true : false)
+        .attr('transform', transform)
         .attr('d', path0 + 'Z');
 
     var corners = zoomLayer.append('path')
@@ -74,7 +129,7 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
             stroke: Color.defaultLine,
             'stroke-width': 1
         })
-        .attr('transform', 'translate(' + xs + ', ' + ys + ')')
+        .attr('transform', transform)
         .attr('d', 'M0,0Z');
 
 
@@ -85,17 +140,6 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
     var searchTraces = determineSearchTraces(gd, dragOptions.xaxes,
       dragOptions.yaxes, dragOptions.subplot);
 
-    // in v2 (once log ranges are fixed),
-    // we'll be able to p2r here for all axis types
-    function p2r(ax, v) {
-        return ax.type === 'log' ? ax.p2d(v) : ax.p2r(v);
-    }
-
-    function axValue(ax) {
-        var index = (ax._id.charAt(0) === 'y') ? 1 : 0;
-        return function(v) { return p2r(ax, v[index]); };
-    }
-
     function ascending(a, b) { return a - b; }
 
     // allow subplots to override fillRangeItems routine
@@ -104,7 +148,7 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
     if(plotinfo.fillRangeItems) {
         fillRangeItems = plotinfo.fillRangeItems;
     } else {
-        if(mode === 'select') {
+        if(isRectMode) {
             fillRangeItems = function(eventData, poly) {
                 var ranges = eventData.range = {};
 
@@ -118,7 +162,7 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
                     ].sort(ascending);
                 }
             };
-        } else {
+        } else { // case of isFreeMode
             fillRangeItems = function(eventData, poly, filterPoly) {
                 var dataPts = eventData.lassoPoints = {};
 
@@ -137,50 +181,107 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
         var dx = Math.abs(x1 - x0);
         var dy = Math.abs(y1 - y0);
 
-        if(mode === 'select') {
-            var direction = fullLayout.selectdirection;
+        if(isRectMode) {
+            var direction;
+            var start, end;
 
-            if(fullLayout.selectdirection === 'any') {
-                if(dy < Math.min(dx * 0.6, MINSELECT)) direction = 'h';
-                else if(dx < Math.min(dy * 0.6, MINSELECT)) direction = 'v';
-                else direction = 'd';
-            } else {
-                direction = fullLayout.selectdirection;
+            if(isSelectMode) {
+                var q = fullLayout.selectdirection;
+
+                if(q === 'any') {
+                    if(dy < Math.min(dx * 0.6, MINSELECT)) {
+                        direction = 'h';
+                    } else if(dx < Math.min(dy * 0.6, MINSELECT)) {
+                        direction = 'v';
+                    } else {
+                        direction = 'd';
+                    }
+                } else {
+                    direction = q;
+                }
+
+                switch(direction) {
+                    case 'h':
+                        start = isEllipse ? ph / 2 : 0;
+                        end = ph;
+                        break;
+                    case 'v':
+                        start = isEllipse ? pw / 2 : 0;
+                        end = pw;
+                        break;
+                }
+            }
+
+            if(isDrawMode) {
+                switch(fullLayout.newshape.drawdirection) {
+                    case 'vertical':
+                        direction = 'h';
+                        start = isEllipse ? ph / 2 : 0;
+                        end = ph;
+                        break;
+                    case 'horizontal':
+                        direction = 'v';
+                        start = isEllipse ? pw / 2 : 0;
+                        end = pw;
+                        break;
+                    case 'ortho':
+                        if(dx < dy) {
+                            direction = 'h';
+                            start = y0;
+                            end = y1;
+                        } else {
+                            direction = 'v';
+                            start = x0;
+                            end = x1;
+                        }
+                        break;
+                    default: // i.e. case of 'diagonal'
+                        direction = 'd';
+                }
             }
 
             if(direction === 'h') {
-                // horizontal motion: make a vertical box
-                currentPolygon = [[x0, 0], [x0, ph], [x1, ph], [x1, 0]];
-                currentPolygon.xmin = Math.min(x0, x1);
-                currentPolygon.xmax = Math.max(x0, x1);
-                currentPolygon.ymin = Math.min(0, ph);
-                currentPolygon.ymax = Math.max(0, ph);
+                // horizontal motion
+                currentPolygon = isLineOrEllipse ?
+                    handleEllipse(isEllipse, [x1, start], [x1, end]) : // using x1 instead of x0 allows adjusting the line while drawing
+                    [[x0, start], [x0, end], [x1, end], [x1, start]]; // make a vertical box
+
+                currentPolygon.xmin = isLineOrEllipse ? x1 : Math.min(x0, x1);
+                currentPolygon.xmax = isLineOrEllipse ? x1 : Math.max(x0, x1);
+                currentPolygon.ymin = Math.min(start, end);
+                currentPolygon.ymax = Math.max(start, end);
                 // extras to guide users in keeping a straight selection
                 corners.attr('d', 'M' + currentPolygon.xmin + ',' + (y0 - MINSELECT) +
                     'h-4v' + (2 * MINSELECT) + 'h4Z' +
                     'M' + (currentPolygon.xmax - 1) + ',' + (y0 - MINSELECT) +
                     'h4v' + (2 * MINSELECT) + 'h-4Z');
             } else if(direction === 'v') {
-                // vertical motion: make a horizontal box
-                currentPolygon = [[0, y0], [0, y1], [pw, y1], [pw, y0]];
-                currentPolygon.xmin = Math.min(0, pw);
-                currentPolygon.xmax = Math.max(0, pw);
-                currentPolygon.ymin = Math.min(y0, y1);
-                currentPolygon.ymax = Math.max(y0, y1);
+                // vertical motion
+                currentPolygon = isLineOrEllipse ?
+                    handleEllipse(isEllipse, [start, y1], [end, y1]) : // using y1 instead of y0 allows adjusting the line while drawing
+                    [[start, y0], [start, y1], [end, y1], [end, y0]]; // make a horizontal box
+
+                currentPolygon.xmin = Math.min(start, end);
+                currentPolygon.xmax = Math.max(start, end);
+                currentPolygon.ymin = isLineOrEllipse ? y1 : Math.min(y0, y1);
+                currentPolygon.ymax = isLineOrEllipse ? y1 : Math.max(y0, y1);
                 corners.attr('d', 'M' + (x0 - MINSELECT) + ',' + currentPolygon.ymin +
                     'v-4h' + (2 * MINSELECT) + 'v4Z' +
                     'M' + (x0 - MINSELECT) + ',' + (currentPolygon.ymax - 1) +
                     'v4h' + (2 * MINSELECT) + 'v-4Z');
             } else if(direction === 'd') {
                 // diagonal motion
-                currentPolygon = [[x0, y0], [x0, y1], [x1, y1], [x1, y0]];
+                currentPolygon = isLineOrEllipse ?
+                    handleEllipse(isEllipse, [x0, y0], [x1, y1]) :
+                    [[x0, y0], [x0, y1], [x1, y1], [x1, y0]];
+
                 currentPolygon.xmin = Math.min(x0, x1);
                 currentPolygon.xmax = Math.max(x0, x1);
                 currentPolygon.ymin = Math.min(y0, y1);
                 currentPolygon.ymax = Math.max(y0, y1);
                 corners.attr('d', 'M0,0Z');
             }
-        } else if(mode === 'lasso') {
+        } else if(isFreeMode) {
             filterPoly.addPt([x1, y1]);
             currentPolygon = filterPoly.filtered;
         }
@@ -195,46 +296,49 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
             selectionTester = polygonTester(currentPolygon);
         }
 
-        // draw selection
-        drawSelection(mergedPolygons, outlines);
+        // display polygons on the screen
+        displayOutlines(mergedPolygons, outlines, dragOptions);
 
+        if(isSelectMode) {
+            throttle.throttle(
+                throttleID,
+                constants.SELECTDELAY,
+                function() {
+                    selection = [];
 
-        throttle.throttle(
-            throttleID,
-            constants.SELECTDELAY,
-            function() {
-                selection = [];
+                    var thisSelection;
+                    var traceSelections = [];
+                    var traceSelection;
+                    for(i = 0; i < searchTraces.length; i++) {
+                        searchInfo = searchTraces[i];
 
-                var thisSelection;
-                var traceSelections = [];
-                var traceSelection;
-                for(i = 0; i < searchTraces.length; i++) {
-                    searchInfo = searchTraces[i];
+                        traceSelection = searchInfo._module.selectPoints(searchInfo, selectionTester);
+                        traceSelections.push(traceSelection);
 
-                    traceSelection = searchInfo._module.selectPoints(searchInfo, selectionTester);
-                    traceSelections.push(traceSelection);
+                        thisSelection = fillSelectionItem(traceSelection, searchInfo);
 
-                    thisSelection = fillSelectionItem(traceSelection, searchInfo);
+                        if(selection.length) {
+                            for(var j = 0; j < thisSelection.length; j++) {
+                                selection.push(thisSelection[j]);
+                            }
+                        } else selection = thisSelection;
+                    }
 
-                    if(selection.length) {
-                        for(var j = 0; j < thisSelection.length; j++) {
-                            selection.push(thisSelection[j]);
-                        }
-                    } else selection = thisSelection;
+                    eventData = {points: selection};
+                    updateSelectedState(gd, searchTraces, eventData);
+                    fillRangeItems(eventData, currentPolygon, filterPoly);
+                    dragOptions.gd.emit('plotly_selecting', eventData);
                 }
-
-                eventData = {points: selection};
-                updateSelectedState(gd, searchTraces, eventData);
-                fillRangeItems(eventData, currentPolygon, filterPoly);
-                dragOptions.gd.emit('plotly_selecting', eventData);
-            }
-        );
+            );
+        }
     };
 
     dragOptions.clickFn = function(numClicks, evt) {
         var clickmode = fullLayout.clickmode;
 
         corners.remove();
+
+        if(isDrawMode) return;
 
         throttle.done(throttleID).then(function() {
             throttle.clear(throttleID);
@@ -291,12 +395,17 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
                 dragOptions.doneFnCompleted(selection);
             }
         }).catch(Lib.error);
+
+        if(isDrawMode && fullLayout.newshape.drawstep === 'immediate') {
+            clearSelectionsCache(dragOptions);
+        }
     };
 }
 
 function selectOnClick(evt, gd, xAxes, yAxes, subplot, dragOptions, polygonOutlines) {
     var hoverData = gd._hoverdata;
-    var clickmode = gd._fullLayout.clickmode;
+    var fullLayout = gd._fullLayout;
+    var clickmode = fullLayout.clickmode;
     var sendEvents = clickmode.indexOf('event') > -1;
     var selection = [];
     var searchTraces, searchInfo, currentSelectionDef, selectionTester, traceSelection;
@@ -357,7 +466,12 @@ function selectOnClick(evt, gd, xAxes, yAxes, subplot, dragOptions, polygonOutli
                 dragOptions.selectionDefs.push(currentSelectionDef);
             }
 
-            if(polygonOutlines) drawSelection(dragOptions.mergedPolygons, polygonOutlines);
+            if(polygonOutlines) {
+                var polygons = dragOptions.mergedPolygons;
+
+                // display polygons on the screen
+                displayOutlines(polygons, polygonOutlines, dragOptions);
+            }
 
             if(sendEvents) {
                 gd.emit('plotly_selected', eventData);
@@ -468,14 +582,19 @@ function multiTester(list) {
 }
 
 function coerceSelectionsCache(evt, gd, dragOptions) {
+    gd._fullLayout._drawing = false;
+
     var fullLayout = gd._fullLayout;
     var plotinfo = dragOptions.plotinfo;
+    var dragmode = dragOptions.dragmode;
 
     var selectingOnSameSubplot = (
         fullLayout._lastSelectedSubplot &&
         fullLayout._lastSelectedSubplot === plotinfo.id
     );
-    var hasModifierKey = evt.shiftKey || evt.altKey;
+
+    var hasModifierKey = (evt.shiftKey || evt.altKey) &&
+        !(drawMode(dragmode) && openMode(dragmode));
 
     if(selectingOnSameSubplot && hasModifierKey &&
       (plotinfo.selection && plotinfo.selection.selectionDefs) && !dragOptions.selectionDefs) {
@@ -494,7 +613,22 @@ function coerceSelectionsCache(evt, gd, dragOptions) {
 }
 
 function clearSelectionsCache(dragOptions) {
+    var dragmode = dragOptions.dragmode;
     var plotinfo = dragOptions.plotinfo;
+
+    if(drawMode(dragmode)) {
+        var gd = dragOptions.gd;
+        var fullLayout = gd._fullLayout;
+        var zoomLayer = fullLayout._zoomlayer;
+
+        var outlines = zoomLayer.selectAll('.select-outline-' + plotinfo.id);
+        if(outlines) {
+            // add shape
+            addNewShapes(outlines, dragOptions);
+        }
+
+        gd._fullLayout._drawing = false;
+    }
 
     plotinfo.selection = {};
     plotinfo.selection.selectionDefs = dragOptions.selectionDefs = [];
@@ -549,19 +683,705 @@ function determineSearchTraces(gd, xAxes, yAxes, subplot) {
     }
 }
 
-function drawSelection(polygons, outlines) {
-    var paths = [];
-    var i, d;
+var SHAPE_CONTROLLERS = [
+    { // move should be first to have zero index - since we don't want to show a button
+        name: 'move',
+        color: '#FA3',
+        label: '\u2B0C'
+    },
+    {
+        name: 'delete',
+        color: '#F33',
+        label: '\u2716'
+    },
+    {
+        name: 'finish',
+        color: '#7F7',
+        label: '\u2713'
+    }
+];
 
-    for(i = 0; i < polygons.length; i++) {
-        var ppts = polygons[i];
-        paths.push(ppts.join('L') + 'L' + ppts[0]);
+function displayOutlines(polygons, outlines, dragOptions, nCalls) {
+    if(!nCalls) nCalls = 0;
+
+    function redraw() {
+        if(nCalls !== -1) {
+            // recursive call
+            displayOutlines(polygons, outlines, dragOptions, nCalls++);
+        }
     }
 
-    d = polygons.length > 0 ?
-      'M' + paths.join('M') + 'Z' :
-      'M0,0Z';
-    outlines.attr('d', d);
+    function finishDraw() {
+        clearSelectionsCache(dragOptions);
+        nCalls = -1;
+    }
+
+    var plotinfo = dragOptions.plotinfo;
+    var transform = getTransform(plotinfo);
+
+    var gd = dragOptions.gd;
+    var fullLayout = gd._fullLayout;
+    var zoomLayer = fullLayout._zoomlayer;
+    zoomLayer.selectAll('.outline-controllers').remove();
+
+    var dragmode = dragOptions.dragmode;
+    var isDrawMode = drawMode(dragmode);
+    var isOpenMode = openMode(dragmode);
+
+    if(isDrawMode) gd._fullLayout._drawing = true;
+
+    var paths = [];
+    for(var k = 0; k < polygons.length; k++) {
+        // create outline path
+        paths.push(
+            providePath(polygons[k], isOpenMode)
+        );
+    }
+    // make outline
+    outlines.attr('d', writePaths(paths, isOpenMode));
+
+    // add controllers
+    var rShapeController = MINSELECT * 0.75; // smaller shape buttons
+    var rVertexController = MINSELECT * 1.5; // bigger vertex buttons
+    var shapeDragOptions;
+    var vertexDragOptions;
+    var indexI; // cell index
+    var indexJ; // vertex or cell-controller index
+    var copyPolygons;
+
+    saveInitPositions();
+
+    if(isDrawMode && fullLayout.newshape.drawstep === 'gradual') {
+        var g = zoomLayer.append('g').attr('class', 'outline-controllers');
+        addVertexControllers(g);
+        addShapeControllers(g);
+    }
+
+    function saveInitPositions() {
+        copyPolygons = [];
+        for(var i = 0; i < polygons.length; i++) {
+            copyPolygons[i] = [];
+            for(var j = 0; j < polygons[i].length; j++) {
+                copyPolygons[i][j] = [];
+                for(var k = 0; k < polygons[i][j].length; k++) {
+                    copyPolygons[i][j][k] = polygons[i][j][k];
+                }
+            }
+        }
+    }
+
+    function startDragVertex(evt) {
+        indexI = +evt.srcElement.getAttribute('data-i');
+        indexJ = +evt.srcElement.getAttribute('data-j');
+
+        vertexDragOptions[indexI][indexJ].moveFn = moveVertexController;
+    }
+
+    function moveVertexController(dx, dy) {
+        if(!polygons.length) return;
+
+        var x0 = copyPolygons[indexI][indexJ][0];
+        var y0 = copyPolygons[indexI][indexJ][1];
+
+        var cell = polygons[indexI];
+        var len = cell.length;
+        if(pointsShapeRectangle(cell)) {
+            for(var q = 0; q < len; q++) {
+                if(q === indexJ) continue;
+
+                // move other corners of rectangle
+                var pos = cell[q];
+
+                if(pos[0] === cell[indexJ][0]) {
+                    pos[0] = x0 + dx;
+                }
+
+                if(pos[1] === cell[indexJ][1]) {
+                    pos[1] = y0 + dy;
+                }
+            }
+            // move the corner
+            cell[indexJ][0] = x0 + dx;
+            cell[indexJ][1] = y0 + dy;
+
+            if(!pointsShapeRectangle(cell)) {
+                // reject result to rectangles with ensure areas
+                for(var j = 0; j < len; j++) {
+                    for(var k = 0; k < 2; k++) {
+                        cell[j][k] = copyPolygons[indexI][j][k];
+                    }
+                }
+            }
+        } else { // other polylines
+            cell[indexJ][0] = x0 + dx;
+            cell[indexJ][1] = y0 + dy;
+        }
+
+        redraw();
+    }
+
+    function endDragVertexController(evt) {
+        Lib.noop(evt);
+    }
+
+    function removeVertex() {
+        if(!polygons.length) return;
+
+        var newPolygon = [];
+        for(var j = 0; j < polygons[indexI].length; j++) {
+            if(j !== indexJ) {
+                newPolygon.push(
+                    polygons[indexI][j]
+                );
+            }
+        }
+        polygons[indexI] = newPolygon;
+    }
+
+    function clickVertexController(numClicks) {
+        if(numClicks === 2) {
+            var cell = polygons[indexI];
+            if(cell.length > 2 && !(pointsShapeRectangle(cell))) {
+                removeVertex();
+            }
+
+            redraw();
+        }
+    }
+
+    function addVertexControllers(g) {
+        vertexDragOptions = [];
+
+        for(var i = 0; i < polygons.length; i++) {
+            var cell = polygons[i];
+
+            if(dragmode === 'ellipsedraw' && pointsShapeEllipse(cell)) {
+                return; // no need for vertex modifiers on ellipses
+            }
+            var onRect = (pointsShapeRectangle(cell));
+            var minX;
+            var minY;
+            var maxX;
+            var maxY;
+            if(onRect) {
+                // compute bounding box
+                minX = calcMin(cell, 0);
+                minY = calcMin(cell, 1);
+                maxX = calcMax(cell, 0);
+                maxY = calcMax(cell, 1);
+            }
+
+            vertexDragOptions[i] = [];
+            for(var j = 0; j < cell.length; j++) {
+                var x = cell[j][0];
+                var y = cell[j][1];
+
+                var rIcon = 3;
+                var button = g.append(onRect ? 'rect' : 'circle')
+                .attr('transform', transform)
+                .style({
+                    'mix-blend-mode': 'luminosity',
+                    fill: 'black',
+                    stroke: 'white',
+                    'stroke-width': 1
+                });
+
+                if(onRect) {
+                    button
+                        .attr('x', x - rIcon)
+                        .attr('y', y - rIcon)
+                        .attr('width', 2 * rIcon)
+                        .attr('height', 2 * rIcon);
+                } else {
+                    button
+                        .attr('cx', x)
+                        .attr('cy', y)
+                        .attr('r', rIcon);
+                }
+
+                var vertex = g.append(onRect ? 'rect' : 'circle')
+                .attr('data-i', i)
+                .attr('data-j', j)
+                .attr('transform', transform)
+                .style({
+                    opacity: 0
+                });
+
+                if(onRect) {
+                    var ratioX = (x - minX) / (maxX - minX);
+                    var ratioY = (y - minY) / (maxY - minY);
+                    if(isFinite(ratioX) && isFinite(ratioY)) {
+                        setCursor(
+                            vertex,
+                            dragElement.getCursor(ratioX, 1 - ratioY)
+                        );
+                    }
+
+                    vertex
+                        .attr('x', x - rVertexController)
+                        .attr('y', y - rVertexController)
+                        .attr('width', 2 * rVertexController)
+                        .attr('height', 2 * rVertexController);
+                } else {
+                    vertex
+                        .classed('cursor-grab', true)
+                        .attr('cx', x)
+                        .attr('cy', y)
+                        .attr('r', rVertexController);
+                }
+
+                vertexDragOptions[i][j] = {
+                    element: vertex.node(),
+                    gd: gd,
+                    prepFn: startDragVertex,
+                    doneFn: endDragVertexController,
+                    clickFn: clickVertexController
+                };
+
+                dragElement.init(vertexDragOptions[i][j]);
+            }
+        }
+    }
+
+    function removeShape() {
+        polygons = [];
+    }
+
+    function moveShape(dx, dy) {
+        if(!polygons.length) return;
+
+        for(var i = 0; i < polygons.length; i++) {
+            for(var j = 0; j < polygons[i].length; j++) {
+                var x0 = copyPolygons[i][j][0];
+                var y0 = copyPolygons[i][j][1];
+
+                polygons[i][j][0] = x0 + dx;
+                polygons[i][j][1] = y0 + dy;
+            }
+        }
+    }
+
+    function moveShapeController(dx, dy) {
+        switch(SHAPE_CONTROLLERS[indexI].name) {
+            case 'move':
+                moveShape(dx, dy);
+                break;
+        }
+
+        redraw();
+    }
+
+    function startDragShapeController(evt) {
+        indexI = +evt.srcElement.getAttribute('data-i');
+        if(!indexI) indexI = 0; // ensure non-existing move button get zero index
+
+        shapeDragOptions[indexI].moveFn = moveShapeController;
+    }
+
+    function endDragShapeController(evt) {
+        Lib.noop(evt);
+    }
+
+    function clickShapeController() {
+        switch(SHAPE_CONTROLLERS[indexI].name) {
+            case 'delete':
+                removeShape();
+                break;
+
+            case 'finish':
+                finishDraw();
+                break;
+        }
+
+        redraw();
+    }
+
+    function addShapeControllers(g) {
+        shapeDragOptions = [];
+
+        if(!polygons.length) return;
+
+        var center = calcShapeCenter(polygons);
+
+        var num = SHAPE_CONTROLLERS.length;
+        for(var i = 0; i < num; i++) {
+            var pos;
+            var isMove = false;
+            switch(SHAPE_CONTROLLERS[i].name) {
+                case 'move':
+                    isMove = true;
+                    pos = center;
+                    break;
+
+                case 'delete':
+                    pos = [2 * rShapeController, 3 * rShapeController];
+                    break;
+
+                case 'finish':
+                    pos = [2 * rShapeController, 6 * rShapeController];
+                    break;
+            }
+
+            var button;
+            if(!isMove) {
+                button = g.append('circle')
+                .attr('data-i', i)
+                .attr('transform', transform)
+                .attr('cx', pos[0])
+                .attr('cy', pos[1])
+                .attr('r', rShapeController)
+                .style({
+                    fill: SHAPE_CONTROLLERS[i].color,
+                    stroke: 'white',
+                    'stroke-width': 1
+                });
+
+                var fontSize = Math.floor(1.5 * rShapeController);
+                g.append('text')
+                .text(SHAPE_CONTROLLERS[i].label)
+                .attr('text-anchor', 'middle')
+                .attr('transform', transform)
+                .attr('x', pos[0])
+                .attr('y', pos[1] + fontSize / 3)
+                .style({
+                    'font-family': 'Arial, sans-serif',
+                    'font-size': fontSize + 'px',
+                    fill: 'black'
+                });
+            }
+
+            shapeDragOptions[i] = {
+                element: isMove ? outlines[0][0] : button.node(),
+                gd: gd,
+                prepFn: startDragShapeController,
+                doneFn: endDragShapeController,
+                clickFn: clickShapeController
+            };
+
+            dragElement.init(shapeDragOptions[i]);
+        }
+    }
+}
+
+function providePath(cell, isOpenMode) {
+    return cell.join('L') + (
+        isOpenMode ? '' : 'L' + cell[0]
+    );
+}
+
+function writePaths(paths, isOpenMode) {
+    return paths.length > 0 ? 'M' + paths.join('M') + (isOpenMode ? '' : 'Z') : 'M0,0Z';
+}
+
+function readPaths(str, size, plotinfo) {
+    var allParts = str
+        .replace('Z', '') // remove Z from end
+        .substring(1) // remove M from start
+        .split('M');
+
+    var allPaths = [];
+    for(var i = 0; i < allParts.length; i++) {
+        var part = allParts[i].split('L');
+
+        var path = [];
+        for(var j = 0; j < part.length; j++) {
+            var pos = part[j].split(',');
+            var x = +pos[0];
+            var y = +pos[1];
+
+            if(plotinfo.domain) {
+                path.push([
+                    plotinfo.domain.x[0] + x / size.w,
+                    plotinfo.domain.y[1] - y / size.h
+                ]);
+            } else {
+                path.push([
+                    p2r(plotinfo.xaxis, x),
+                    p2r(plotinfo.yaxis, y)
+                ]);
+            }
+        }
+
+        allPaths.push(path);
+    }
+
+    return allPaths;
+}
+
+function fixDatesOnPaths(path, xaxis, yaxis) {
+    var xIsDate = xaxis.type === 'date';
+    var yIsDate = yaxis.type === 'date';
+    if(!xIsDate && !yIsDate) return path;
+
+    for(var i = 0; i < path.length; i++) {
+        if(xIsDate) path[i][0] = path[i][0].replace(' ', '_');
+        if(yIsDate) path[i][1] = path[i][1].replace(' ', '_');
+    }
+
+    return path;
+}
+
+function almostEq(a, b) {
+    return Math.abs(a - b) <= 1e-6;
+}
+
+function dist(a, b) {
+    var dx = b[0] - a[0];
+    var dy = b[1] - a[1];
+    return Math.sqrt(
+        dx * dx +
+        dy * dy
+    );
+}
+
+function calcCellCenter(cell) {
+    var len = cell.length;
+    var cx = 0;
+    var cy = 0;
+    for(var i = 0; i < len; i++) {
+        cx += cell[i][0] / len;
+        cy += cell[i][1] / len;
+    }
+    return [cx, cy];
+}
+
+function calcShapeCenter(polygons) {
+    var len = polygons.length;
+    var cx = 0;
+    var cy = 0;
+    for(var i = 0; i < len; i++) {
+        var pos = calcCellCenter(polygons[i]);
+        cx += pos[0] / len;
+        cy += pos[1] / len;
+    }
+    return [cx, cy];
+}
+
+function calcMin(cell, dim) {
+    var v = Infinity;
+    for(var i = 0; i < cell.length; i++) {
+        v = Math.min(v, cell[i][dim]);
+    }
+    return v;
+}
+
+function calcMax(cell, dim) {
+    var v = -Infinity;
+    for(var i = 0; i < cell.length; i++) {
+        v = Math.max(v, cell[i][dim]);
+    }
+    return v;
+}
+
+function pointsShapeRectangle(cell, len) {
+    if(!len) len = cell.length;
+    if(len !== 4) return false;
+    for(var j = 0; j < 2; j++) {
+        var e01 = cell[0][j] - cell[1][j];
+        var e32 = cell[3][j] - cell[2][j];
+
+        if(!almostEq(e01, e32)) return false;
+
+        var e03 = cell[0][j] - cell[3][j];
+        var e12 = cell[1][j] - cell[2][j];
+        if(!almostEq(e03, e12)) return false;
+    }
+
+    // N.B. rotated rectangles are not valid rects since rotation is not supported in shapes for now.
+    if(
+        !almostEq(cell[0][0], cell[1][0]) &&
+        !almostEq(cell[0][0], cell[3][0])
+    ) return false;
+
+    // reject cases with zero area
+    return !!(
+        dist(cell[0], cell[1]) *
+        dist(cell[0], cell[3])
+    );
+}
+
+function pointsShapeEllipse(cell, len) {
+    if(!len) len = cell.length;
+    if(len !== CIRCLE_SIDES) return false;
+    // opposite diagonals should be the same
+    for(var i = 0; i < len; i++) {
+        var k = (len * 2 - i) % len;
+
+        var k2 = (len / 2 + k) % len;
+        var i2 = (len / 2 + i) % len;
+
+        if(!almostEq(
+            dist(cell[i], cell[i2]),
+            dist(cell[k], cell[k2])
+        )) return false;
+    }
+    return true;
+}
+
+function handleEllipse(isEllipse, start, end) {
+    if(!isEllipse) return [start, end]; // i.e. case of line
+
+    var pos = ellipseOver({
+        x0: start[0],
+        y0: start[1],
+        x1: end[0],
+        y1: end[1]
+    });
+
+    var cx = (pos.x1 + pos.x0) / 2;
+    var cy = (pos.y1 + pos.y0) / 2;
+    var rx = (pos.x1 - pos.x0) / 2;
+    var ry = (pos.y1 - pos.y0) / 2;
+
+    // make a circle when one dimension is zero
+    if(!rx) rx = ry = ry / SQRT2;
+    if(!ry) ry = rx = rx / SQRT2;
+
+    var cell = [];
+    for(var i = 0; i < CIRCLE_SIDES; i++) {
+        var t = i * 2 * Math.PI / CIRCLE_SIDES;
+        cell.push([
+            cx + rx * Math.cos(t),
+            cy + ry * Math.sin(t),
+        ]);
+    }
+    return cell;
+}
+
+function ellipseOver(pos) {
+    var x0 = pos.x0;
+    var y0 = pos.y0;
+    var x1 = pos.x1;
+    var y1 = pos.y1;
+
+    var dx = x1 - x0;
+    var dy = y1 - y0;
+
+    x0 -= dx;
+    y0 -= dy;
+
+    var cx = (x0 + x1) / 2;
+    var cy = (y0 + y1) / 2;
+
+    var scale = SQRT2;
+    dx *= scale;
+    dy *= scale;
+
+    return {
+        x0: cx - dx,
+        y0: cy - dy,
+        x1: cx + dx,
+        y1: cy + dy
+    };
+}
+
+function addNewShapes(outlines, dragOptions) {
+    if(!outlines.length) return;
+    var gd = dragOptions.gd;
+    var drwStyle = gd._fullLayout.newshape;
+    var isOpenMode = openMode(dragOptions.dragmode);
+    var plotinfo = dragOptions.plotinfo;
+    var xaxis = plotinfo.xaxis;
+    var yaxis = plotinfo.yaxis;
+    var onPaper = plotinfo.domain;
+    var dragmode = dragOptions.dragmode;
+
+    var e = outlines[0][0]; // pick first
+    if(!e) return;
+    var d = e.getAttribute('d');
+
+    var newShapes = [];
+    var fullLayout = gd._fullLayout;
+
+    var polygons = readPaths(d, fullLayout._size, plotinfo);
+
+    for(var i = 0; i < polygons.length; i++) {
+        var cell = polygons[i];
+        var len = cell.length - (isOpenMode ? 0 : 1); // skip closing point
+        if(len < 2) continue;
+
+        var shape = {
+            editable: true,
+            editing: false,
+
+            xref: onPaper ? 'paper' : xaxis._id,
+            yref: onPaper ? 'paper' : yaxis._id,
+
+            layer: drwStyle.layer,
+            opacity: drwStyle.opacity,
+            line: {
+                color: drwStyle.line.color,
+                width: drwStyle.line.width,
+                dash: drwStyle.line.dash
+            }
+        };
+
+        if(!isOpenMode) {
+            shape.fillcolor = drwStyle.fillcolor;
+            shape.fillrule = drwStyle.fillrule;
+        }
+
+        if(
+            dragmode === 'rectdraw' &&
+            pointsShapeRectangle(cell, len) // should pass len here which is equal to cell.length - 1 i.e. because of the closing point
+        ) {
+            shape.type = 'rect';
+            shape.x0 = cell[0][0];
+            shape.y0 = cell[0][1];
+            shape.x1 = cell[2][0];
+            shape.y1 = cell[2][1];
+        } else if(
+            dragmode === 'linedraw'
+        ) {
+            shape.type = 'line';
+            shape.x0 = cell[0][0];
+            shape.y0 = cell[0][1];
+            shape.x1 = cell[1][0];
+            shape.y1 = cell[1][1];
+        } else if(
+            dragmode === 'ellipsedraw' &&
+            pointsShapeEllipse(cell, len) && // should pass len here which is equal to cell.length - 1 i.e. because of the closing point
+            xaxis.type !== 'log' && yaxis.type !== 'log' &&
+            xaxis.type !== 'date' && yaxis.type !== 'date'
+        ) {
+            shape.type = 'circle'; // an ellipse!
+            var j = Math.floor((CIRCLE_SIDES + 1) / 2);
+            var k = Math.floor((CIRCLE_SIDES + 1) / 8);
+            var pos = ellipseOver({
+                x0: (cell[0][0] + cell[j][0]) / 2,
+                y0: (cell[0][1] + cell[j][1]) / 2,
+                x1: cell[k][0],
+                y1: cell[k][1]
+            });
+            shape.x0 = pos.x0;
+            shape.y0 = pos.y0;
+            shape.x1 = pos.x1;
+            shape.y1 = pos.y1;
+        } else {
+            shape.type = 'path';
+            fixDatesOnPaths(cell, xaxis, yaxis);
+
+            shape.path = writePaths([
+                providePath(cell, isOpenMode)
+            ], isOpenMode);
+        }
+
+        newShapes.push(shape);
+    }
+
+    // remove outline and controllers
+    clearSelect(gd);
+
+    if(newShapes.length) {
+        var oldShapes = [];
+        for(var q = 0; q < fullLayout.shapes.length; q++) {
+            oldShapes.push(fullLayout.shapes[q]._input);
+        }
+
+        Registry.call('relayout', gd, {
+            shapes: oldShapes.concat(newShapes) // add new shapes to the end.
+        });
+    }
 }
 
 function isHoverDataSet(hoverData) {
@@ -790,14 +1610,18 @@ function fillSelectionItem(selection, searchInfo) {
 // at the end.
 function clearSelect(gd) {
     var fullLayout = gd._fullLayout || {};
-    var zoomlayer = fullLayout._zoomlayer;
-    if(zoomlayer) {
-        zoomlayer.selectAll('.select-outline').remove();
+    var zoomLayer = fullLayout._zoomlayer;
+    if(zoomLayer) {
+        zoomLayer.selectAll('.outline-controllers').remove();
+        zoomLayer.selectAll('.select-outline').remove();
     }
+
+    fullLayout._drawing = false;
 }
 
 module.exports = {
     prepSelect: prepSelect,
     clearSelect: clearSelect,
+    clearSelectionsCache: clearSelectionsCache,
     selectOnClick: selectOnClick
 };

@@ -90,23 +90,64 @@ function drawOne(gd, index) {
     }
 
     function drawShape(shapeLayer) {
+        var d = getPathString(gd, options);
         var attrs = {
             'data-index': index,
-            'fill-rule': 'evenodd',
-            d: getPathString(gd, options)
+            'fill-rule': options.fillrule,
+            d: d
         };
+
+        var opacity = options.opacity;
+        var fillColor = options.fillcolor;
         var lineColor = options.line.width ? options.line.color : 'rgba(0,0,0,0)';
+        var lineWidth = options.line.width;
+        var lineDash = options.line.dash;
 
         var path = shapeLayer.append('path')
             .attr(attrs)
-            .style('opacity', options.opacity)
+            .style('opacity', opacity)
             .call(Color.stroke, lineColor)
-            .call(Color.fill, options.fillcolor)
-            .call(Drawing.dashLine, options.line.dash, options.line.width);
+            .call(Color.fill, fillColor)
+            .call(Drawing.dashLine, lineDash, lineWidth);
 
         setClipPath(path, gd, options);
 
-        if(gd._context.edits.shapePosition) setupDragElement(gd, path, options, index, shapeLayer);
+        if(gd._context.edits.shapePosition || (options.editable && options.editing)) {
+            setupDragElement(gd, path, options, index, shapeLayer);
+        }
+
+        path.style('pointer-events',
+            !gd._context.edits.shapePosition && // for backward compatibility
+            (lineWidth >= 1) && ( // has border
+                (Color.opacity(fillColor) * opacity <= 0.5) || // too transparent
+                (d[d.length - 1] !== 'Z') // is closed
+            ) ?
+            'stroke' : 'all'
+        );
+        path.node().addEventListener('click', function() { return clickFn(path); });
+    }
+
+    function clickFn(path) {
+        var fullLayout = gd._fullLayout;
+        var element = path.node();
+        var id = +element.getAttribute('data-index');
+
+        var newShapes = [];
+        for(var q = 0; q < fullLayout.shapes.length; q++) {
+            var shapeIn = fullLayout.shapes[q]._input;
+            if(q === id && shapeIn.editable) {
+                // enable/disable - flip editing status
+                shapeIn.editing = !shapeIn.editing;
+            }
+
+            if(q !== id || fullLayout.dragmode !== 'eraseshape') {
+                newShapes.push(shapeIn);
+            }
+        }
+
+        Registry.call('relayout', gd, {
+            shapes: newShapes
+        });
     }
 }
 
@@ -213,7 +254,16 @@ function setupDragElement(gd, shapePath, shapeOptions, index, shapeLayer) {
         return g;
     }
 
+    function shouldSkipEdits() {
+        return !!gd._fullLayout._drawing;
+    }
+
     function updateDragMode(evt) {
+        if(shouldSkipEdits()) {
+            dragMode = null;
+            return;
+        }
+
         if(isLine) {
             if(evt.target.tagName === 'path') {
                 dragMode = 'move';
@@ -244,6 +294,8 @@ function setupDragElement(gd, shapePath, shapeOptions, index, shapeLayer) {
     }
 
     function startDrag(evt) {
+        if(shouldSkipEdits()) return;
+
         // setup update strings and initial values
         if(xPixelSized) {
             xAnchor = x2p(shapeOptions.xanchor);
@@ -292,9 +344,12 @@ function setupDragElement(gd, shapePath, shapeOptions, index, shapeLayer) {
         renderVisualCues(shapeLayer, shapeOptions);
         deactivateClipPathTemporarily(shapePath, shapeOptions, gd);
         dragOptions.moveFn = (dragMode === 'move') ? moveShape : resizeShape;
+        dragOptions.altKey = evt.altKey;
     }
 
     function endDrag() {
+        if(shouldSkipEdits()) return;
+
         setCursor(shapePath);
         removeVisualCues(shapeLayer);
 
@@ -304,6 +359,8 @@ function setupDragElement(gd, shapePath, shapeOptions, index, shapeLayer) {
     }
 
     function abortDrag() {
+        if(shouldSkipEdits()) return;
+
         removeVisualCues(shapeLayer);
     }
 
