@@ -950,9 +950,10 @@ function createHoverText(hoverData, opts, gd) {
             hoverData[j].name = name;
             legendOpts.entries.push([hoverData[j]]);
         }
+        legendOpts.layer = container;
 
         // Draw unified hover label
-        legend.draw(gd, container, legendOpts);
+        legend.draw(gd, legendOpts);
 
         // Position the hover
         var ly = Lib.mean(hoverData.map(function(c) {return (c.y0 + c.y1) / 2;}));

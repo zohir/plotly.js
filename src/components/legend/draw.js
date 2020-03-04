@@ -30,24 +30,25 @@ var getLegendData = require('./get_legend_data');
 var style = require('./style');
 var helpers = require('./helpers');
 
-module.exports = function draw(gd, layer, opts) {
+module.exports = function draw(gd, opts) {
     var fullLayout = gd._fullLayout;
     var clipId = 'legend' + fullLayout._uid;
+    var layer;
 
     // Check whether this is the main legend (ie. called without any opts)
     var main;
     if(!opts) {
         main = true;
         opts = fullLayout.legend;
+        layer = fullLayout._infolayer;
     } else {
+        layer = opts.layer;
         clipId += '-hover';
     }
 
-    if(!layer) layer = fullLayout._infolayer;
     if(!layer) return;
 
     if(!gd._legendMouseDownTime) gd._legendMouseDownTime = 0;
-
 
     var legendData;
     if(main) {
