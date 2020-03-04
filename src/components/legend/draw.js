@@ -36,10 +36,9 @@ module.exports = function draw(gd, opts) {
     var layer;
 
     // Check whether this is the main legend (ie. called without any opts)
-    var main;
     if(!opts) {
-        main = true;
         opts = fullLayout.legend;
+        opts._main = true;
         layer = fullLayout._infolayer;
     } else {
         layer = opts.layer;
@@ -51,24 +50,24 @@ module.exports = function draw(gd, opts) {
     if(!gd._legendMouseDownTime) gd._legendMouseDownTime = 0;
 
     var legendData;
-    if(main) {
+    if(opts._main) {
         if(!gd.calcdata) return;
         legendData = fullLayout.showlegend && getLegendData(gd.calcdata, opts);
     } else {
         if(!opts.entries) return;
-        legendData = [opts.entries];
+        legendData = getLegendData(opts.entries, opts);
     }
 
     var hiddenSlices = fullLayout.hiddenlabels || [];
 
-    if(main && (!fullLayout.showlegend || !legendData.length)) {
+    if(opts._main && (!fullLayout.showlegend || !legendData.length)) {
         layer.selectAll('.legend').remove();
         fullLayout._topdefs.select('#' + clipId).remove();
         return Plots.autoMargin(gd, 'legend');
     }
 
     var legend = Lib.ensureSingle(layer, 'g', 'legend', function(s) {
-        if(main) s.attr('pointer-events', 'all');
+        if(opts._main) s.attr('pointer-events', 'all');
     });
 
     var clipPath = Lib.ensureSingleById(fullLayout._topdefs, 'clipPath', clipId, function(s) {
@@ -118,9 +117,9 @@ module.exports = function draw(gd, opts) {
             return trace.visible === 'legendonly' ? 0.5 : 1;
         }
     })
-    .each(function() { d3.select(this).call(drawTexts, gd, main ? false : opts); })
+    .each(function() { d3.select(this).call(drawTexts, gd, opts._main ? false : opts); })
     .call(style, gd, opts)
-    .each(function() { if(main) d3.select(this).call(setupTraceToggle, gd); });
+    .each(function() { if(opts._main) d3.select(this).call(setupTraceToggle, gd); });
 
     Lib.syncOrAsync([
         Plots.previousPromises,
@@ -129,7 +128,7 @@ module.exports = function draw(gd, opts) {
             // IF expandMargin return a Promise (which is truthy),
             // we're under a doAutoMargin redraw, so we don't have to
             // draw the remaining pieces below
-            if(main && expandMargin(gd)) return;
+            if(opts._main && expandMargin(gd)) return;
 
             var gs = fullLayout._size;
             var bw = opts.borderwidth;
@@ -137,7 +136,7 @@ module.exports = function draw(gd, opts) {
             var lx = gs.l + gs.w * opts.x - FROM_TL[getXanchor(opts)] * opts._width;
             var ly = gs.t + gs.h * (1 - opts.y) - FROM_TL[getYanchor(opts)] * opts._effHeight;
 
-            if(main && fullLayout.margin.autoexpand) {
+            if(opts._main && fullLayout.margin.autoexpand) {
                 var lx0 = lx;
                 var ly0 = ly;
 
@@ -160,7 +159,7 @@ module.exports = function draw(gd, opts) {
             scrollBar.on('.drag', null);
             legend.on('wheel', null);
 
-            if(!main || opts._height <= opts._maxHeight || gd._context.staticPlot) {
+            if(!opts._main || opts._height <= opts._maxHeight || gd._context.staticPlot) {
                 // if scrollbar should not be shown.
                 bg.attr({
                     width: opts._width - bw,
@@ -503,7 +502,7 @@ function textLayout(s, g, gd, opts) {
 
 function computeTextDimensions(g, gd, opts) {
     var legendItem = g.data()[0][0];
-    if(legendItem && !legendItem.trace.showlegend) {
+    if(opts._main && legendItem && !legendItem.trace.showlegend) {
         g.remove();
         return;
     }

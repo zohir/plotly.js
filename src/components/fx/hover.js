@@ -935,7 +935,8 @@ function createHoverText(hoverData, opts, gd) {
                 title: {text: t0},
                 bgcolor: '#fff', // TODO: use layout.hoverlabel.bg or layout.paper_bgcolor
                 borderwidth: 1, // TODO: use default or 1
-                bordercolor: '#aaa' // TODO: use default
+                bordercolor: '#aaa', // TODO: use default
+                tracegroupgap: 7
             }
         };
         var mockLayoutOut = {};
