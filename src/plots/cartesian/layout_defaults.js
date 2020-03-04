@@ -253,7 +253,7 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
         var unifiedSpike = unifiedHover && axLetter === layoutIn.hovermode.charAt(0);
         var spikecolor = coerce2('spikecolor');
         var spikethickness = coerce2('spikethickness', unifiedHover ? 1 : undefined);
-        var spikedash = coerce2('spikedash');
+        var spikedash = coerce2('spikedash', unifiedHover ? 'dot' : undefined);
         var spikemode = coerce2('spikemode', unifiedHover ? 'across' : undefined);
         var spikesnap = coerce2('spikesnap');
         var showSpikes = coerce('showspikes', unifiedSpike || !!spikecolor || !!spikethickness || !!spikedash || !!spikemode || !!spikesnap);
