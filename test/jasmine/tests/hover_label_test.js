@@ -3690,6 +3690,7 @@ describe('hovermode: (x|y)unified', function() {
                 var ax = gd._fullLayout.xaxis;
                 expect(ax.showspike).toBeTrue;
                 expect(ax.spikemode).toBe('across');
+                expect(ax.spikethickness).toBe(1.5);
                 expect(ax.spikedash).toBe('dot');
                 expect(ax.spikecolor).toBe('red');
                 expect(gd._fullLayout.yaxis.showspike).toBeFalse;
@@ -3705,6 +3706,7 @@ describe('hovermode: (x|y)unified', function() {
                 var ax = gd._fullLayout.yaxis;
                 expect(ax.showspike).toBeTrue;
                 expect(ax.spikemode).toBe('across');
+                expect(ax.spikethickness).toBe(1.5);
                 expect(ax.spikedash).toBe('dot');
                 expect(ax.spikecolor).toBe('red');
                 expect(gd._fullLayout.yaxis.showspike).toBeFalse;
