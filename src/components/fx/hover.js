@@ -933,7 +933,7 @@ function createHoverText(hoverData, opts, gd) {
             showlegend: true,
             legend: {
                 title: {text: t0},
-                bgcolor: fullLayout.legend ? fullLayout.legend.bgcolor : undefined,
+                bgcolor: fullLayout.paper_bgcolor,
                 borderwidth: 1,
                 tracegroupgap: 7
             }
