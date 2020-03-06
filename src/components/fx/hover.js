@@ -933,9 +933,8 @@ function createHoverText(hoverData, opts, gd) {
             showlegend: true,
             legend: {
                 title: {text: t0},
-                bgcolor: '#fff', // TODO: use layout.hoverlabel.bg or layout.paper_bgcolor
-                borderwidth: 1, // TODO: use default or 1
-                bordercolor: '#aaa', // TODO: use default
+                bgcolor: fullLayout.legend ? fullLayout.legend.bgcolor : undefined,
+                borderwidth: 1,
                 tracegroupgap: 7
             }
         };
