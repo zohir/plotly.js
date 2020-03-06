@@ -3649,7 +3649,7 @@ describe('dragmode: false', function() {
 
 describe('hovermode: (x|y)unified', function() {
     var gd;
-    var mock = require('@mocks/hovermode_x unified.json');
+    var mock = require('@mocks/hovermode_xunified.json');
 
     beforeEach(function() {
         gd = createGraphDiv();
