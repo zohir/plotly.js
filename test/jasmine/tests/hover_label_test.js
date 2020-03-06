@@ -3668,7 +3668,8 @@ describe('hovermode: (x|y)unified', function() {
     }
 
     function assertLabel(expectation) {
-        var hover = d3.select('g.legend');
+        var hoverLayer = d3.select('g.hoverlayer');
+        var hover = hoverLayer.select('g.legend');
         var title = hover.select('text.legendtitletext');
         var traces = hover.selectAll('g.traces');
 
@@ -3735,6 +3736,27 @@ describe('hovermode: (x|y)unified', function() {
                 _hover(gd, { yval: 6 });
 
                 assertLabel({title: '6', items: ['trace 0 : 2', 'trace 1 : 5']});
+            })
+            .catch(failTest)
+            .then(done);
+    });
+
+    it('x unified should work for x/y cartesian traces with legendgroup', function(done) {
+        var mockLegendGroup = require('@mocks/legendgroup.json');
+        var mockCopy = Lib.extendDeep({}, mockLegendGroup);
+        mockCopy.layout.hovermode = 'x unified';
+        Plotly.newPlot(gd, mockCopy)
+            .then(function(gd) {
+                _hover(gd, { xval: 3 });
+
+                assertLabel({title: '3', items: [
+                    'trace 0 : 2',
+                    'trace 3 : 2',
+                    'trace 1 : median: 1',
+                    'trace 4 : 1',
+                    'trace 2 : 2',
+                    'trace 5 : 2'
+                ]});
             })
             .catch(failTest)
             .then(done);
