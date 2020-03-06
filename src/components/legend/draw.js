@@ -117,7 +117,7 @@ module.exports = function draw(gd, opts) {
             return trace.visible === 'legendonly' ? 0.5 : 1;
         }
     })
-    .each(function() { d3.select(this).call(drawTexts, gd, opts._main ? false : opts); })
+    .each(function() { d3.select(this).call(drawTexts, gd, opts); })
     .call(style, gd, opts)
     .each(function() { if(opts._main) d3.select(this).call(setupTraceToggle, gd); });
 
@@ -390,15 +390,10 @@ function clickOrDoubleClick(gd, legend, legendItem, numClicks, evt) {
 function drawTexts(g, gd, opts) {
     var legendItem = g.data()[0][0];
     var fullLayout = gd._fullLayout;
-    var main;
-    if(!opts) {
-        main = true;
-        opts = fullLayout.legend;
-    }
     var trace = legendItem.trace;
     var isPieLike = Registry.traceIs(trace, 'pie-like');
     var traceIndex = trace.index;
-    var isEditable = main && gd._context.edits.legendText && !isPieLike;
+    var isEditable = opts._main && gd._context.edits.legendText && !isPieLike;
     var maxNameLength = opts._maxNameLength;
 
     var name;
