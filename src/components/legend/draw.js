@@ -389,7 +389,6 @@ function clickOrDoubleClick(gd, legend, legendItem, numClicks, evt) {
 
 function drawTexts(g, gd, opts) {
     var legendItem = g.data()[0][0];
-    var fullLayout = gd._fullLayout;
     var trace = legendItem.trace;
     var isPieLike = Registry.traceIs(trace, 'pie-like');
     var traceIndex = trace.index;
