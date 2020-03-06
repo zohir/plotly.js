@@ -164,7 +164,7 @@ module.exports = function draw(gd, opts) {
                 var height = opts._effHeight;
 
                 // if not the main legend, let it be its full size
-                if(!opts.main) height = opts._height;
+                if(!opts._main) height = opts._height;
 
                 bg.attr({
                     width: opts._width - bw,
