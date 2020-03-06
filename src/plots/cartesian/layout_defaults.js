@@ -249,7 +249,7 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
         handleTypeDefaults(axLayoutIn, axLayoutOut, coerce, defaultOptions);
         handleAxisDefaults(axLayoutIn, axLayoutOut, coerce, defaultOptions, layoutOut);
 
-        var unifiedHover = layoutIn.hovermode && ['xunified', 'yunified'].indexOf(layoutIn.hovermode) !== -1;
+        var unifiedHover = layoutIn.hovermode && ['x unified', 'y unified'].indexOf(layoutIn.hovermode) !== -1;
         var unifiedSpike = unifiedHover && axLetter === layoutIn.hovermode.charAt(0);
         var spikecolor = coerce2('spikecolor', unifiedHover ? axLayoutOut.color : undefined);
         var spikethickness = coerce2('spikethickness', unifiedHover ? 1.5 : undefined);

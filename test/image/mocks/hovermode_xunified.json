@@ -40,6 +40,6 @@
     "xaxis": {"range": [0, 10]},
     "yaxis": {"range": [0, 10]},
     "showlegend": false,
-    "hovermode": "xunified"
+    "hovermode": "x unified"
   }
 }

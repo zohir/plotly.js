@@ -246,7 +246,7 @@ function _hover(gd, evt, subplot, noHoverEvent) {
 
     if(hovermode && !supportsCompare) hovermode = 'closest';
 
-    if(['x', 'y', 'closest', 'xunified', 'yunified'].indexOf(hovermode) === -1 || !gd.calcdata ||
+    if(['x', 'y', 'closest', 'x unified', 'y unified'].indexOf(hovermode) === -1 || !gd.calcdata ||
             gd.querySelector('.zoombox') || gd._dragging) {
         return dragElement.unhoverRaw(gd, evt);
     }
@@ -390,7 +390,7 @@ function _hover(gd, evt, subplot, noHoverEvent) {
 
         // within one trace mode can sometimes be overridden
         mode = hovermode;
-        if(['xunified', 'yunified'].indexOf(mode) !== -1) {
+        if(['x unified', 'y unified'].indexOf(mode) !== -1) {
             mode = mode.charAt(0);
         }
 
@@ -666,7 +666,7 @@ function _hover(gd, evt, subplot, noHoverEvent) {
 
     var hoverLabels = createHoverText(hoverData, labelOpts, gd);
 
-    if(['xunified', 'yunified'].indexOf(hovermode) === -1) {
+    if(['x unified', 'y unified'].indexOf(hovermode) === -1) {
         hoverAvoidOverlaps(hoverLabels, rotateLabels ? 'xa' : 'ya', fullLayout);
         alignHoverText(hoverLabels, rotateLabels);
     }
@@ -923,7 +923,7 @@ function createHoverText(hoverData, opts, gd) {
     }
 
     // Show a single hover label
-    if(['xunified', 'yunified'].indexOf(hovermode) !== -1) {
+    if(['x unified', 'y unified'].indexOf(hovermode) !== -1) {
         // Delete leftover hover labels from other hovermodes
         container.selectAll('g.hovertext').remove();
 

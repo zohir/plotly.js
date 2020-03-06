@@ -3649,7 +3649,7 @@ describe('dragmode: false', function() {
 
 describe('hovermode: (x|y)unified', function() {
     var gd;
-    var mock = require('@mocks/hovermode_xunified.json');
+    var mock = require('@mocks/hovermode_x unified.json');
 
     beforeEach(function() {
         gd = createGraphDiv();
@@ -3683,10 +3683,10 @@ describe('hovermode: (x|y)unified', function() {
         });
     }
 
-    it('set smart defaults for spikeline in xunified', function(done) {
-        Plotly.newPlot(gd, [{y: [4, 6, 5]}], {'hovermode': 'xunified', 'xaxis': {'color': 'red'}})
+    it('set smart defaults for spikeline in x unified', function(done) {
+        Plotly.newPlot(gd, [{y: [4, 6, 5]}], {'hovermode': 'x unified', 'xaxis': {'color': 'red'}})
             .then(function(gd) {
-                expect(gd._fullLayout.hovermode).toBe('xunified');
+                expect(gd._fullLayout.hovermode).toBe('x unified');
                 var ax = gd._fullLayout.xaxis;
                 expect(ax.showspike).toBeTrue;
                 expect(ax.spikemode).toBe('across');
@@ -3699,10 +3699,10 @@ describe('hovermode: (x|y)unified', function() {
             .then(done);
     });
 
-    it('set smart defaults for spikeline in yunified', function(done) {
-        Plotly.newPlot(gd, [{y: [4, 6, 5]}], {'hovermode': 'yunified', 'yaxis': {'color': 'red'}})
+    it('set smart defaults for spikeline in y unified', function(done) {
+        Plotly.newPlot(gd, [{y: [4, 6, 5]}], {'hovermode': 'y unified', 'yaxis': {'color': 'red'}})
             .then(function(gd) {
-                expect(gd._fullLayout.hovermode).toBe('yunified');
+                expect(gd._fullLayout.hovermode).toBe('y unified');
                 var ax = gd._fullLayout.yaxis;
                 expect(ax.showspike).toBeTrue;
                 expect(ax.spikemode).toBe('across');
@@ -3715,7 +3715,7 @@ describe('hovermode: (x|y)unified', function() {
             .then(done);
     });
 
-    it('xunified should work for x/y cartesian traces', function(done) {
+    it('x unified should work for x/y cartesian traces', function(done) {
         var mockCopy = Lib.extendDeep({}, mock);
         Plotly.newPlot(gd, mockCopy)
             .then(function(gd) {
@@ -3727,9 +3727,9 @@ describe('hovermode: (x|y)unified', function() {
             .then(done);
     });
 
-    it('yunified should work for x/y cartesian traces', function(done) {
+    it('y unified should work for x/y cartesian traces', function(done) {
         var mockCopy = Lib.extendDeep({}, mock);
-        mockCopy.layout.hovermode = 'yunified';
+        mockCopy.layout.hovermode = 'y unified';
         Plotly.newPlot(gd, mockCopy)
             .then(function(gd) {
                 _hover(gd, { yval: 6 });
@@ -3767,7 +3767,7 @@ describe('hovermode: (x|y)unified', function() {
                 assertElementCount('hovertext', 2);
                 assertElementCount('legend', 0);
 
-                return Plotly.relayout(gd, 'hovermode', 'xunified');
+                return Plotly.relayout(gd, 'hovermode', 'x unified');
             })
             .then(function(gd) {
                 _hover(gd, { xval: 3 });
