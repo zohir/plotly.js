@@ -161,9 +161,14 @@ module.exports = function draw(gd, opts) {
 
             if(!opts._main || opts._height <= opts._maxHeight || gd._context.staticPlot) {
                 // if scrollbar should not be shown.
+                var height = opts._effHeight;
+
+                // if not the main legend, let it be its full size
+                if(!opts.main) height = opts._height;
+
                 bg.attr({
                     width: opts._width - bw,
-                    height: opts._effHeight - bw,
+                    height: height - bw,
                     x: bw / 2,
                     y: bw / 2
                 });
@@ -172,7 +177,7 @@ module.exports = function draw(gd, opts) {
 
                 clipPath.select('rect').attr({
                     width: opts._width - 2 * bw,
-                    height: opts._effHeight - 2 * bw,
+                    height: height - 2 * bw,
                     x: bw,
                     y: bw
                 });
