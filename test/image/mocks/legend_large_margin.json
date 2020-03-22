@@ -25,7 +25,7 @@
             "name": "trace 1"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 500,
         "height": 500,
         "legend": {
@@ -37,4 +37,4 @@
         }
 
     }
-}
+}}}

@@ -32,7 +32,7 @@
     "xaxis": "x4",
     "yaxis": "y4"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "grid": {"rows": 2, "columns": 2, "pattern": "independent", "xgap": 0.1, "ygap": 0.1},
     "xaxis": {"showticklabels": false},
@@ -47,4 +47,4 @@
     "height": 600,
     "margin": {"l": 20, "t": 20, "r": 20, "b": 20}
   }
-}
+}}}

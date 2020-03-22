@@ -613,7 +613,7 @@
       "yaxis": "y"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "grid": {
       "xaxes": [
         "x"
@@ -652,4 +652,4 @@
       }
     }
   }
-}
+}}}

@@ -137,7 +137,7 @@
             "name": "reversed blue-red"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "<b>histogram2dcontour legends</b><br>red-blue should be equal to reversed blue-red.<br>i.e. display identical legends for identical graphs",
         "margin": {
             "t": 125,
@@ -200,4 +200,4 @@
             ]
         }
     }
-}
+}}}

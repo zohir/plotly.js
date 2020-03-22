@@ -24,7 +24,7 @@
       "yaxis": "y4"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Fixed size shapes",
     "autosize": false,
     "width": 1000,
@@ -256,4 +256,4 @@
   "config": {
     "editable": "true"
   }
-}
+}}}

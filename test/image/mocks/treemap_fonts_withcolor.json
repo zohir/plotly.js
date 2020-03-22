@@ -330,7 +330,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "coloraxis": {
             "colorscale": "Portland",
             "reversescale": true,
@@ -345,4 +345,4 @@
             "r": 10
         }
     }
-}
+}}}

@@ -98,7 +98,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": {
       "text": "Multi-category histograms",
       "xref": "paper",
@@ -118,4 +118,4 @@
     },
     "showlegend": false
   }
-}
+}}}

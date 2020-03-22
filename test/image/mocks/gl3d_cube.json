@@ -186,7 +186,7 @@
             "opacity": 0.3
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "scene": {
             "xaxis": {
                 "showgrid": false,
@@ -222,4 +222,4 @@
         "width": 1731.82,
         "autosize": true
     }
-}
+}}}

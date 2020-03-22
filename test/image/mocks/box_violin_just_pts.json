@@ -138,10 +138,10 @@
       "hoveron": "points"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "legend": {
       "x": 0,
       "y": 1
     }
   }
-}
+}}}

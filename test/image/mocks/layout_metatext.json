@@ -25,7 +25,7 @@
     "domain": {"row": 0, "column": 1},
     "title": {"text": "Employee %{meta[1]}"}
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "meta": ["A", "B", "<b>IMPORTANT</b>", "company<sup>TM</sup>", 1000],
     "grid": {"rows": 3, "columns": 2, "xgap": 0.2, "ygap": 0.35},
     "width": 700,
@@ -114,4 +114,4 @@
       }]
     }]
   }
-}
+}}}

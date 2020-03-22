@@ -5,9 +5,9 @@
     "y": ["A", "B", "C", "A", "B", "C", "A", "B", "C"],
     "z": [0, 50, 100, 50, 0, 255, 100, 510, 1010]
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
       "xaxis": {
         "categoryorder": "category descending"
       }
   }
-}
+}}}

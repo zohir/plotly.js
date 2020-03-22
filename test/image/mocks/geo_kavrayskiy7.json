@@ -51,7 +51,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo": {
             "projection": {
                 "type": "kavrayskiy7",
@@ -82,4 +82,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

@@ -250,7 +250,7 @@
       "cmax": 5
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Surface intensity test"
   }
-}
+}}}

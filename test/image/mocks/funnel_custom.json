@@ -82,7 +82,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "two stacked funnel charts with custom marker colors and lines<br>as well as transparent colors and opacity"
         },
@@ -98,4 +98,4 @@
         "showlegend": true,
         "funnelmode": "stack"
     }
-}
+}}}

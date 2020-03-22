@@ -50,7 +50,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo": {
             "scope": "usa",
             "showrivers": true,
@@ -61,4 +61,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

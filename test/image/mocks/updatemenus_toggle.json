@@ -9,7 +9,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "updatemenus": [
       {
         "type": "buttons",
@@ -30,4 +30,4 @@
       }
     ]
   }
-}
+}}}

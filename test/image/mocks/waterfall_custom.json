@@ -40,7 +40,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "Waterfall chart with custom bar widths and offsets"
         },
@@ -56,4 +56,4 @@
         "autosize": true,
         "showlegend": true
     }
-}
+}}}

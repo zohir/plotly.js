@@ -688,7 +688,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
 	"title": "Iris dataset splom",
     "xaxis": {"matches": "y"},
     "xaxis2": {"matches": "y2"},
@@ -697,4 +697,4 @@
   	"width": 600,
 	"height": 500
   }
-}
+}}}

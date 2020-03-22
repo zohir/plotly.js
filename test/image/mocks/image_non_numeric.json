@@ -82,7 +82,7 @@
       []
     ]
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 600,
     "height": 600,
     "grid": {
@@ -91,4 +91,4 @@
       "pattern": "independent"
     }
   }
-}
+}}}

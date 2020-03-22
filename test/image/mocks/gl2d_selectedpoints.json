@@ -27,7 +27,7 @@
     },
     "selectedpoints": [1, 4, 2]
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false
   }
-}
+}}}

@@ -23,7 +23,7 @@
     "xaxis": "x2",
     "yaxis": "y2"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "dragmode": "pan",
     "width": 700,
     "height": 400,
@@ -55,4 +55,4 @@
       "yanchor": "bottom"
     }
   }
-}
+}}}

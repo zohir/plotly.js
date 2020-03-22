@@ -998,7 +998,7 @@
             "name": "dev from mean"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "rangeselector": {
                 "buttons": [
@@ -1105,4 +1105,4 @@
         "height": 500,
         "width": 700
     }
-}
+}}}

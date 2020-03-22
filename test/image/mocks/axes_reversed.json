@@ -12,9 +12,9 @@
       "type": "scatter"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "autorange": "reversed"
     }
   }
-}
+}}}

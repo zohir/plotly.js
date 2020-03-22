@@ -11,7 +11,7 @@
     "yaxis": "y2",
     "xaxis": "x2"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
         "type": "category",
         "categoryorder": "total ascending"
@@ -26,4 +26,4 @@
       "domain": [0.55, 1]
     }
   }
-}
+}}}

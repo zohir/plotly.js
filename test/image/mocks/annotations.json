@@ -4,7 +4,7 @@
         "y":[1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5],
         "mode":"markers"
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "yaxis":{"autorange":false,"range":[1,5],"showgrid":false,"zeroline":false,"showticklabels":false},
         "xaxis":{"autorange":false,"range":[1,5],"showgrid":false,"zeroline":false,"showticklabels":false},
         "height":500,
@@ -61,4 +61,4 @@
             {"text": "off-plot 2", "x": 3, "y": 5.1, "showarrow": true, "ax": 0, "ay": 100}
         ]
     }
-}
+}}}

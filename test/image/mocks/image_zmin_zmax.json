@@ -57,7 +57,7 @@
       "xaxis": "x8"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 400,
     "height": 800,
     "grid": {
@@ -69,4 +69,4 @@
       "text": "zmin zmax"
     }
   }
-}
+}}}

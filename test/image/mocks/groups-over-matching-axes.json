@@ -85,7 +85,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "boxmode": "group",
     "violinmode": "group",
     "showlegend": false,
@@ -108,4 +108,4 @@
       "matches": "x"
     }
   }
-}
+}}}

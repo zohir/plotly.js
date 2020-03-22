@@ -56,5 +56,5 @@
             "size": 0.02
         }
     }],
-    "layout": {"width": 400, "height": 600}
-}
+    "layout": { "template": { "layout": {"width": 400, "height": 600}
+}}}

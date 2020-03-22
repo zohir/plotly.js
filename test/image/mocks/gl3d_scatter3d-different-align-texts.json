@@ -10,7 +10,7 @@
             "textposition":      ["", "bottom", "right", "bottom right", "bottom left", "left", "top right", "top", "top left"]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title":"Texts in scatter3d could be aligned differently using arrays",
         "width": 800,
         "height": 600,
@@ -22,4 +22,4 @@
             }
         }
     }
-}
+}}}

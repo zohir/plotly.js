@@ -36,11 +36,11 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 300,
         "height": 300,
         "title": {
             "text": "should provide some pad<br>before fiting & printing text"
         }
     }
-}
+}}}

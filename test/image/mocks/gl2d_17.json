@@ -567,7 +567,7 @@
             "type": "scattergl"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Extracting the Acceleration of Gravity<br>from Velocity Data",
         "titlefont": {
             "color": "",
@@ -715,4 +715,4 @@
         "separators": ".,",
         "hidesources": false
     }
-}
+}}}

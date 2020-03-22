@@ -5,7 +5,7 @@
     "y": ["A", "B", "C", "B"],
     "z": [1, 1e3, 1e5, 100]
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 600,
     "height": 600,
     "scene": {
@@ -109,4 +109,4 @@
     ]
     }
   }
-}
+}}}

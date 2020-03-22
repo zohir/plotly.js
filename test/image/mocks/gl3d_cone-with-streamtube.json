@@ -135710,7 +135710,7 @@
       "hoverinfo": "u+v+w+name"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "scene": {
       "aspectratio": {
         "x": 1,
@@ -135727,4 +135727,4 @@
     "width": 600,
     "height": 400
   }
-}
+}}}

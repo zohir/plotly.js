@@ -18,7 +18,7 @@
             "connectgaps": false
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "categoryarray",
         "xaxis": {
             "type": "category",
@@ -42,4 +42,4 @@
         "width": 1000,
         "autosize": true
     }
-}
+}}}

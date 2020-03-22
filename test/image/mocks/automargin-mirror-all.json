@@ -11,7 +11,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "grid": {
       "rows": 1,
@@ -48,4 +48,4 @@
     "width": 500,
     "height": 400
   }
-}
+}}}

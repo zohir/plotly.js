@@ -51,7 +51,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "margin": {
       "b": 100,
       "l": 120,
@@ -77,4 +77,4 @@
     "hovermode": "closest",
     "dragmode": "zoom"
   }
-}
+}}}

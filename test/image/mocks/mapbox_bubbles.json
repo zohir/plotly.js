@@ -71,7 +71,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "mapbox": {
       "style": "light",
       "zoom": 0.5
@@ -82,4 +82,4 @@
     "margin": {"l": 10},
     "dragmode": "select"
   }
-}
+}}}

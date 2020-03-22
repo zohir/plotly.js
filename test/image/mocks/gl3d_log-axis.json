@@ -18,7 +18,7 @@
       "width": 20
     }
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "test",
     "scene": {
       "xaxis": {
@@ -26,4 +26,4 @@
       }
     }
   }
-}
+}}}

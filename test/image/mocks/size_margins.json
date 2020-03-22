@@ -26,7 +26,7 @@
       "type": "scatter"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "autosize": false,
     "width": 500,
     "height": 500,
@@ -40,4 +40,4 @@
     "paper_bgcolor": "#7f7f7f",
     "plot_bgcolor": "#c7c7c7"
   }
-}
+}}}

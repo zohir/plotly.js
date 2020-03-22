@@ -12051,7 +12051,7 @@
       "bingroup": "Y"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "width": 600,
     "height": 550,
@@ -12078,4 +12078,4 @@
     },
     "hovermode": "closest"
   }
-}
+}}}

@@ -30,7 +30,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "scene": {
             "camera": {
                 "eye": {
@@ -49,4 +49,4 @@
         "width": 1000,
         "autosize": true
     }
-}
+}}}

@@ -52,7 +52,7 @@
         "xaxis": "x2",
         "yaxis": "y2"
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
           "text": "textinfo: 'label' versus texttemplate: '%{label}'"
         },
@@ -70,4 +70,4 @@
           "ygap": 5
         }
     }
-}
+}}}

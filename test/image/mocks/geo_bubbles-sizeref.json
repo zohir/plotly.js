@@ -177,8 +177,8 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "scattergeo trace scaled bubbles",
         "showlegend": true
     }
-}
+}}}

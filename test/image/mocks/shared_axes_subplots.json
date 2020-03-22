@@ -59,7 +59,7 @@
       "type": "scatter"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "domain": [
         0,
@@ -99,4 +99,4 @@
       "anchor": "x4"
     }
   }
-}
+}}}

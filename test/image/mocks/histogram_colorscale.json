@@ -16,8 +16,8 @@
             "type": "histogram"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "height": 500,
         "width": 700
     }
-}
+}}}

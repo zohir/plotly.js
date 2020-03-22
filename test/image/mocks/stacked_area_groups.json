@@ -40,9 +40,9 @@
         "line": {"color": "#f0f"}, "fillcolor": "rgba(255,0,255,0.8)"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 500,
     "height": 450,
     "title": "Stack groups and unstacked filled traces"
   }
-}
+}}}

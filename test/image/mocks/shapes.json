@@ -11,7 +11,7 @@
         "xaxis":"x2",
         "yaxis":"y2"
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis":{"title":{"text":"linear"},"range":[0,1],"domain":[0.35,0.65],"type":"linear","showgrid":false,"zeroline":false,"showticklabels":false},
         "yaxis":{"title":{"text":"log"},"range":[0,1],"domain":[0.6,1],"type":"log","showgrid":false,"zeroline":false,"showticklabels":false},
         "xaxis2":{"title":{"text":"date"},"range":["2000-01-01","2000-01-02"],"domain":[0.7,1],"anchor":"y2","type":"date","showgrid":false,"zeroline":false,"showticklabels":false},
@@ -36,4 +36,4 @@
             {"layer":"above","xref":"paper","path":"M0.05,4C0.4,12 -0.1,12 0.25,4Z","fillcolor":"#a66"}
         ]
     }
-}
+}}}

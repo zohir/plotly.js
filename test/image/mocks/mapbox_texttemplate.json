@@ -22,7 +22,7 @@
     "customdata": [1780000, 2930000, 675218]
   }],
 
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 500,
     "height": 500,
     "title": {"text": "Mapbox with texttemplate"},
@@ -35,4 +35,4 @@
       "zoom": 1.5
     }
   }
-}
+}}}

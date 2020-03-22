@@ -82,7 +82,7 @@
             "type": "barpolar"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "height": 600,
         "width": 600,
         "showlegend": false,
@@ -104,4 +104,4 @@
             "domain": {"row": 1, "column": 1}
         }
     }
-}
+}}}

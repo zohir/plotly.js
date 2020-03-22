@@ -152,7 +152,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "domain": [0, 0.45],
       "title": "linear"
@@ -175,4 +175,4 @@
     "width": 600,
     "height": 600
   }
-}
+}}}

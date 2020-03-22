@@ -46,7 +46,7 @@
             "mode": "markers"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "scatter3d + colorbar = <3"
     }
-}
+}}}

@@ -96,7 +96,7 @@
       "yanchor": "bottom"
     }
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": {
       "text": "Multi-category heatmap/contour",
       "x": 0,
@@ -110,4 +110,4 @@
       "side": "right"
     }
   }
-}
+}}}

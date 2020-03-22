@@ -11,7 +11,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Editable line shapes",
     "autosize": false,
     "width": 1000,
@@ -223,4 +223,4 @@
   "config": {
     "editable": "true"
   }
-}
+}}}

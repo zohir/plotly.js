@@ -33,7 +33,7 @@
     "subplot": "polar2"
   }],
 
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "polar": {
       "domain": {
@@ -65,4 +65,4 @@
       }
     }
   }
-}
+}}}

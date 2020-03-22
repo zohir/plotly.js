@@ -54,7 +54,7 @@
       "subplot": "polar6"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "polar": {
       "gridshape": "linear",
       "domain": {
@@ -138,4 +138,4 @@
     "margin": {"l": 40, "r": 40, "b": 60, "t": 20, "pad": 0},
     "showlegend": false
   }
-}
+}}}

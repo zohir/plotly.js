@@ -13,9 +13,9 @@
       "line": {"width": 5}
     }
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "polar": {"barmode": "overlay"},
     "width": 500,
     "height": 500
   }
-}
+}}}

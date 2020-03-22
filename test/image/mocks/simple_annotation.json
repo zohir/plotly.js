@@ -51,7 +51,7 @@
       "type": "scatter"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "annotations": [
       {
@@ -67,4 +67,4 @@
       }
     ]
   }
-}
+}}}

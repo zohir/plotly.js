@@ -5,7 +5,7 @@
         "y":[1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5,1,2,3,4,5],
         "mode":"markers"
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "yaxis":{"autorange":false,"range":[1,5],"showgrid":false,"zeroline":false,"showticklabels":false},
         "xaxis":{"autorange":false,"range":[1,5],"showgrid":false,"zeroline":false,"showticklabels":false},
         "height":500,
@@ -52,4 +52,4 @@
             {"text":"","showarrow":true,"borderwidth":1.2,"startstandoff":5,"standoff":7,"arrowside":"none","axref":"x","ayref":"y","x":2,"y":3,"ax":2,"ay":4}
         ]
     }
-}
+}}}

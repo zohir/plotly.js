@@ -36,8 +36,8 @@
       }
     }
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": {"text": "Traces with set <b>cmid</b> / <b>zmid</b>"},
     "showlegend": false
   }
-}
+}}}

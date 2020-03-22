@@ -121,7 +121,7 @@
       "cheaterslope": 10
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Cheaterslope with titles and no tick labels",
     "width": 600,
     "height": 800,
@@ -228,4 +228,4 @@
       }
     ]
   }
-}
+}}}

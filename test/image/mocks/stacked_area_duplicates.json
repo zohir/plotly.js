@@ -31,7 +31,7 @@
         "xaxis": "x2", "yaxis": "y2", "stackgaps": "interpolate"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 500,
     "height": 500,
     "title": "Duplicate positions",
@@ -39,4 +39,4 @@
     "xaxis2": {"title": "interpolate"},
     "grid": {"columns": 1, "rows": 2, "pattern": "independent"}
   }
-}
+}}}

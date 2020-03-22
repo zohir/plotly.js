@@ -767,8 +767,8 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 600,
     "height": 600
   }
-}
+}}}

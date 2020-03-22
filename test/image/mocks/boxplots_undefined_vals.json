@@ -309,7 +309,7 @@
          "name":"Course Grade"
       }
    ],
-   "layout":{
+   "layout": { "template": { "layout":{
       "showlegend":false,
       "yaxis":{
          "title":"Grade [%]",
@@ -323,4 +323,4 @@
       "width":1080,
       "autosize":true
    }
-}
+}}}

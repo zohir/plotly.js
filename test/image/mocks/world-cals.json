@@ -352,7 +352,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "calendar": "ummalqura",
             "title": "ummalqura axis",
@@ -426,4 +426,4 @@
             "autorange": true
         }
     }
-}
+}}}

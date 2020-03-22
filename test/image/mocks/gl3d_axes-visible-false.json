@@ -5,7 +5,7 @@
     "y": [1, 2, 3],
     "z": [1, 2, 0]
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "scene": {
       "xaxis": { "visible": false },
       "yaxis": { "visible": false },
@@ -19,4 +19,4 @@
       }
     }
   }
-}
+}}}

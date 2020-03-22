@@ -19,7 +19,7 @@
             "type": "scatterternary"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "ternary": {
             "aaxis": {
                 "showline": true,
@@ -47,4 +47,4 @@
         "height": 450,
         "width": 700
     }
-}
+}}}

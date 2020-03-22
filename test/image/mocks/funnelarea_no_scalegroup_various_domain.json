@@ -118,7 +118,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "hiddenlabels": ["1", "4"],
         "width": 800,
         "height": 800,
@@ -134,4 +134,4 @@
             { "type": "rect", "layer": "below", "x0": 0.8, "x1": 1, "y0": 0.8, "y1": 1 }
         ]
     }
-}
+}}}

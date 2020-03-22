@@ -20,7 +20,7 @@
       "type": "scatter3d"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "yaxis": {
       "type": "linear",
       "ticks": "outside",
@@ -84,4 +84,4 @@
     "showlegend": false,
     "dragmode": "pan"
   }
-}
+}}}

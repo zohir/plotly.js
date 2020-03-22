@@ -112,7 +112,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Canadian cities",
         "font": {},
         "titlefont": {
@@ -140,4 +140,4 @@
         "height": 600,
         "showlegend": false
     }
-}
+}}}

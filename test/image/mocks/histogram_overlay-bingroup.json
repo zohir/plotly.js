@@ -124,9 +124,9 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "barmode": "overlay",
     "bargap": 0.1
   }
-}
+}}}

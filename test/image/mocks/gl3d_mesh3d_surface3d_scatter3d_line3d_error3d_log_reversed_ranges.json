@@ -93,7 +93,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 758,
     "width": 1310,
     "title": "X-axis using autorange:'reversed',Y-axis using range:[30,-5] & Z-axis using range:'reversed' & type:log",
@@ -132,4 +132,4 @@
       }
     }
   }
-}
+}}}

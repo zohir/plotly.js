@@ -7060,7 +7060,7 @@
       "sizeref": 0.2
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "scene": {
       "aspectratio": {
         "x": 2,
@@ -7078,4 +7078,4 @@
     "width": 700,
     "height": 500
   }
-}
+}}}

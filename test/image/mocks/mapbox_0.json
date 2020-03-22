@@ -35,7 +35,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "mapbox": {
       "style": "dark",
       "center": {
@@ -48,4 +48,4 @@
     "width": 1100,
     "autosize": true
   }
-}
+}}}

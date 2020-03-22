@@ -60,7 +60,7 @@
       "yaxis": "y4"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "boxmode": "group",
     "grid": {
       "rows": 4,
@@ -101,4 +101,4 @@
     "height": 800,
     "margin": {"b": 140}
   }
-}
+}}}

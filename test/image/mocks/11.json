@@ -114,7 +114,7 @@
             "type": "bar"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Grouped Bar Chart",
         "titlefont": {
             "color": "",
@@ -295,4 +295,4 @@
         "separators": ".,",
         "hidesources": false
     }
-}
+}}}

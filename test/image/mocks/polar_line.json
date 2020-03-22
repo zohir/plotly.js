@@ -676,7 +676,7 @@
       "type": "scatterpolar"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Mic Patterns",
     "font": {
       "family": "Arial, sans-serif",
@@ -704,4 +704,4 @@
     "showlegend": false,
     "paper_bgcolor": "rgb(255, 255, 255)"
   }
-}
+}}}

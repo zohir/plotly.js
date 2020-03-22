@@ -25,9 +25,9 @@
       "type": "funnelarea"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": true,
     "height": 400,
     "width": 600
   }
-}
+}}}

@@ -599,7 +599,7 @@
       "geo": "geo2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "geo": {
       "showland": true,
       "landcolor": "rgb(255, 255, 255)",
@@ -661,4 +661,4 @@
     "width": 800,
     "showlegend": false
   }
-}
+}}}

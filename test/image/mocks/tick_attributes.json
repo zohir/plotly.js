@@ -13,7 +13,7 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "tickwidth": 2,
             "tickcolor": "blue",
@@ -40,4 +40,4 @@
         "width": 1000,
         "autosize": true
     }
-}
+}}}

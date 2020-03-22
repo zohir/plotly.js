@@ -3462,7 +3462,7 @@
             "yaxis": "y1"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "autosize": false,
         "height": 500,
         "hovermode": "closest",
@@ -3579,4 +3579,4 @@
             "zeroline": false
         }
     }
-}
+}}}

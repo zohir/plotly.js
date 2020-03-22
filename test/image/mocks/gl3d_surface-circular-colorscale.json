@@ -988,7 +988,7 @@
       "cmax": 3.141592653589793
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "scene": {
       "aspectratio": {
         "x": 1,
@@ -1016,4 +1016,4 @@
     "width": 1745,
     "height": 878
   }
-}
+}}}

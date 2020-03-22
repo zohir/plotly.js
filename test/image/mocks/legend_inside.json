@@ -51,7 +51,7 @@
       "type": "scatter"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": true,
     "legend": {
       "x": 1,
@@ -59,4 +59,4 @@
       "xanchor": "auto"
     }
   }
-}
+}}}

@@ -1944,7 +1944,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "range": [
         "2559-01-10 14:24:21.917",
@@ -1972,4 +1972,4 @@
     "height": 600,
     "width": 1100
   }
-}
+}}}

@@ -35,7 +35,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "type": "category",
             "range": [
@@ -56,4 +56,4 @@
         "width": 1000,
         "autosize": true
     }
-}
+}}}

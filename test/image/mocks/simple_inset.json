@@ -29,7 +29,7 @@
       "type": "scatter"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "yaxis2": {
       "domain": [
         0.6,
@@ -45,4 +45,4 @@
       "anchor": "y2"
     }
   }
-}
+}}}

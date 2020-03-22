@@ -14,7 +14,7 @@
             "type": "scattergl"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "showlegend": false,
         "xaxis": {
             "autorange": true,
@@ -25,4 +25,4 @@
             "rangemode": "nonnegative"
         }
     }
-}
+}}}

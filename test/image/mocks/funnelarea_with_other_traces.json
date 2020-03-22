@@ -60,7 +60,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "hiddenlabels": ["B", "E"],
         "width": 800,
         "height": 800,
@@ -79,4 +79,4 @@
             ]
         }
     }
-}
+}}}

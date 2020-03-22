@@ -15,7 +15,7 @@
             "type": "histogram"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 600,
         "height": 400,
         "xaxis": {
@@ -28,4 +28,4 @@
         "plot_bgcolor": "rgb(229,229,229)",
         "bargap": 0.2
     }
-}
+}}}

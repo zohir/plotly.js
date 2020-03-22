@@ -16,7 +16,7 @@
       "type": "heatmap"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "domain": [ 0, 0.45 ],
       "range": [ 1, 2 ],
@@ -41,4 +41,4 @@
       "domain": [ 0.5, 1 ]
     }
   }
-}
+}}}

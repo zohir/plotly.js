@@ -42,7 +42,7 @@
       "type": "scatter"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "yaxis": {
       "domain": [
         0,
@@ -65,4 +65,4 @@
       ]
     }
   }
-}
+}}}

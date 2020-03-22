@@ -92,7 +92,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "yaxis": {
       "type": "linear"
     },
@@ -104,4 +104,4 @@
     "autosize": true,
     "showlegend": true
   }
-}
+}}}

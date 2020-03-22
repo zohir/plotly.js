@@ -54,7 +54,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "geo": {
       "center": { "lon": -86, "lat": 33 },
       "projection": {"scale": 30},
@@ -70,4 +70,4 @@
       "xanchor": "left"
     }
   }
-}
+}}}

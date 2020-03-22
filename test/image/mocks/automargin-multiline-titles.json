@@ -4,7 +4,7 @@
       "y": [1, 2, 1]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "automargin": true,
       "nticks": 3,
@@ -24,4 +24,4 @@
     "height": 400,
     "margin": {"l": 0, "t": 0, "r": 0, "b": 0}
   }
-}
+}}}

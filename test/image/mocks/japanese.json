@@ -18,7 +18,7 @@
             "type": "scatter"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Japanese font test for Kanji, Romaji, Katakana, and Hiragana",
         "titlefont": {
             "family": "",
@@ -254,4 +254,4 @@
             }
         ]
     }
-}
+}}}

@@ -55,7 +55,7 @@
             "name": "contour reversed scale"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "legend": {
             "orientation": "h",
             "title": {
@@ -120,4 +120,4 @@
             ]
         }
     }
-}
+}}}

@@ -11,9 +11,9 @@
       "type": "pie"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 400,
     "height": 400,
     "margin": {"autoexpand": false}
   }
-}
+}}}

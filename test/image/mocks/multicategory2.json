@@ -23,7 +23,7 @@
       "y": [0.63, 2.17, 3.11, 1.07, 3.08, 1.94, 2.55, 0.59]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "title": {"text": "MULTI-CATEGORY ON TOP"},
       "side": "top",
@@ -36,4 +36,4 @@
     "width": 400,
     "height": 800
   }
-}
+}}}

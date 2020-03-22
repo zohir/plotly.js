@@ -86,7 +86,7 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "domain": [
                 0,
@@ -186,4 +186,4 @@
         "width": 1000,
         "autosize": true
     }
-}
+}}}

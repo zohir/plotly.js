@@ -54,7 +54,7 @@
       "name": "connectgaps true"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "mapbox": {
       "style": "streets",
       "zoom": 1.5,
@@ -67,4 +67,4 @@
     "width": 1100,
     "autosize": true
   }
-}
+}}}

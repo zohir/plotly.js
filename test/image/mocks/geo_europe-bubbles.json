@@ -28,7 +28,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo": {
             "scope": "europe",
             "resolution": 50
@@ -37,4 +37,4 @@
         "height": 500,
         "showlegend": false
     }
-}
+}}}

@@ -82,7 +82,7 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "margin": {
             "t": 50,
             "b": 25,
@@ -92,4 +92,4 @@
         "width": 500,
         "height": 400
     }
-}
+}}}

@@ -11,7 +11,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "margin": {"l": 0, "r": 0, "t": 0, "b": 0},
     "grid": {"rows": 1, "columns": 2, "pattern": "independent"},
     "xaxis": {
@@ -32,4 +32,4 @@
     "width": 700,
     "height": 450
   }
-}
+}}}

@@ -61,7 +61,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "margin": {
       "l": 60,
       "r": 60,
@@ -72,4 +72,4 @@
     "width": 480,
     "showlegend": false
   }
-}
+}}}

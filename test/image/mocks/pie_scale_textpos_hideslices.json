@@ -79,11 +79,11 @@
       "textposition": "none"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 500,
     "width": 600,
     "showlegend": true,
     "font": {"size": 20},
     "hiddenlabels": ["x","y"]
   }
-}
+}}}

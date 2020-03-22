@@ -19,7 +19,7 @@
       "ygap": 1
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 450,
     "width": 650,
     "xaxis": {
@@ -29,4 +29,4 @@
       "type": "category"
     }
   }
-}
+}}}

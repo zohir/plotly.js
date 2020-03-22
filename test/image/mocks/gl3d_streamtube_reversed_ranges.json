@@ -13,7 +13,7 @@
       "cmax": 3
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 758,
     "width": 1310,
     "title": "Streamtube, X and Y axes reversed using autorange: reversed, Z-axis reversed using range: [2, -2]",
@@ -39,4 +39,4 @@
       }
     }
   }
-}
+}}}

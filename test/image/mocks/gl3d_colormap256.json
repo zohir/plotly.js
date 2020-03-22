@@ -1033,9 +1033,9 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 500,
         "height": 500,
         "title": { "text": "256 colormap" }
     }
-}
+}}}

@@ -31,7 +31,7 @@
       "subplot": "polar"
   }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "width": 600,
     "height": 300,
@@ -58,4 +58,4 @@
       "ygap": 5
     }
   }
-}
+}}}

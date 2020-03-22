@@ -17,7 +17,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "ternary": {
       "sum": 100,
       "aaxis": {
@@ -54,4 +54,4 @@
       }
     ]
   }
-}
+}}}

@@ -40,7 +40,7 @@
       "fill": "toself"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "polar": {
       "domain": {
         "x": [0, 0.46],
@@ -100,4 +100,4 @@
     "height": 550,
     "margin": {"l": 40, "r": 40, "b": 60, "t": 20, "pad": 0}
   }
-}
+}}}

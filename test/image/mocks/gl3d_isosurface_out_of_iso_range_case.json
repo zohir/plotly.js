@@ -266,7 +266,7 @@
             "z": 0
         }
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "No iso-surface would be created when one tries plotting data that cross from <i>isomax</i> to <i>isomin</i> with no values between.<br>In this example the slices are provided to illustrate the changes in <b>value</b> data array."
         },
@@ -285,4 +285,4 @@
             }
         }
     }
-}
+}}}

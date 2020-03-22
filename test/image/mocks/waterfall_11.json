@@ -59,7 +59,7 @@
             "type": "waterfall"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Grouped Waterfall Chart",
         "titlefont": {
             "color": "",
@@ -240,4 +240,4 @@
         "separators": ".,",
         "hidesources": false
     }
-}
+}}}

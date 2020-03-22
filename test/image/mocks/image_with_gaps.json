@@ -8,7 +8,7 @@
     ],
     "zmax": [1, 1, 1]
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 400, "height": 400, "title": {"text": "Image with missing pixels"}
   }
-}
+}}}

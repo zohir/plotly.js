@@ -46,7 +46,7 @@
       "name": "connectgaps true"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "geo": {
       "projection": {
         "type": "eckert4"
@@ -56,4 +56,4 @@
     "width": 1100,
     "autosize": true
   }
-}
+}}}

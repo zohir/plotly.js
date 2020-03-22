@@ -13,5 +13,5 @@
             "type": "sqrt"
         }
     }],
-    "layout": {}
-}
+    "layout": { "template": { "layout": {}
+}}}

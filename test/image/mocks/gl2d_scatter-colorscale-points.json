@@ -1229,9 +1229,9 @@
       "type": "scattergl"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 400,
     "width": 680,
     "showlegend": false
   }
-}
+}}}

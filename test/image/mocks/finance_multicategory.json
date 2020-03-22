@@ -25,7 +25,7 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": {
       "text": "Finance traces on multicategory x-axis",
       "xref": "paper",
@@ -38,4 +38,4 @@
       "yanchor": "bottom"
     }
   }
-}
+}}}

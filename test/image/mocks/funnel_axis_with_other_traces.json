@@ -149,7 +149,7 @@
             "yaxis": "y4"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "Should not see axis lines by default when there are only funnels!"
         },
@@ -211,4 +211,4 @@
             ]
         }
     }
-}
+}}}

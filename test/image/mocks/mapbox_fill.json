@@ -86,7 +86,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "mapbox": {
       "center": {
         "lon": -67,
@@ -99,4 +99,4 @@
     "width": 1100,
     "autosize": true
   }
-}
+}}}

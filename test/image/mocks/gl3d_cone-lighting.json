@@ -104,7 +104,7 @@
       "lightposition": {"x": 0, "y": 0, "z": 1e5}
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "scene": {
       "aspectmode": "data",
       "camera": {
@@ -115,4 +115,4 @@
     "height": 500,
     "margin": {"t": 0, "b": 0, "l": 0, "r": 0}
   }
-}
+}}}

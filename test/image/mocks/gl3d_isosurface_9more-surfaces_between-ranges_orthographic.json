@@ -2630,7 +2630,7 @@
             0.000, 0.042, 0.083, 0.125, 0.167, 0.208, 0.250, 0.292, 0.333, 0.375, 0.417, 0.458, 0.500, 0.542, 0.583, 0.625, 0.667, 0.708, 0.750, 0.792, 0.833, 0.875, 0.917, 0.958, 1.000
         ]
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "isosurface trace displaying multiple sections between iso-min and iso-max<br>displayed using orthographic projection"
         },
@@ -2660,4 +2660,4 @@
             }
         }
     }
-}
+}}}

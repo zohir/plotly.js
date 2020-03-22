@@ -171,7 +171,7 @@
             "name": "Exports"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "autosize": true,
         "title": {
             "text": "2011 US Agriculture Exports by State"
@@ -198,4 +198,4 @@
             "lakecolor": "rgb(255, 255, 255)"
         }
     }
-}
+}}}

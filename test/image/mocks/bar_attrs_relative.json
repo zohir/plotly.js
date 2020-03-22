@@ -30,7 +30,7 @@
             "type":"bar"
         }
     ],
-    "layout":{
+    "layout": { "template": { "layout":{
         "xaxis": {"showgrid":true},
         "yaxis": {"range":[-6,6]},
         "height":400,
@@ -38,4 +38,4 @@
         "barmode":"relative",
         "barnorm":false
     }
-}
+}}}

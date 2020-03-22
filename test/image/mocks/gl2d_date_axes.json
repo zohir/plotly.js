@@ -59,7 +59,7 @@
             "ycalendar": "taiwan"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "range": [
                 "2559-10-25 22:22:59.998",
@@ -74,4 +74,4 @@
             "title": "Mayan"
         }
     }
-}
+}}}

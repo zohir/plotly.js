@@ -122,7 +122,7 @@
             "textposition": "outside"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "Profit and loss statement 2018 vs 2019<br>waterfall chart"
         },
@@ -143,4 +143,4 @@
         "hovermode": "closest",
         "showlegend": true
     }
-}
+}}}

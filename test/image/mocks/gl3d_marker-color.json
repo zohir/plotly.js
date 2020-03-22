@@ -10,7 +10,7 @@
         "size": [10, 20, 30, 40]
       }
     }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Scatter3d with under-defined marker color array"
   }
-}
+}}}

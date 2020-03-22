@@ -7,7 +7,7 @@
             "type": "scatterternary"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "ternary": {
             "aaxis": {
                 "showticklabels": false,
@@ -28,4 +28,4 @@
         "height": 450,
         "width": 700
     }
-}
+}}}

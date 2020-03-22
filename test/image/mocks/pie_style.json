@@ -26,7 +26,7 @@
       "type": "pie"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 400,
     "width": 500,
     "paper_bgcolor": "#ddd",
@@ -55,4 +55,4 @@
         "layer": "above"
     }]
   }
-}
+}}}

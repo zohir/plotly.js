@@ -45,9 +45,9 @@
       "type":"scatter3d"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Markers should default to line color",
     "height":758,
     "width":1310
   }
-}
+}}}

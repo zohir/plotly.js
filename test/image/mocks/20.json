@@ -111,7 +111,7 @@
             "name": "x4y9"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "multiple axes example",
         "xaxis": {
             "domain": [
@@ -293,4 +293,4 @@
         "height": 600,
         "margin": {"r": 200, "l": 50, "t": 50, "b": 50, "pad": 5}
     }
-}
+}}}

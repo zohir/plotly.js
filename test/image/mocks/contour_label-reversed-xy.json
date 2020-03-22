@@ -88,7 +88,7 @@
       "yaxis": "y8"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "grid": {"rows": 4, "columns": 2, "pattern": "independent"},
 
     "template": {
@@ -109,4 +109,4 @@
     "width": 500,
     "height": 800
   }
-}
+}}}

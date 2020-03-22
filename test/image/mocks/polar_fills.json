@@ -30,7 +30,7 @@
     "hoveron": "fills",
     "subplot": "polar2"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "polar": {
       "domain": {
         "x": [0, 1],
@@ -54,4 +54,4 @@
     "width": 500,
     "height": 800
   }
-}
+}}}

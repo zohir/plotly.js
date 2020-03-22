@@ -11,7 +11,7 @@
       "showscale": false
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "scene": {
       "camera": {
         "eye": {
@@ -25,4 +25,4 @@
     "height": 500,
     "margin": {"t": 0, "b": 0, "l": 0, "r": 0}
   }
-}
+}}}

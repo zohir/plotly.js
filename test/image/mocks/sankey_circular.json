@@ -18,9 +18,9 @@
                 ]
             }
         }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Sankey with circular data",
         "width": 800,
         "height": 800
     }
-}
+}}}

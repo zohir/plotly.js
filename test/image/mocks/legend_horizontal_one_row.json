@@ -19,8 +19,8 @@
             "name": "this is a title"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Average Distribution per Month",
         "legend": { "orientation": "h" }
     }
-}
+}}}

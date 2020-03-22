@@ -24,7 +24,7 @@
     "yaxis": "y2",
     "coloraxis": "coloraxis"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "anchor": "y2",
       "domain": [0, 1],
@@ -51,4 +51,4 @@
         "colorscale": "RdBu"
     }
   }
-}
+}}}

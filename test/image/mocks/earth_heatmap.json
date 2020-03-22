@@ -2608,7 +2608,7 @@
       "zsmooth": "fast"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Earth"
   }
-}
+}}}

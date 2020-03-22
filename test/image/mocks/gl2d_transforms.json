@@ -67,9 +67,9 @@
             {"type": "groupby", "groups": [1, 1, 1, 2, 2, 2]}
         ]
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 600,
         "height": 400,
         "title": "Transforms on scattergl traces"
     }
-}
+}}}

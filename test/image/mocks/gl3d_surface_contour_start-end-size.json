@@ -120,7 +120,7 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Surface contours using start, end and size",
         "width": 900,
         "height": 600,
@@ -139,4 +139,4 @@
             }
         }
     }
-}
+}}}

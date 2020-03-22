@@ -50,7 +50,7 @@
       "yaxis": "y3"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
 	"barmode": "overlay",
 	"legend": {
       "x": 0.5,
@@ -106,4 +106,4 @@
 	"margin": {"t": 40},
 	"dragmode": "pan"
   }
-}
+}}}

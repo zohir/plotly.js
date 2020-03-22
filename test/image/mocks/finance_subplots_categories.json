@@ -63,11 +63,11 @@
         ],
         "name": "Box"
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {"domain": [0, 0.45], "title": "Date"},
         "xaxis2": {"domain": [0.55, 1], "title": "Category", "type": "category"},
         "width": 800,
         "height": 500,
         "boxgroupgap": 0
     }
-}
+}}}

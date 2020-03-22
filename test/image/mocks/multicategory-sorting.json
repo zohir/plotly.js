@@ -42,11 +42,11 @@
         "xaxis": "x4",
         "yaxis": "y4"
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "grid": {"rows": 2, "columns": 2, "pattern": "independent", "xgap": 0.1, "ygap": 0.15},
         "width": 700,
         "height": 400,
         "margin": {"l": 20, "b": 40, "t": 20, "r": 20},
         "showlegend": false
     }
-}
+}}}

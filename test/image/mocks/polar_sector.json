@@ -541,7 +541,7 @@
       "subplot": "polar20"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "margin": {
       "l": 40,
       "r": 40,
@@ -1172,4 +1172,4 @@
       }
     }
   }
-}
+}}}

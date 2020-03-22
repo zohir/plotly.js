@@ -57,7 +57,7 @@
       "geo": "geo14"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "grid": {
       "rows": 7,
       "columns": 2
@@ -261,4 +261,4 @@
       "showrivers": true
     }
   }
-}
+}}}

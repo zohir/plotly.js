@@ -1017,7 +1017,7 @@
             "geo": "geo2"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "autosize": false,
         "title": "Pure alcohol consumption among adults (age 15+) in 2010",
         "height": 700,
@@ -1037,4 +1037,4 @@
         },
         "showlegend": false
     }
-}
+}}}

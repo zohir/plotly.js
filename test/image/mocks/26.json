@@ -31184,7 +31184,7 @@
             "type": "scatter"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "A Century of Asteroid Flybys",
         "titlefont": {
             "color": "",
@@ -31328,4 +31328,4 @@
         "separators": ".,",
         "hidesources": false
     }
-}
+}}}

@@ -37,7 +37,7 @@
       "type": "scatter3d", "mode": "lines", "line": {"width": 10}
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 1200,
     "height": 900,
     "scene": {
@@ -69,4 +69,4 @@
       }
     }
   }
-}
+}}}

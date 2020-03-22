@@ -103,7 +103,7 @@
       "value": 450
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 750,
     "height": 500,
     "paper_bgcolor": "black",
@@ -188,4 +188,4 @@
   "config": {
     "responsive": true
   }
-}
+}}}

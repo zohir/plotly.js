@@ -65,7 +65,7 @@
       "xaxis": "x2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "violinmode": "group",
     "showlegend": false,
     "grid": {
@@ -86,4 +86,4 @@
       }
     }
   }
-}
+}}}

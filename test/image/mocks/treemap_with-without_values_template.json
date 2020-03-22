@@ -365,7 +365,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "treemapcolorway": [
             "#700",
             "#077"
@@ -431,4 +431,4 @@
             }
         ]
     }
-}
+}}}

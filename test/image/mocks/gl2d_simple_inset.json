@@ -29,7 +29,7 @@
             "type": "scattergl"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 700,
         "height": 500,
         "yaxis2": {
@@ -47,4 +47,4 @@
             "anchor": "y2"
         }
     }
-}
+}}}

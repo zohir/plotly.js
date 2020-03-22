@@ -129172,7 +129172,7 @@
       "text": "-> wind <-"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "scene": {
       "aspectratio": {
         "x": 1,
@@ -129181,4 +129181,4 @@
       }
     }
   }
-}
+}}}

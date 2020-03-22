@@ -95,7 +95,7 @@
       "type": "bar"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "US Export of Plastic Scrap",
     "xaxis": {
       "tickfont": {
@@ -124,4 +124,4 @@
     "bargap": 0.15,
     "bargroupgap": 0.1
   }
-}
+}}}

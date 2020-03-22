@@ -52,7 +52,7 @@
     "dtheta": 2,
     "thetaunit": "radians"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 500,
     "height": 800,
     "margin": {"l": 200, "t": 20, "b": 20},
@@ -74,4 +74,4 @@
       }
     }
   }
-}
+}}}

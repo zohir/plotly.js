@@ -20,9 +20,9 @@
             "type": "scattergl"
         }
     ],
-    "layout":{
+    "layout": { "template": { "layout":{
         "title": "Fill toself and tonext",
         "width": 400,
         "height": 400
     }
-}
+}}}

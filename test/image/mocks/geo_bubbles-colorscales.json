@@ -269,8 +269,8 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "scattergeo trace with colorscales for both marker color and marker line color",
         "showlegend": true
     }
-}
+}}}

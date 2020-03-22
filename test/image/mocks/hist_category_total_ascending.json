@@ -19,7 +19,7 @@
     "xaxis": "x2",
     "yaxis": "y2"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "categoryorder: \"total ascending\"",
     "height": 400,
     "width": 600,
@@ -36,4 +36,4 @@
       "categoryorder": "total ascending"
     }
   }
-}
+}}}

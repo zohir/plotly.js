@@ -7165,7 +7165,7 @@
       "colorscale": "Viridis"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "scene": {
       "camera": {
         "eye": { "x": -1.4, "y": -0.15, "z": 1.6 }
@@ -7174,4 +7174,4 @@
     "width": 700,
     "height": 500
   }
-}
+}}}

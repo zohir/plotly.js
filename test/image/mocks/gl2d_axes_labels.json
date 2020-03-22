@@ -51,7 +51,7 @@
             "type": "scattergl"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "tickfont": {
                 "color": "black",
@@ -87,4 +87,4 @@
             "exponentformat": "e"
         }
     }
-}
+}}}

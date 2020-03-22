@@ -16,7 +16,7 @@
       "opacity": 0.4
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Connect gaps + line opacity test"
   }
-}
+}}}

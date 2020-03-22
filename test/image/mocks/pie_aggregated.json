@@ -32,8 +32,8 @@
         "textinfo": "label+value+percent"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 300,
     "width": 500
   }
-}
+}}}

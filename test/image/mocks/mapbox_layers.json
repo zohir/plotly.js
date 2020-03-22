@@ -27,7 +27,7 @@
       "subplot": "mapbox2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "mapbox": {
       "domain": {"x": [0, 0.48], "y": [0, 1]},
       "style": "light",
@@ -582,4 +582,4 @@
     "height": 450,
     "width": 900
   }
-}
+}}}

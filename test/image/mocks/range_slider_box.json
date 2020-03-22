@@ -581,7 +581,7 @@
             "type": "box"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Spectral Box Plot with Range Slider",
         "titlefont": {
             "size": 18
@@ -607,4 +607,4 @@
         "paper_bgcolor": "rgb(233, 233, 233)",
         "plot_bgcolor": "rgb(233, 233, 233)"
     }
-}
+}}}

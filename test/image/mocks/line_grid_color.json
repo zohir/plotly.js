@@ -13,7 +13,7 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "linecolor": "rgb(10, 10, 10)",
             "gridcolor": "rgb(200, 200, 200)",
@@ -40,4 +40,4 @@
         "width": 1000,
         "autosize": true
     }
-}
+}}}

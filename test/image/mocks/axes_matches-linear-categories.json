@@ -25,7 +25,7 @@
       "yaxis": "y3"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "xaxis": {
       "title": {
@@ -62,4 +62,4 @@
       "matches": "y2"
     }
   }
-}
+}}}

@@ -417,6 +417,6 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
   }
-}
+}}}

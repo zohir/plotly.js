@@ -57,7 +57,7 @@
       "reference": 20
     }
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "paper_bgcolor": "orange",
     "width": 400,
     "height": 100,
@@ -108,4 +108,4 @@
       "fill": "rgba(0,0,0,0)"
     }]
   }
-}
+}}}

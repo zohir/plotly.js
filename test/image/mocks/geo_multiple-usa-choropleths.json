@@ -222,7 +222,7 @@
             "type": "choropleth"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 1080,
         "height": 598,
         "title": "Executions by U.S. State Since 1819",
@@ -233,4 +233,4 @@
             }
         }
     }
-}
+}}}

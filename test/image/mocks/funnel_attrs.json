@@ -40,9 +40,9 @@
             "type": "funnel", "orientation": "v"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": { "showgrid": true },
         "height": 800,
         "width": 800
     }
-}
+}}}

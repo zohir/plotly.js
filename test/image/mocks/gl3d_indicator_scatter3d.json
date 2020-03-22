@@ -24,7 +24,7 @@
       "color": "rgba(125, 125, 125, 0.1)"
     }
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 400,
     "height": 300,
     "scene": {
@@ -49,4 +49,4 @@
   "config": {
     "responsive": true
   }
-}
+}}}

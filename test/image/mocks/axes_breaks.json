@@ -57,7 +57,7 @@
       "yaxis": "y4"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "grid": { "rows": 2, "columns": 2, "pattern": "independent" },
     "yaxis": {
       "rangebreaks": [
@@ -110,4 +110,4 @@
     "width": 700,
     "height": 600
   }
-}
+}}}

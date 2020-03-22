@@ -105,7 +105,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "waterfall chart with bar chart"
         },
@@ -121,4 +121,4 @@
         "bargap": 0,
         "waterfallgap": 0.4
     }
-}
+}}}

@@ -16,7 +16,7 @@
         }
     }],
 
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "showgrid": false,
             "zeroline": true,
@@ -27,4 +27,4 @@
             "nticks": 24
         }
     }
-}
+}}}

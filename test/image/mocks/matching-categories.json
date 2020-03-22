@@ -29,7 +29,7 @@
       "yaxis": "y4"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "domain": [ 0, 0.2 ]
     },
@@ -89,4 +89,4 @@
       }
     ]
   }
-}
+}}}

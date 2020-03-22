@@ -18,7 +18,7 @@
 	                "error_x": {"value": 0.4, "type": "constant","color":"#028"},
 			"error_y": {"value": 0.3, "type": "constant","color":"#820"},
 		        "marker": {"color": "#060"},"line": {"color": "#030"}
-		},{	
+		},{
 			"type": "scatter",
 			"y": [2, 3, 2,  0],
 			"xaxis": "x2", "yaxis": "y2" ,
@@ -53,7 +53,7 @@
 	                "error_x": {"value": 0.4, "type": "constant","color":"#028"},
 			"error_y": {"value": 0.3, "type": "constant","color":"#820"},
 			"marker": {"color": "#060"},"line": {"color": "#030"}
-		},{	
+		},{
 			"type": "scatter",
 		         "y": [2, 3, 2,  0],
 			"fill": "tozeroy", "xaxis": "x4", "yaxis": "y4" ,
@@ -70,17 +70,17 @@
 			"error_y": {"value": 0.3, "type": "constant","color":"#820"},
 			"marker": {"color": "#660"},"line": {"color": "#330"}
 		}],
-    "layout": {
+    "layout": { "template": { "layout": {
 	"width": 800,"height": 800,
 	"margin": {"l": 100, "r": 100, "t": 100, "b": 100},
 	"grid": {"columns": 2, "rows": 2, "pattern": "independent", "roworder": "bottom to top"} ,
 	"xaxis" : { "title": "GL" , "type": "linear", "rangemode": "tozero", "nticks": 3 },
 	"xaxis2": { "title": "" , "type": "linear", "rangemode": "tozero", "nticks": 3 },
 	"xaxis3": { "title": "GL" , "type": "linear", "rangemode": "tozero", "nticks": 3 },
-	"xaxis4": { "title": "" , "type": "linear", "rangemode": "tozero", "nticks": 3 },	
+	"xaxis4": { "title": "" , "type": "linear", "rangemode": "tozero", "nticks": 3 },
 	"yaxis" : { "title": "GL" , "type": "linear", "range": [-1,5], "nticks": 3 },
 	"yaxis2": { "title": "" , "type": "linear", "range": [-1,5], "nticks": 3 },
 	"yaxis3": { "title": "GL" , "type": "linear", "range": [-1,5], "nticks": 3 },
-	"yaxis4": { "title": "" , "type": "linear", "range": [-1,5], "nticks": 3 }		
+	"yaxis4": { "title": "" , "type": "linear", "range": [-1,5], "nticks": 3 }
     }
-}
+}}}

@@ -25,7 +25,7 @@
         "yaxis": "y2",
         "colorbar": {"title": "He^{i\\pi}=-1H", "y": 0.225, "len": 0.45}
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "yaxis":{"domain": [0, 0.45], "title": "$y=\\sin{2 \\theta}$"},
         "xaxis":{
             "domain": [0, 0.45],
@@ -74,4 +74,4 @@
             }
         ]
     }
-}
+}}}

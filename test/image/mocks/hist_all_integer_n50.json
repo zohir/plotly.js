@@ -4,5 +4,5 @@
         "type":"histogram",
         "nbinsx":50
     }],
-    "layout":{"height":300,"width":400}
-}
+    "layout": { "template": { "layout":{"height":300,"width":400}
+}}}

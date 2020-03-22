@@ -23,7 +23,7 @@
             "xaxis": "x3"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "domain": [
                 0,
@@ -44,4 +44,4 @@
         },
         "hovermode": "y"
     }
-}
+}}}

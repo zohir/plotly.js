@@ -51,7 +51,7 @@
             "type": "scattergl"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "showticklabels": false,
             "ticks": "",
@@ -71,4 +71,4 @@
             "autorange": true
         }
     }
-}
+}}}

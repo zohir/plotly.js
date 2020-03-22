@@ -11591,7 +11591,7 @@
             "coloraxis": "coloraxis"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Ribbon Plot 1",
         "autosize": false,
         "width": 800,
@@ -11603,4 +11603,4 @@
             "t": 100
         }
     }
-}
+}}}

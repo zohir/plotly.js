@@ -193,7 +193,7 @@
             "locationmode": "USA-states"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "autosize": true,
         "title": "2011 US Agriculture Exports by State<br>(Hover for breakdown)",
         "showlegend": false,
@@ -208,4 +208,4 @@
             "lakecolor": "rgb(255, 255, 255)"
         }
     }
-}
+}}}

@@ -23,7 +23,7 @@
         "title": "for colorscale + intensity tetrahedra",
         "titleside": "right"
       }
-    }, 
+    },
     {
       "type":"mesh3d",
       "name": "facecolor",
@@ -68,7 +68,7 @@
       "color": "rgb(0, 255, 0)"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Tetrahedra",
     "scene": {
         "aspectratio": {
@@ -86,4 +86,4 @@
     },
     "width": 1000
   }
-}
+}}}

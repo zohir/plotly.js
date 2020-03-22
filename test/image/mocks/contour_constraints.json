@@ -123,11 +123,11 @@
     "name": "> -8",
     "xaxis": "x2"
   }],
-  "layout":{
+  "layout": { "template": { "layout":{
     "xaxis": {"domain": [0, 0.4444]},
     "xaxis2": {"domain": [0.5556, 1]},
     "height": 500,
     "width":1100,
     "margin": {"l": 50, "r": 150, "t": 50, "b": 50, "autoexpand": false}
   }
-}
+}}}

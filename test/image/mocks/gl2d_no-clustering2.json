@@ -136771,7 +136771,7 @@
       "opacity": 0.03125
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": {
       "text": "Missing data points"
     },
@@ -136794,4 +136794,4 @@
       "autorange": true
     }
   }
-}
+}}}

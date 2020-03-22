@@ -50,7 +50,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Multiple Sankey plots with circular links",
         "width": 800,
         "height": 300,
@@ -62,4 +62,4 @@
         },
         "showlegend": false
     }
-}
+}}}

@@ -270,7 +270,7 @@
          "notched":true
       }
    ],
-   "layout":{
+   "layout": { "template": { "layout":{
       "showlegend":false,
       "xaxis":{
          "title":"Grade [%]",
@@ -287,4 +287,4 @@
       },
       "autosize":true
    }
-}
+}}}

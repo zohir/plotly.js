@@ -18,7 +18,7 @@
             "reversescale": true
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "reverse auto colorscale",
         "xaxis": {
             "type": "linear",
@@ -41,4 +41,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

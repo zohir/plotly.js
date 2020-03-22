@@ -5,7 +5,7 @@
     "y": ["A", "B", "C"],
     "z": [1, 1e3, 1e5]
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "scene": {
       "camera": {
         "eye": {"x": 2.1, "y": 0.1, "z": 0.9}
@@ -26,4 +26,4 @@
       }
     }
   }
-}
+}}}

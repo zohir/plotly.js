@@ -12,10 +12,10 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 602,
     "width": 592,
     "margin": {
       "l": 40, "r": 40, "t": 50, "b": 40
     }}
-}
+}}}

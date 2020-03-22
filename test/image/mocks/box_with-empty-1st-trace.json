@@ -23,5 +23,5 @@
             "boxpoints": "all"
         }
     ],
-    "layout": {}
-}
+    "layout": { "template": { "layout": {}
+}}}

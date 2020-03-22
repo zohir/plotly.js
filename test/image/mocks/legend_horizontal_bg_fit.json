@@ -8,11 +8,11 @@
     { "y": [ 6 ], "name": "F" },
     { "y": [ 7 ], "name": "G" }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "legend": {
       "bgcolor": "red",
       "orientation": "h"
     },
     "width": 600
   }
-}
+}}}

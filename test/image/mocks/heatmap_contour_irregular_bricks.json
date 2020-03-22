@@ -21,7 +21,7 @@
             "yaxis": "y2"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "heatmap and contour map with irregular bricks",
         "xaxis": {"domain": [0, 0.4]},
         "xaxis2": {"domain": [0.6, 1]},
@@ -29,4 +29,4 @@
         "height": 400,
         "width": 800
     }
-}
+}}}

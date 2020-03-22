@@ -150,7 +150,7 @@
             "yaxis": "y4"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 800,
         "height": 800,
         "dragmode": "pan",
@@ -209,4 +209,4 @@
             ]
         }
     }
-}
+}}}

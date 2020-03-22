@@ -51,7 +51,7 @@
             "yaxis": "y2"
         }
     ]
-    ,"layout": {
+    ,"layout": { "template": { "layout": {
         "width": 600,
         "height": 1200,
         "xaxis": {
@@ -67,4 +67,4 @@
             "domain": [ 0.445, 0.45 ]
         }
     }
-}
+}}}

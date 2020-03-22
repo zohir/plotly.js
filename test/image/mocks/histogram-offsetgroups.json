@@ -57,7 +57,7 @@
       "text": "offsetgroup: 4"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "grid": {
       "rows": 2,
@@ -77,4 +77,4 @@
       }
     }
   }
-}
+}}}

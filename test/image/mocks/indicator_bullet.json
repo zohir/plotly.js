@@ -118,7 +118,7 @@
     },
     "value": 220
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 600,
     "height": 250,
     "margin": {
@@ -165,4 +165,4 @@
   "config": {
     "responsive": true
   }
-}
+}}}

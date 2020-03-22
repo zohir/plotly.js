@@ -177,7 +177,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "scatter trace with colorscales for both marker color and marker line color",
         "xaxis": {
             "type": "linear",
@@ -200,4 +200,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

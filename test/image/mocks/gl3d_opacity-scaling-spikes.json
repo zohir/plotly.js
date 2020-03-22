@@ -2996,7 +2996,7 @@
       "type": "scatter3d"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 500,
     "autosize": false,
     "margin": {
@@ -3025,4 +3025,4 @@
       }
     }
   }
-}
+}}}

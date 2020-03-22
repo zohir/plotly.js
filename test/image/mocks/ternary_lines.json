@@ -316,7 +316,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "ternary": {
             "aaxis": {
                 "title": "Clay",
@@ -384,4 +384,4 @@
         "height": 450,
         "autosize": false
     }
-}
+}}}

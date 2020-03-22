@@ -59,11 +59,11 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 400,
         "height": 400,
         "title": {
             "text": "Should not select out of range values"
         }
     }
-}
+}}}

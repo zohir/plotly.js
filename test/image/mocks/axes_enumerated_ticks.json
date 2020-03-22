@@ -19,7 +19,7 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "yaxis": {
             "type": "log",
             "tickvals": [
@@ -47,4 +47,4 @@
             ]
         }
     }
-}
+}}}

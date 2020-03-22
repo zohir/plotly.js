@@ -150,7 +150,7 @@
     "name": "volume",
     "scene": "scene10"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "margin": {
       "t": 0,
       "b": 0,
@@ -242,4 +242,4 @@
       "camera": { "eye": { "x": 2, "y": -3, "z": 1 } }
     }
   }
-}
+}}}

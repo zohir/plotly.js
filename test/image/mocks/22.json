@@ -765,7 +765,7 @@
             "type": "histogram2d"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Click to enter Plot title",
         "titlefont": {
             "color": "",
@@ -913,4 +913,4 @@
         "separators": ".,",
         "hidesources": false
     }
-}
+}}}

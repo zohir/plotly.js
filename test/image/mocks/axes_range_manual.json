@@ -60,7 +60,7 @@
       "mode": "lines"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "range": [
         2,
@@ -74,4 +74,4 @@
       ]
     }
   }
-}
+}}}

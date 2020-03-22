@@ -33,8 +33,8 @@
       "mode": "lines+markers"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "margin": {"l": 40, "r": 50, "b": 80, "t": 40},
     "legend": {"orientation": "h", "x": "0.5", "xanchor": "center"}
   }
-}
+}}}

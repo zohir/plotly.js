@@ -78,9 +78,9 @@
     }
 
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Color array for lines, and explicit color for markers",
     "height":758,
     "width":1310
   }
-}
+}}}

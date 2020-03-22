@@ -8,7 +8,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "tick label prefix and suffix",
         "xaxis": {
             "tickprefix": "-> ",
@@ -21,4 +21,4 @@
             "showticksuffix": "last"
         }
     }
-}
+}}}

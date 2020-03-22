@@ -65,7 +65,7 @@
             "type": "funnel", "orientation": "v"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Grouped Funnel Chart",
         "titlefont": {
             "color": "",
@@ -246,4 +246,4 @@
         "separators": ".,",
         "hidesources": false
     }
-}
+}}}

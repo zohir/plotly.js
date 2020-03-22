@@ -3650,7 +3650,7 @@
             "z": 0
         }
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "isosurface trace",
         "width": 1200,
         "height": 900,
@@ -3667,4 +3667,4 @@
             }
         }
     }
-}
+}}}

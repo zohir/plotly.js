@@ -721,7 +721,7 @@
             "type": "box"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Spectral<br>Box Plot",
         "titlefont": {
             "color": "",
@@ -868,4 +868,4 @@
         "separators": ".,",
         "hidesources": false
     }
-}
+}}}

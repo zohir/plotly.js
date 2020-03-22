@@ -26,7 +26,7 @@
       "pathbar": {"visible": false}
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "annotations": [{
       "showarrow": false,
       "text": "branchvalues: <b>remainder</b>",
@@ -46,4 +46,4 @@
 
     "paper_bgcolor": "#d3d3d3"
   }
-}
+}}}

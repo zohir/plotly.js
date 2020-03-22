@@ -11,8 +11,8 @@
       "type": "bar"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 400,
     "height": 400
   }
-}
+}}}

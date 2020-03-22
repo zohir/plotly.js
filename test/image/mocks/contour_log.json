@@ -64,7 +64,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {"domain": [0, 0.45]},
     "xaxis2": {"domain": [0.55, 1], "type": "log"},
     "yaxis": {"domain": [0, 0.45]},
@@ -73,4 +73,4 @@
     "width": 500,
     "height": 400
   }
-}
+}}}

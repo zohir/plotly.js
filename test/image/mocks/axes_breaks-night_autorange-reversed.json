@@ -185,7 +185,7 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "showlegend": false,
         "width": 800,
         "height": 800,
@@ -282,4 +282,4 @@
             ]
         }
     }
-}
+}}}

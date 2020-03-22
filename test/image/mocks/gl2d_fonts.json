@@ -18,7 +18,7 @@
             "type": "scattergl"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Click to enter Plot title",
         "titlefont": {
             "family": "",
@@ -467,4 +467,4 @@
         "boxgroupgap": 0.3,
         "hidesources": false
     }
-}
+}}}

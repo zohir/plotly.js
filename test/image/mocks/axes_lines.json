@@ -51,7 +51,7 @@
       "type": "scatter"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "zerolinewidth": 4,
       "gridwidth": 2,
@@ -77,4 +77,4 @@
       "linewidth": 6
     }
   }
-}
+}}}

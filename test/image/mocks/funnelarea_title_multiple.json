@@ -135,9 +135,9 @@
       "textinfo": "none"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "U.S. Imports for Platinum-group Metals",
     "height": 400,
     "width": 500
   }
-}
+}}}

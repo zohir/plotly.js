@@ -686,7 +686,7 @@
             "type": "scatter"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Mic Patterns",
         "font": {
             "family": "Arial, sans-serif",
@@ -708,4 +708,4 @@
         "orientation": -90,
         "needsEndSpacing": false
     }
-}
+}}}

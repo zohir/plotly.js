@@ -7,9 +7,9 @@
             "fill": "tozeroy"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 400,
         "height": 300,
         "showlegend": false
     }
-}
+}}}

@@ -105,7 +105,7 @@
     "name": "volume",
     "scene": "scene8"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "paper_bgcolor": "rgba(0,0,255, 0.5)",
     "margin": {
       "t": 0,
@@ -172,4 +172,4 @@
       "camera": { "eye": { "x": 1.5, "y": 3, "z": 1 } }
     }
   }
-}
+}}}

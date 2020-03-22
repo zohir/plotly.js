@@ -7290,7 +7290,7 @@
             "yaxis": "y"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "annotations": [
             {
                 "x": 0.5175,
@@ -7439,4 +7439,4 @@
             "zerolinewidth": 1
         }
     }
-}
+}}}

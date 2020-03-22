@@ -37,7 +37,7 @@
             "textposition": "top right"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Big frame / up-side down map",
         "geo": {
             "projection": {
@@ -54,4 +54,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

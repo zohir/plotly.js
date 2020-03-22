@@ -29,10 +29,10 @@
       "type": "bar"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "type": "category"
     },
     "barmode": "group"
   }
-}
+}}}

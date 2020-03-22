@@ -116,7 +116,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 600,
         "height": 400,
         "xaxis": { "nticks": 20 },
@@ -125,4 +125,4 @@
             "text": "Should not display alpha<br>when having rgb not rgba"
         }
     }
-}
+}}}

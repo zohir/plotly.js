@@ -11,11 +11,11 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "rangebreaks": [
         { "values": [ "2020-01-03 23:59:59", "2020-01-05" ] }
       ]
     }
   }
-}
+}}}

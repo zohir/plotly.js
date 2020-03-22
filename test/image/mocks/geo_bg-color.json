@@ -44,7 +44,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "COLOURED GEOS",
         "geo": {
             "projection": {
@@ -83,4 +83,4 @@
         "autosize": true,
         "showlegend": true
     }
-}
+}}}

@@ -12,7 +12,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "plot_bgcolor": "rgba(0,0,0,0)",
     "xaxis2": {
         "anchor": "y2"
@@ -101,4 +101,4 @@
     "width": 800,
     "height": 500
   }
-}
+}}}

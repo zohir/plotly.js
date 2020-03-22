@@ -161,7 +161,7 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "geo": {
       "showland": true,
       "landcolor": "rgb(163,213,235)",
@@ -178,4 +178,4 @@
       "text": "Number of artists by country or region"
     }
   }
-}
+}}}

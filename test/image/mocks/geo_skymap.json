@@ -4895,7 +4895,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": {
       "text": "Sky map of the stars with Magnitude <= 5<br>(from the Bright Star Catalogue, 5th Revised Ed. [Hoffleit+, 1991])"
     },
@@ -4926,4 +4926,4 @@
       "showsubunits": false
     }
   }
-}
+}}}

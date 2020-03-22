@@ -22,7 +22,7 @@
             "zmax": 100
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo": {
             "projection": {
                 "type": "mollweide",
@@ -54,4 +54,4 @@
         "height": 500,
         "showlegend": false
     }
-}
+}}}

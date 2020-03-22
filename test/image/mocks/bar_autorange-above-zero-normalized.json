@@ -11,9 +11,9 @@
       "type": "bar"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "barnorm": "percent",
     "width": 400,
     "height": 400
   }
-}
+}}}

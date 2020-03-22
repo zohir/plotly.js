@@ -936,7 +936,7 @@
       "type": "parcoords"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "coloraxis": {
       "cmid": 2,
       "colorbar": {
@@ -981,4 +981,4 @@
       "t": 60
     }
   }
-}
+}}}

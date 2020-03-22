@@ -28,7 +28,7 @@
       "len": 0.45
     }
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "mapbox": {
       "style": "light",
       "center": {"lat": 20}
@@ -36,4 +36,4 @@
     "width": 600,
     "height": 400
   }
-}
+}}}

@@ -226,7 +226,7 @@
       "showlegend": false
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "grid": {"rows": 3, "columns": 2, "xgap": 0, "ygap": 0},
     "xaxis2": {"matches": "x"},
     "yaxis2": {"matches": "y"},
@@ -238,4 +238,4 @@
     "height": 1600,
     "hovermode": "closest"
   }
-}
+}}}

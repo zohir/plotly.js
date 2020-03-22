@@ -6,10 +6,10 @@
             "type": "scatter"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "yaxis": {
-            "exponentformat": "none", 
-            "separatethousands": true 
+            "exponentformat": "none",
+            "separatethousands": true
         }
     }
-}
+}}}

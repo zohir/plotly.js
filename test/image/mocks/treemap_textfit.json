@@ -577,8 +577,8 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 1000,
         "height": 1000
     }
-}
+}}}

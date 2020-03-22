@@ -51,7 +51,7 @@
             "type": "scattergl"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "range": [
                 2,
@@ -65,4 +65,4 @@
             ]
         }
     }
-}
+}}}

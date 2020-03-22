@@ -165,7 +165,7 @@
       "yaxis": "y8"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 1000,
     "height": 500,
     "margin": {"t": 5, "b": 25, "l": 15, "r": 0},
@@ -193,4 +193,4 @@
       "autorange": true
     }
   }
-}
+}}}

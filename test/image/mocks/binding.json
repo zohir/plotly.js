@@ -5,7 +5,7 @@
       "y": [0.5, 1, 2.5]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "sliders": [{
       "active": 0,
       "steps": [{
@@ -107,4 +107,4 @@
     "width": 1100,
     "autosize": true
   }
-}
+}}}

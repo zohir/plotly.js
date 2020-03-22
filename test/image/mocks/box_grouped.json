@@ -106,11 +106,11 @@
          "type":"box"
       }
    ],
-   "layout":{
+   "layout": { "template": { "layout":{
       "yaxis":{
          "zeroline":false,
          "title":"normalized moisture"
       },
       "boxmode":"group"
    }
-}
+}}}

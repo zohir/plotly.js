@@ -10,7 +10,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo": {
             "projection": {
                 "type": "orthographic",
@@ -29,4 +29,4 @@
         "width": 500,
         "height": 500
     }
-}
+}}}

@@ -34,7 +34,7 @@
       "type": "scatter"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Double Y Axis Example",
     "xaxis": {
       "title": "Wavelength (nm)",
@@ -57,4 +57,4 @@
       "overlaying": "y"
     }
   }
-}
+}}}

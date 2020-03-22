@@ -244,7 +244,7 @@
       "text": "sector: 0->360<br>rotation: 0<br>direction: counterclockwise"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "margin": {
       "l": 40,
       "r": 40,
@@ -507,4 +507,4 @@
       }
     }
   }
-}
+}}}

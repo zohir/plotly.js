@@ -21,8 +21,8 @@
         ]
 
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 500,
         "height": 250
     }
-}
+}}}

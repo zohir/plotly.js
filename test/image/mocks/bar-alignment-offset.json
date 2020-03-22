@@ -397,7 +397,7 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "legend": {
       "x": 1,
       "xanchor": "right",
@@ -544,4 +544,4 @@
       "anchor": "x6"
     }
   }
-}
+}}}

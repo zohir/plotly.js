@@ -57,7 +57,7 @@
       "decreasing": { "marker": {"color": "red"} }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
 	"waterfallmode": "overlay",
 	"legend": {
       "x": 0.5,
@@ -113,4 +113,4 @@
 	"margin": {"t": 40},
 	"dragmode": "pan"
   }
-}
+}}}

@@ -41,7 +41,7 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "barmode": "stack",
     "font": {
       "size": 16
@@ -50,4 +50,4 @@
       "type": "log"
     }
   }
-}
+}}}

@@ -11,7 +11,7 @@
       "domain": {"x": [0, 0.4]}
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Custom Trace Color Defaults",
     "colorway": [
       "#DE5845",
@@ -24,4 +24,4 @@
       "domain": [0.4, 1]
     }
   }
-}
+}}}

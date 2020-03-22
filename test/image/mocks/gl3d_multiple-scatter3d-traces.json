@@ -25,7 +25,7 @@
             "z": [-10, -10, -10]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Hovering over data points of multiple scatter3d traces",
         "width": 600,
         "height": 400,
@@ -37,4 +37,4 @@
             }
         }
     }
-}
+}}}

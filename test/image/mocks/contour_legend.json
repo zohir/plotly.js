@@ -49,9 +49,9 @@
       "y": [2.2, 2.8, 2.8, 2.2, 2.2, 2.8, 2.8, 2.8, 2.8, 2.8],
       "name": "histogram"
   }],
-  "layout":{
+  "layout": { "template": { "layout":{
     "autosize":false,
     "height":400,
     "width":500
   }
-}
+}}}

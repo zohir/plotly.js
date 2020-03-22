@@ -21,11 +21,11 @@
       "base": 1000
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "title": "MULTI-CATEGORY",
       "tickfont": {"size": 16},
       "ticks": "outside"
     }
   }
-}
+}}}

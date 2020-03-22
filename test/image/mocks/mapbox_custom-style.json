@@ -46,7 +46,7 @@
       "subplot": "mapbox2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "mapbox": {
       "style": "mapbox://styles/plotly-js-tests/ck4og36lx0vnj1cpdl8y0cr8m",
       "center": {
@@ -67,4 +67,4 @@
     "width": 700,
     "height": 450
   }
-}
+}}}

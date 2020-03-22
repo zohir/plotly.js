@@ -17,7 +17,7 @@
       "y": [1.12, 2.15, 3.07, 1.48, 2.78, 1.95, 2.54, 0.64]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "title": "MULTI-CATEGORY",
       "ticks": "outside",
@@ -32,4 +32,4 @@
       "range": [-0.5, 3.5]
     }
   }
-}
+}}}

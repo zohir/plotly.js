@@ -7836,7 +7836,7 @@
       "type": "surface"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "hidesources": false,
     "autosize": true,
     "font": {
@@ -8012,4 +8012,4 @@
     },
     "legend": {}
   }
-}
+}}}

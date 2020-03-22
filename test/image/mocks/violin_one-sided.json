@@ -37,7 +37,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "ticks": "inside"
     },
@@ -59,4 +59,4 @@
       "b": 40
     }
   }
-}
+}}}

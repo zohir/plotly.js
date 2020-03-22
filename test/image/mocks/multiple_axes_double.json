@@ -30,7 +30,7 @@
       "type": "scatter"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Double Y Axis Example",
     "yaxis": {
       "title": "yaxis title"
@@ -47,4 +47,4 @@
       "overlaying": "y"
     }
   }
-}
+}}}

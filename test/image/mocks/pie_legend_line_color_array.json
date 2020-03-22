@@ -33,9 +33,9 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 400,
         "height": 400,
         "title": { "text": "pie-like legend with line.color array of length > 3" }
     }
-}
+}}}

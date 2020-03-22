@@ -31,7 +31,7 @@
             "showscale":false
         }
     ],
-    "layout":{
+    "layout": { "template": { "layout":{
         "autosize":false,
         "xaxis2":{"domain":[0.55,1],"type":"linear","range":[-0.5,7.5],"autorange":true,"title":"connectgaps=true"},
         "yaxis":{"range":[-0.5,6.5],"type":"linear","autorange":true,"domain":[0,0.45],"title":"heatmap"},
@@ -39,4 +39,4 @@
         "yaxis2":{"domain":[0.55,1],"type":"linear","range":[0,6],"autorange":true,"title":"contour map"},
         "xaxis":{"range":[-0.5,7.5],"type":"linear","autorange":true,"domain":[0,0.45],"title":"connectgaps=false"}
     }
-}
+}}}

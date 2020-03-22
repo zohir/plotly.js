@@ -41,7 +41,7 @@
             "geo": "geo2"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo": {
             "domain": {
                 "x": [0, 0.5],
@@ -100,4 +100,4 @@
         "width": 700,
         "height": 440
     }
-}
+}}}

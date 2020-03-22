@@ -35,9 +35,9 @@
                 ]
             }
         }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Sankey with messy data",
         "width": 600,
         "height": 800
     }
-}
+}}}

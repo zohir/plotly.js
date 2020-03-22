@@ -68,9 +68,9 @@
 
 
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Monochrome and palette based line plots",
     "height":758,
     "width":1310
   }
-}
+}}}

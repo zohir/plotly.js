@@ -113,7 +113,7 @@
             "textinfo": "text"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 600,
         "height": 900,
         "margin": {
@@ -132,4 +132,4 @@
             "minsize": 20
         }
     }
-}
+}}}

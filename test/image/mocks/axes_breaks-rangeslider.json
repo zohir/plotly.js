@@ -2648,7 +2648,7 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "tickformat": "%d %b %H:%M",
       "tickfont": {"size": 8},
@@ -2679,4 +2679,4 @@
       "yanchor": "bottom"
     }
   }
-}
+}}}

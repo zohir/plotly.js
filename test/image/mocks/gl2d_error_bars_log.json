@@ -11,8 +11,8 @@
       "y": [10, 2e4, 5e6],
       "error_y": {"type": "percent", "value": 50}
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
       "yaxis": {"type": "log"},
       "showlegend": false
     }
-}
+}}}

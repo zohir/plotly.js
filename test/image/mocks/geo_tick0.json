@@ -5,7 +5,7 @@
     {"type": "scattergeo", "lon": [40], "lat": [-40], "name": "lonaxis.tick0: 40 | lataxis.tick0: -40", "geo": "geo3"},
     {"type": "scattergeo", "lon": [73], "lat": [45], "name": "lonaxis.tick0: 73 | lataxis.tick0: 45", "geo": "geo4"}
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "legend": {
       "x": -0.05,
       "xanchor": "right",
@@ -69,4 +69,4 @@
     "width": 1100,
     "height": 400
   }
-}
+}}}

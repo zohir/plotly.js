@@ -69,7 +69,7 @@
         "stackgaps": "interpolate"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 800,
     "height": 800,
     "xaxis": {"title": "stackgaps: infer zero"},
@@ -83,4 +83,4 @@
     "legend": {"traceorder": "reversed"},
     "grid": {"columns": 2, "rows": 3, "pattern": "independent", "roworder": "bottom to top"}
   }
-}
+}}}

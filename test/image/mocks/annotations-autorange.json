@@ -7,7 +7,7 @@
             "x":["1","2"]
         }
     ],
-    "layout":{
+    "layout": { "template": { "layout":{
         "autosize":false,
         "xaxis":{
             "domain":[0,0.21],
@@ -145,4 +145,4 @@
             }
         ]
     }
-}
+}}}

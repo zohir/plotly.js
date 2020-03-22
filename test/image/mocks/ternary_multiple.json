@@ -69,7 +69,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "ternary": {
             "domain": {
                 "x": [
@@ -110,4 +110,4 @@
         "width": 700,
         "autosize": false
     }
-}
+}}}

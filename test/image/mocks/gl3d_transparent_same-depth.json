@@ -97,11 +97,11 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 400,
         "height": 400,
         "title": {
             "text": "hover should generally pick latest<br>points on the same position<br>and display above not below"
         }
     }
-}
+}}}

@@ -86,9 +86,9 @@
             "side": "positive"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "type": "log"
         }
     }
-}
+}}}

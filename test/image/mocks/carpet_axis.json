@@ -203,7 +203,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 800,
     "height": 800,
     "annotations": [
@@ -268,4 +268,4 @@
       "autorange": true
     }
   }
-}
+}}}

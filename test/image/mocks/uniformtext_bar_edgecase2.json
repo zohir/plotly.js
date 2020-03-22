@@ -28,7 +28,7 @@
             "textangle": 0
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "height": 500,
         "width": 300,
         "font": {
@@ -39,4 +39,4 @@
             "mode": "hide"
         }
     }
-}
+}}}

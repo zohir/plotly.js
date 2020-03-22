@@ -43,7 +43,7 @@
       "below": ""
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "mapbox": {
       "style": "light",
       "zoom": 0.3
@@ -52,4 +52,4 @@
     "height": 400,
     "margin": { "t": 10, "b": 10, "l": 10 }
   }
-}
+}}}

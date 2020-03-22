@@ -55,7 +55,7 @@
       "marker": {"size": 20}
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "polar": {
       "domain": {
         "x": [0, 0.46],
@@ -105,4 +105,4 @@
       "yanchor": "bottom"
     }]
   }
-}
+}}}

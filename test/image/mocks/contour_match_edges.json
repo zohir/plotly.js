@@ -10468,7 +10468,7 @@
          ]
       }
    ],
-   "layout":{
+   "layout": { "template": { "layout":{
       "boxmode":"overlay",
       "paper_bgcolor":"#fff",
       "height":725,
@@ -10647,4 +10647,4 @@
          "autoexpand":true
       }
    }
-}
+}}}

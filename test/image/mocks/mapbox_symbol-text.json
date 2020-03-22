@@ -53,7 +53,7 @@
       "textposition": "bottom left"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "mapbox": {
       "style": "outdoors",
       "zoom": 0.5,
@@ -67,4 +67,4 @@
     "width": 1100,
     "autosize": true
   }
-}
+}}}

@@ -93,7 +93,7 @@
             "scene": "scene2"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "surface and mesh3d with half opacity"
         },
@@ -144,4 +144,4 @@
             }
         }
     }
-}
+}}}

@@ -36,7 +36,7 @@
             "y": ["loooooooo"]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "title": "X Axis Title",
             "titlefont": { "size": 80 },
@@ -56,4 +56,4 @@
             "automargin": true
         }
     }
-}
+}}}

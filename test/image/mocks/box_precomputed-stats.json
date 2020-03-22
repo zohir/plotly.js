@@ -172,7 +172,7 @@
       "yaxis": "y4"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "boxmode": "group",
     "yaxis": {
@@ -208,4 +208,4 @@
     },
     "hovermode": "closest"
   }
-}
+}}}

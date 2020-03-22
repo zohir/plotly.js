@@ -20,9 +20,9 @@
             }
         }
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "margin": { "l": 100, "r": 20, "t": 20, "b": 20 },
         "width": 500,
         "height": 250
     }
-}
+}}}

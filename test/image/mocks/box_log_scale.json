@@ -86,9 +86,9 @@
             "boxmean": true
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "type": "log"
         }
     }
-}
+}}}

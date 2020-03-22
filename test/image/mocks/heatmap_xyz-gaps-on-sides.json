@@ -143,7 +143,7 @@
             "type": "heatmap"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "heatmap with x/y/z columns with gaps on the sides"
     }
-}
+}}}

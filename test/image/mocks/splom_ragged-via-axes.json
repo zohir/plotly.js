@@ -51,8 +51,8 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "ragged sploms using trace xaxes yaxes",
     "showlegend": false
   }
-}
+}}}

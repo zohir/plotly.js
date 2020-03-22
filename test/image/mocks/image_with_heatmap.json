@@ -19,11 +19,11 @@
       [-1, 0, 1]
     ]
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 400,
     "height": 400,
     "title": {
       "text": "Image is below heatmap"
     }
   }
-}
+}}}

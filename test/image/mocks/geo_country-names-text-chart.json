@@ -784,7 +784,7 @@
             "geo": "geo2"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "The World's countries",
         "geo": {
             "domain": {
@@ -859,4 +859,4 @@
         "width": 1000,
         "autosize": true
     }
-}
+}}}

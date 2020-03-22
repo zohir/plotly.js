@@ -793,7 +793,7 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "legend": {
       "x": 1,
       "xanchor": "right",
@@ -941,4 +941,4 @@
     },
     "boxmode": "group"
   }
-}
+}}}

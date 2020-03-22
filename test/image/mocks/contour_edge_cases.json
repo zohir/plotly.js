@@ -132,7 +132,7 @@
       "yaxis": "y4"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {"domain": [0, 0.4]},
     "xaxis2": {"domain": [0.6, 1]},
     "yaxis": {"domain": [0.8, 1]},
@@ -142,4 +142,4 @@
     "width": 600,
     "height": 800
   }
-}
+}}}

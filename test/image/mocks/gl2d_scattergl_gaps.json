@@ -35,7 +35,7 @@
             "connectgaps": false
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "showlegend": false,
         "margin": {
             "t": 20,
@@ -46,4 +46,4 @@
         "width": 400,
         "height": 300
     }
-}
+}}}

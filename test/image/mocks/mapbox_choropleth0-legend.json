@@ -31,7 +31,7 @@
             "geojson": "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/us-states.json"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "mapbox": {
             "center": {
                 "lon": -74.22,
@@ -51,4 +51,4 @@
             "r": 0
         }
     }
-}
+}}}

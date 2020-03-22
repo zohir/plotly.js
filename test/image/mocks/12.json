@@ -680,7 +680,7 @@
             "type": "scatter"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Life Expectancy vs GDP<br>Bubble Chart",
         "titlefont": {
             "color": "",
@@ -854,4 +854,4 @@
         "separators": ".,",
         "hidesources": false
     }
-}
+}}}

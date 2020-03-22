@@ -31,11 +31,11 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 400,
         "height": 400,
         "title": {
             "text": "<sup>Tick formatting and <i><b>labelangle</b></i></sup>"
         }
     }
-}
+}}}

@@ -226,7 +226,7 @@
       "yaxis": "y5"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Greater than constraint with z = -2 in the middle",
     "width": 600,
     "height": 800,
@@ -321,4 +321,4 @@
       }
     ]
   }
-}
+}}}

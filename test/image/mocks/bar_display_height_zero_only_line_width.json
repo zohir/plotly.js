@@ -273,7 +273,7 @@
             "yaxis": "y4"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "showlegend": true,
         "width": 800,
         "height": 800,
@@ -345,4 +345,4 @@
             ]
         }
     }
-}
+}}}

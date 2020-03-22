@@ -65,7 +65,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "Profit and loss statement 2018<br>waterfall chart displaying positive and negative"
         },
@@ -81,4 +81,4 @@
         "width": 800,
         "showlegend": true
     }
-}
+}}}

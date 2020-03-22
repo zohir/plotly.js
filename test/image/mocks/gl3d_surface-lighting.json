@@ -523,7 +523,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Correlation Matrix",
     "width": 1670,
     "height": 758,
@@ -570,4 +570,4 @@
       }
     }
   }
-}
+}}}

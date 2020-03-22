@@ -21,7 +21,7 @@
       "value": 40,
       "domain": {"row": 1, "column": 1}
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 700,
     "height": 400,
     "margin": {"t": 25, "b": 25, "l": 25, "r": 25},
@@ -36,4 +36,4 @@
       }
     }
   }
-}
+}}}

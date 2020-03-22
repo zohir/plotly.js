@@ -129226,7 +129226,7 @@
       "maxdisplayed": 3000
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "scene": {
       "aspectratio": {
         "x": 2,
@@ -129243,4 +129243,4 @@
     "width": 600,
     "height": 400
   }
-}
+}}}

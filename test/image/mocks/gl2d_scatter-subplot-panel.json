@@ -7020,7 +7020,7 @@
       "name": "Fair"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 700,
     "height": 700,
     "showlegend": true,
@@ -7439,4 +7439,4 @@
       "bgcolor": "#efefef"
     }
   }
-}
+}}}

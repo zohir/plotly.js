@@ -490,7 +490,7 @@
                 ]
             }
         }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Energy forecast for 2050, UK — Department of Energy & Climate Change<br>Imperfect copy of <a href='https://bost.ocks.org/mike/sankey/'>Mike Bostock's example</a><br>with numerous <a href='https://plot.ly/javascript/'>Plotly</a> features",
         "width": 1118,
         "height": 772,
@@ -585,4 +585,4 @@
             }
         ]
     }
-}
+}}}

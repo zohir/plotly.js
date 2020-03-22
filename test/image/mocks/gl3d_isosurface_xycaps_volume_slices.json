@@ -2850,7 +2850,7 @@
             "z": 0
         }
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "isosurface trace with volume fill, open xy caps and scene aspect ratio: 2"
         },
@@ -2874,4 +2874,4 @@
             }
         }
     }
-}
+}}}

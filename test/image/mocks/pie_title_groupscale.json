@@ -76,8 +76,8 @@
       "scalegroup": "1"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 400,
     "width": 500
   }
-}
+}}}

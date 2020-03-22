@@ -6,7 +6,7 @@
     "name":"Col3",
     "type":"scatter3d"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "yaxis":{
       "type":"linear",
       "autorange":true,
@@ -62,4 +62,4 @@
     "showlegend":false,
     "dragmode":"rotate"
   }
-}
+}}}

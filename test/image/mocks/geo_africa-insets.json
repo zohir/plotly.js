@@ -219,7 +219,7 @@
             "type": "scattergeo"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo2": {
             "showland": true,
             "domain": {
@@ -281,4 +281,4 @@
         "height": 791,
         "width": 1600
     }
-}
+}}}

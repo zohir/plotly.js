@@ -33,7 +33,7 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo": {
             "projection": {
                 "type": "conic conformal",
@@ -53,4 +53,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

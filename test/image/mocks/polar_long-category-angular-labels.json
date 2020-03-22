@@ -53,7 +53,7 @@
       "subplot": "polar2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "grid": {"rows": 2, "columns": 1, "ygap": 0.15},
     "height": 800,
     "polar": {
@@ -81,4 +81,4 @@
       "text": "eLife Sciences Publications<br>Ltd: journal-article (8.62 - 7.95 = 0.67)"
     }
   }
-}
+}}}

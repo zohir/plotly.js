@@ -16,9 +16,9 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 600,
     "width": 400,
     "showlegend": false
   }
-}
+}}}

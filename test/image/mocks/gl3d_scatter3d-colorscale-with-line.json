@@ -13,9 +13,9 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Scatter3d show scale with line colors",
         "width": 600,
         "height": 600
     }
-}
+}}}

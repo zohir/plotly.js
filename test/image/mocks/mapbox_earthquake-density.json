@@ -36666,7 +36666,7 @@
       "hoverinfo": "skip"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "mapbox": {
       "center": {
         "lon": -120,
@@ -36691,4 +36691,4 @@
       "b": 20
     }
   }
-}
+}}}

@@ -14,7 +14,7 @@
       "subplot": "mapbox2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "grid": {"rows": 1, "columns": 2},
 
     "legend": {
@@ -31,4 +31,4 @@
       "style": "carto-darkmatter"
     }
   }
-}
+}}}

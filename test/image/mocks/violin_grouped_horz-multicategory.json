@@ -85,7 +85,7 @@
          "type":"violin"
       }
    ],
-   "layout":{
+   "layout": { "template": { "layout":{
       "yaxis":{
          "zeroline":false,
          "title":"normalized moisture"
@@ -99,4 +99,4 @@
       },
       "margin": {"l": 100}
    }
-}
+}}}

@@ -97,10 +97,10 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "height": 758,
     "width": 1310,
     "autosize": true
   }
-}
+}}}

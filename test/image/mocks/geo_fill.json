@@ -88,16 +88,16 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "geo": {
       "projection": {
         "type": "natural earth",
         "rotation": {"lon": 0}
       },
-      "lonaxis": { 
+      "lonaxis": {
         "range": [-80, -65]
       },
-      "lataxis": { 
+      "lataxis": {
         "range": [42, 51]
       },
       "center": {
@@ -110,4 +110,4 @@
     "width": 1100,
     "autosize": true
   }
-}
+}}}

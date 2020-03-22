@@ -5,7 +5,7 @@
     {"x": [1,10,100,10,1], "y": [0,1,2,3,4], "xaxis":"x2", "yaxis":"y3"},
     {"x": [1,100,30,80,1], "y": [1,1.5,2,2.5,3], "xaxis":"x2", "yaxis":"y4"}
   ],
-  "layout":{
+  "layout": { "template": { "layout":{
     "width": 800,
     "height":500,
     "title": "fixed-ratio axes",
@@ -17,4 +17,4 @@
     "yaxis4": {"scaleanchor": "y3", "domain": [0.55, 1], "anchor": "x2", "title": "Scale matches <-"},
     "showlegend": false
   }
-}
+}}}

@@ -13,9 +13,9 @@
         ]
       }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Surface plot with interpolated gaps<br>(connectgaps: true)",
         "width": 600,
         "height": 400
     }
-}
+}}}

@@ -262,7 +262,7 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "range": [-0.125, 0.125]
     },
@@ -271,4 +271,4 @@
       "zeroline": false
     }
   }
-}
+}}}

@@ -32,7 +32,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "sqrt errorbars",
         "scene": {
             "camera": {
@@ -52,4 +52,4 @@
         "width": 1000,
         "autosize": true
     }
-}
+}}}

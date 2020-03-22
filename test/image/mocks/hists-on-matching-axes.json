@@ -39,7 +39,7 @@
       "yaxis": "y4"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "margin": {"t": 20, "b": 20},
     "showlegend": false,
     "xaxis": {
@@ -81,4 +81,4 @@
       "anchor": "x4"
     }
   }
-}
+}}}

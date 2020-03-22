@@ -24,7 +24,7 @@
             "type": "histogram"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "range": [
                 0,
@@ -44,4 +44,4 @@
         "width": 1000,
         "autosize": true
     }
-}
+}}}

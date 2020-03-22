@@ -86,7 +86,7 @@
             "showlegend": false
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "legend": {
             "x": 0,
 	    "xanchor": "left",
@@ -116,4 +116,4 @@
         "autosize": true,
         "showlegend": true
     }
-}
+}}}

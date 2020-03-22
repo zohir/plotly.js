@@ -2024,7 +2024,7 @@
             "type": "mesh3d"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 500,
         "height": 400,
         "margin": {
@@ -2048,4 +2048,4 @@
             }
         }
     }
-}
+}}}

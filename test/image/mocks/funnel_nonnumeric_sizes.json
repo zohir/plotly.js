@@ -20,9 +20,9 @@
       "type": "funnel", "orientation": "v"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "margin": { "l": 20, "r": 20, "t": 20, "b": 50 },
     "width": 600,
     "height": 200
   }
-}
+}}}

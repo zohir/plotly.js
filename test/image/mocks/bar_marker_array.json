@@ -38,7 +38,7 @@
       "type": "bar"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": true
   }
-}
+}}}

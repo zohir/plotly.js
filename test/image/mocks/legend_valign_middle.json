@@ -12,7 +12,7 @@
       "showlegend": true
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 800,
     "legend": {
       "bgcolor": "rgba(0,255,255,1)",
@@ -22,4 +22,4 @@
       }
     }
   }
-}
+}}}

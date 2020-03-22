@@ -24,9 +24,9 @@
             "opacity": 0.2
         }
     ],
-    "layout":{
+    "layout": { "template": { "layout":{
         "title": "No opacity with filled scatter",
         "width": 400,
         "height": 400
     }
-}
+}}}

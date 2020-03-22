@@ -6930,7 +6930,7 @@
             "z": 0
         }
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "isosurface trace"
         },
@@ -6949,4 +6949,4 @@
             }
         }
     }
-}
+}}}

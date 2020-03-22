@@ -5437,7 +5437,7 @@
             "type": "scattergeo"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo": {
             "countrywidth": 0.5,
             "lakecolor": "rgb(0, 255, 255)",
@@ -5469,4 +5469,4 @@
         "width": 1100,
         "autosize": true
     }
-}
+}}}

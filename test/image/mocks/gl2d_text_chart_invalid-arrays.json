@@ -85,7 +85,7 @@
             "type": "scattergl"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "showlegend": true,
         "xaxis": {
             "type": "linear",
@@ -107,4 +107,4 @@
         "width": 1000,
         "autosize": true
     }
-}
+}}}

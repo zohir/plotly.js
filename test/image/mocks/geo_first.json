@@ -13,9 +13,9 @@
             "autocolorscale": true
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "showframe": true,
         "width": 600,
         "height": 440
     }
-}
+}}}

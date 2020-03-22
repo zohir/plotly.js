@@ -21,9 +21,9 @@
         ]
       }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Surface 3d plot on top of 2d heatmap!",
         "width": 600,
         "height": 400
     }
-}
+}}}

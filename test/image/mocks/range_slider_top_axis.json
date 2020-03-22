@@ -21,7 +21,7 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "title": {
         "text": "Top X Axis",
@@ -36,4 +36,4 @@
     "width": 400,
     "height": 400
   }
-}
+}}}

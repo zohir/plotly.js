@@ -496,7 +496,7 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "range selector prototype",
         "xaxis": {
             "rangeselector": {
@@ -550,4 +550,4 @@
         "width": 1000,
         "autosize": true
     }
-}
+}}}

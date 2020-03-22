@@ -29,7 +29,7 @@
             "zmax": 100
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo": {
             "projection": {
                 "type": "stereographic",
@@ -56,4 +56,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

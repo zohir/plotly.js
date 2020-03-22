@@ -81,7 +81,7 @@
             "x": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "showlegend": false,
         "width": 800,
         "height": 800,
@@ -178,4 +178,4 @@
             ]
         }
     }
-}
+}}}

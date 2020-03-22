@@ -30,7 +30,7 @@
             "type": "scatter"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "showlegend": true,
         "legend": {
             "orientation": "h",
@@ -48,4 +48,4 @@
         "height": 350,
         "width": 700
     }
-}
+}}}

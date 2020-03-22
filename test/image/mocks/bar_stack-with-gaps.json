@@ -150,7 +150,7 @@
       "type": "bar"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "type": "category",
       "range": [
@@ -172,4 +172,4 @@
     "width": 1100,
     "autosize": true
   }
-}
+}}}

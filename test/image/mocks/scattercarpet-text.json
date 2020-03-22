@@ -46,8 +46,8 @@
       "text": ["a", "b", "c", "d"]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "scattercarpet with text",
     "hovermode": "closest"
   }
-}
+}}}

@@ -69,7 +69,7 @@
       "name": "unsorted cw"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 500,
     "width": 600,
     "uniformtext": {
@@ -78,4 +78,4 @@
     },
     "showlegend": false
   }
-}
+}}}

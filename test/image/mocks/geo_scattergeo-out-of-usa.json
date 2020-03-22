@@ -20016,7 +20016,7 @@
             "lonsrc": "jackp:17903:767d41"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "yaxis": {
             "zeroline": false,
             "gridcolor": "#dfe8f3",
@@ -20067,4 +20067,4 @@
             "resolution": 50
         }
     }
-}
+}}}

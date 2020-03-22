@@ -3799,7 +3799,7 @@
             "type": "scatter"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Home Temperature",
         "titlefont": {
             "color": "black",
@@ -3977,4 +3977,4 @@
         "separators": ".,",
         "hidesources": false
     }
-}
+}}}

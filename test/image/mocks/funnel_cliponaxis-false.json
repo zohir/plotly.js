@@ -54,7 +54,7 @@
       "yaxis": "y3"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
 	"funnelmode": "overlay",
 	"legend": {
       "x": 0.5,
@@ -110,4 +110,4 @@
 	  "margin": {"t": 40},
 	  "dragmode": "pan"
   }
-}
+}}}

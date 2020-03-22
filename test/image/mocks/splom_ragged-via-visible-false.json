@@ -49,8 +49,8 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "title": "ragged sploms using visible false dimensions"
   }
-}
+}}}

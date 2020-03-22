@@ -37,7 +37,7 @@
             "textposition": "top right"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo": {
             "projection": {
                 "type": "orthographic",
@@ -64,4 +64,4 @@
         "height": 500,
         "showlegend": false
     }
-}
+}}}

@@ -113,7 +113,7 @@
       "type": "area"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Wind Speed Distribution in Laurel, NE",
     "font": {
       "family": "Arial, sans-serif",
@@ -125,4 +125,4 @@
     },
     "orientation": 270
   }
-}
+}}}

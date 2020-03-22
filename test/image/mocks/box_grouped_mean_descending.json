@@ -106,7 +106,7 @@
          "type":"box"
       }
    ],
-   "layout":{
+   "layout": { "template": { "layout":{
       "xaxis": {
           "categoryorder": "mean descending"
       },
@@ -116,4 +116,4 @@
       },
       "boxmode":"group"
    }
-}
+}}}

@@ -25,11 +25,11 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 300,
         "height": 600,
         "uniformtext": {
             "mode": "hide"
         }
     }
-}
+}}}

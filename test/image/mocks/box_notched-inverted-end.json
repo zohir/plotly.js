@@ -13,7 +13,7 @@
       "notched": true
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": {
       "text": "Samples where the confidence interval<br>median ± 1.57 / IQR * sqrt(N)<br>go beyond the fences",
       "x": 0.02
@@ -33,4 +33,4 @@
     "width": 600,
     "height": 300
   }
-}
+}}}

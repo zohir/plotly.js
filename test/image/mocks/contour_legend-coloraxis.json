@@ -12,7 +12,7 @@
             "name": "contour"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "coloraxis": {
             "colorscale": [[0, "blue"], [1, "red"]],
             "reversescale": true,
@@ -26,4 +26,4 @@
         "width": 600,
         "height": 400
     }
-}
+}}}

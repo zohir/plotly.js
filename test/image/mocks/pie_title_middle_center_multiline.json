@@ -10,9 +10,9 @@
       "type": "pie"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Top 5 languages by number of native speakers (2010, est.)",
     "height": 600,
     "width": 600
   }
-}
+}}}

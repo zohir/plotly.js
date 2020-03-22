@@ -78,7 +78,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo": {
             "projection": {
                 "type": "conic equal area"
@@ -98,4 +98,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

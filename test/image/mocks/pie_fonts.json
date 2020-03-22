@@ -83,7 +83,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 500,
     "width": 600,
     "font": {
@@ -93,4 +93,4 @@
     "showlegend": true,
     "separators": "∆|"
   }
-}
+}}}

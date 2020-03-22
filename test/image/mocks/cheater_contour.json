@@ -194,7 +194,7 @@
       "yaxis":"y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 1000,
     "height": 600,
     "title": "Cheater plot with 1D input",
@@ -246,4 +246,4 @@
       ]
     }
   }
-}
+}}}

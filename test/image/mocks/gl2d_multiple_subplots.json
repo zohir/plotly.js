@@ -59,7 +59,7 @@
             "type": "scattergl"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 700,
         "height": 500,
         "xaxis": {
@@ -115,4 +115,4 @@
             "anchor": "x4"
         }
     }
-}
+}}}

@@ -65,9 +65,9 @@
         "x": ["Initial", "Jan-Feb", "Mar-Apr", "May-Jun", "Mid-year", "Jul-Aug", "Sep-Oct", "Nov-Dec", "Full year"],
         "y": [25, -6.4, -5.4, -4.4, null, -3.4, -2.4, -1.4, null]
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 900,
         "height": 450,
         "showlegend": true
     }
-}
+}}}

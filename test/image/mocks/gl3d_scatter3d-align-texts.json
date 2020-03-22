@@ -34,7 +34,7 @@
       "textposition": "bottom center"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title":"Texts in scatter3d should be aligned to left, right, top or bottom & displayed well on WEBGL",
     "width": 800,
     "height": 600,
@@ -46,4 +46,4 @@
       }
     }
   }
-}
+}}}

@@ -97,7 +97,7 @@
       "cmax": 3
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "scene": {
       "camera": {
         "eye": {
@@ -108,4 +108,4 @@
       }
     }
   }
-}
+}}}

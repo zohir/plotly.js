@@ -82,7 +82,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Click on the legend item to show the 3<sup>rd</sup> trace",
         "geo": {
             "projection": {
@@ -100,4 +100,4 @@
         "autosize": true,
         "showlegend": true
     }
-}
+}}}

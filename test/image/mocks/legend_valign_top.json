@@ -18,7 +18,7 @@
         "domain": {"x": [0.5, 1]}
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 800,
     "xaxis": {"domain": [0, 0.5]},
     "legend": {
@@ -29,4 +29,4 @@
       }
     }
   }
-}
+}}}

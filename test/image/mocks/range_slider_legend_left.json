@@ -95,7 +95,7 @@
       "visible": "legendonly"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "legend": {
       "xanchor": "right",
       "yanchor": "top",
@@ -120,4 +120,4 @@
       "side": "right"
     }
   }
-}
+}}}

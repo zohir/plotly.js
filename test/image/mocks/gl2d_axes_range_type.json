@@ -51,7 +51,7 @@
             "type": "scattergl"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "type": "log",
             "autorange": true
@@ -61,4 +61,4 @@
             "autorange": true
         }
     }
-}
+}}}

@@ -8,7 +8,7 @@
     "z":[[0, 10, 0], [10, 80, 20], [0, 40, 0]],
     "type":"contour"
   }],
-  "layout":{
+  "layout": { "template": { "layout":{
     "showlegend":false,
     "autosize":false,
     "height":400,
@@ -16,4 +16,4 @@
     "xaxis": {"range": [1, 2.5]},
     "yaxis": {"range": [0.2, 1]}
   }
-}
+}}}

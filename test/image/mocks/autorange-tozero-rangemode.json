@@ -78,7 +78,7 @@
             "type": "scatter"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Revenue and Take Rate",
         "xaxis": {
             "type": "category",
@@ -137,4 +137,4 @@
         "width": 1000,
         "autosize": true
     }
-}
+}}}

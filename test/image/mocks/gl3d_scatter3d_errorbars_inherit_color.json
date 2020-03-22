@@ -69,11 +69,11 @@
         }
       }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 600,
         "heigh": 600,
         "title": {
             "text": "Scatter3d error bars inherit color from line or marker"
         }
     }
-}
+}}}

@@ -9,7 +9,7 @@
       "j":[1],
       "k":[2]
     }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Triangle mesh",
     "scene": {
       "annotations": [{
@@ -24,4 +24,4 @@
     "width": 600,
     "height": 500
   }
-}
+}}}

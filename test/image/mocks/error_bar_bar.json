@@ -47,7 +47,7 @@
       "type": "bar"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "barmode": "group"
   }
-}
+}}}

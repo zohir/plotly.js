@@ -13,8 +13,8 @@
       "titleposition": "top center"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 400,
     "width": 400
   }
-}
+}}}

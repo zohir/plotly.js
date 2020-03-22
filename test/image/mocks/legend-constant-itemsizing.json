@@ -125,7 +125,7 @@
       "textinfo": "none"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "visible": false,
       "rangeslider": {
@@ -167,4 +167,4 @@
       "yanchor": "top"
     }
   }
-}
+}}}

@@ -48,8 +48,8 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 602,
     "width": 592,
     "grid": {"rows": 2, "columns": 2}}
-}
+}}}

@@ -28,7 +28,7 @@
     "name": "mesh3d",
     "scene": "scene2"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "paper_bgcolor": "#ddd",
     "margin": {
       "t": 0,
@@ -53,4 +53,4 @@
       "camera": { "eye": { "x": 1.5, "y": 3, "z": 1 } }
     }
   }
-}
+}}}

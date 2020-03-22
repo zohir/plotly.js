@@ -82,7 +82,7 @@
          "type":"box"
       }
    ],
-   "layout":{
+   "layout": { "template": { "layout":{
       "xaxis": {
          "tickangle": 90
       },
@@ -97,4 +97,4 @@
         "yanchor": "bottom"
       }
    }
-}
+}}}

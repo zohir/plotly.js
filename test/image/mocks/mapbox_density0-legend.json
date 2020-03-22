@@ -18,7 +18,7 @@
     "showscale": false,
     "showlegend": true
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "mapbox": {
       "style": "open-street-map",
       "center": {
@@ -39,4 +39,4 @@
       "r": 0
     }
   }
-}
+}}}

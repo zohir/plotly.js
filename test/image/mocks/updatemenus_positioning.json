@@ -20,7 +20,7 @@
       "name": "Data set 0"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "updatemenus": [
       {
         "buttons": [
@@ -304,4 +304,4 @@
     "width": 1100,
     "autosize": true
   }
-}
+}}}

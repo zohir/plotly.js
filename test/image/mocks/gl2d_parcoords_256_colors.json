@@ -1826,11 +1826,11 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 1000,
         "height": 1000,
         "title": {
             "text": "The first color should be blue.<br>The last color should be yellow."
         }
     }
-}
+}}}

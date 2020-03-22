@@ -48,7 +48,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Scatter3d arrayOk",
         "scene": {
             "aspectratio": {
@@ -62,4 +62,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

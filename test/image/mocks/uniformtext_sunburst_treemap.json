@@ -145,7 +145,7 @@
             ]
 		}
 	],
-	"layout": {
+	"layout": { "template": { "layout": {
         "coloraxis": {
             "colorscale": "Blackbody",
             "reversescale": true,
@@ -164,4 +164,4 @@
             "minsize": 8
         }
 	}
-}
+}}}

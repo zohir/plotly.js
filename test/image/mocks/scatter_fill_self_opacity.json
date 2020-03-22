@@ -15,7 +15,7 @@
       "opacity": 0.3
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "toself fill with opacity"
   }
-}
+}}}

@@ -24,7 +24,7 @@
     "connectgaps": false,
     "name": "gap in x"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "connect gaps test"
   }
-}
+}}}

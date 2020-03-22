@@ -46,7 +46,7 @@
             "y": [9, 9, 9]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Point Cloud - basic",
         "xaxis": {
             "type": "linear",
@@ -69,4 +69,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

@@ -367,7 +367,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "grid": {
       "rows": 3,
       "columns": 2
@@ -430,4 +430,4 @@
       "fitbounds": "locations"
     }
   }
-}
+}}}

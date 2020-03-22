@@ -7,7 +7,7 @@
         {"label": "Two", "values": ["A", "B", "A", "B", "C", "C", "A", "B", "C"]},
         {"label": "Three", "values": [11, 11, 11, 11, 11, 11, 11, 11, 11]}]}
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "paper_bgcolor": "black",
     "font": {"color": "white"},
     "height": 602,
@@ -15,4 +15,4 @@
     "margin": {
       "l": 40, "r": 40, "t": 50, "b": 40
     }}
-}
+}}}

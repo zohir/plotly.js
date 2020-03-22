@@ -69,7 +69,7 @@
       "yaxis": "y7"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "width": 600,
     "height": 500,
@@ -87,4 +87,4 @@
     "xaxis6": {"anchor": "y6"},
     "xaxis7": {"anchor": "y7"}
   }
-}
+}}}

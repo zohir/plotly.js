@@ -38,7 +38,7 @@
     "y": [71.15, 81.82, 88.46, 74.29],
     "name":"Trace E-1"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 600,
     "legend": {
       "orientation": "h"
@@ -54,4 +54,4 @@
       "autorange": true
     }
   }
-}
+}}}

@@ -1890,7 +1890,7 @@
             "z": 0
         }
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "Spherical isosurface trace on logarithmic z-axes with horizontal and vertical slices on desired locations"
         },
@@ -1914,4 +1914,4 @@
             }
         }
     }
-}
+}}}

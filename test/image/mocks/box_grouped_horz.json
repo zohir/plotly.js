@@ -37,7 +37,7 @@
   "boxmean": "sd",
   "jitter": 0.2
 }],
-"layout": {
+"layout": { "template": { "layout": {
   "xaxis": {
     "zeroline": false,
     "title": "normalized moisture"
@@ -45,4 +45,4 @@
   "boxmode": "group",
   "boxgroupgap": 0.5
 }
-}
+}}}

@@ -4,7 +4,7 @@
         "type": "scattermapbox"
       }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
       "mapbox": {
         "style": "outdoors",
         "layers": [
@@ -73,4 +73,4 @@
       "width": 1100,
       "autosize": true
     }
-}
+}}}

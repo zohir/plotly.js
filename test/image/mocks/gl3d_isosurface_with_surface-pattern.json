@@ -1890,7 +1890,7 @@
             "z": 0
         }
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "isosurface trace with non-uniform axes & surface patterns"
         },
@@ -1909,4 +1909,4 @@
             }
         }
     }
-}
+}}}

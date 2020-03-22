@@ -24,7 +24,7 @@
     "marker": {"color": "rgb(242,240,247)"},
     "type": "barpolar"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Wind Speed Distribution in Laurel, NE",
     "font": {"size": 16},
     "legend": {"font": {"size": 16}},
@@ -35,4 +35,4 @@
       "angularaxis": {"direction": "clockwise"}
     }
   }
-}
+}}}

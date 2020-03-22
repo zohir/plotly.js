@@ -29,7 +29,7 @@
             "cliponaxis": true
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "ternary": {
             "sum": 100,
             "aaxis": {
@@ -56,4 +56,4 @@
         "height": 450,
         "width": 500
     }
-}
+}}}

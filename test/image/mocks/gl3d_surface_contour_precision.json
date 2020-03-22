@@ -23,7 +23,7 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Big numbers and surface contour precision",
         "width": 800,
         "height": 600,
@@ -38,4 +38,4 @@
             }
         }
     }
-}
+}}}

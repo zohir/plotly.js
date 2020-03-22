@@ -32,7 +32,7 @@
          "type":"scatter"
       }
    ],
-   "layout":{
+   "layout": { "template": { "layout":{
       "xaxis":{
          "ticks":"outside",
          "tickcolor":"#000"
@@ -43,4 +43,4 @@
          "gridwidth":0.1
       }
    }
-}
+}}}

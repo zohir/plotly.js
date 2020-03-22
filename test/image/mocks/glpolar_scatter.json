@@ -829,7 +829,7 @@
       "cliponaxis": false
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Hobbs-Pearson Trials",
     "font": {
       "size": 15
@@ -855,4 +855,4 @@
     "width": 450,
     "height": 450
   }
-}
+}}}

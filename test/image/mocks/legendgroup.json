@@ -92,7 +92,7 @@
             "visible": true
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Toggle legend group",
         "legend": {
             "tracegroupgap": 20
@@ -118,4 +118,4 @@
         "autosize": true,
         "showlegend": true
     }
-}
+}}}

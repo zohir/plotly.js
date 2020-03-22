@@ -32,7 +32,7 @@
     "fill": "toself",
     "subplot": "polar4"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "polar": {
       "domain": {
         "x": [0, 0.46],
@@ -76,4 +76,4 @@
     "width": 600,
     "height": 500
   }
-}
+}}}

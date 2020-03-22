@@ -281,7 +281,7 @@
             "type": "heatmap"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "heatmap xyz with date & categories"
     }
-}
+}}}

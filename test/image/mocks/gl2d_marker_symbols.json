@@ -485,7 +485,7 @@
       "hoverinfo": "text"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "margin": {
       "l": 0,
       "r": 0,
@@ -507,4 +507,4 @@
     "plot_bgcolor": "#d3d3d3",
     "hovermode": "closest"
   }
-}
+}}}

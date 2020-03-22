@@ -38,7 +38,7 @@
       "xaxis": "x2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "funnelmode": "group",
     "showlegend": false,
     "grid": {
@@ -59,4 +59,4 @@
       }
     }
   }
-}
+}}}

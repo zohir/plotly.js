@@ -99,7 +99,7 @@
             "surfacecolor": [[0, 1],[2, 3]]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "scene": {
             "xaxis": {
                 "title": "taiwan",
@@ -126,4 +126,4 @@
         "width": 800,
         "height": 700
     }
-}
+}}}

@@ -81,7 +81,7 @@
             "type": "heatmap"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "User Traffic",
         "font": {
           "family": "Arial, sans-serif",
@@ -112,4 +112,4 @@
           }
         ]
     }
-}
+}}}

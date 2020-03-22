@@ -100,7 +100,7 @@
     "yaxis": "y4"
   }],
 
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "grid": {"rows": 2, "columns": 2, "pattern": "independent"},
 
@@ -135,4 +135,4 @@
       }
     }
   }
-}
+}}}

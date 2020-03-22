@@ -101,7 +101,7 @@
             "name": "Unknown"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Sales report monthly",
         "barmode": "stack",
         "margin": {
@@ -112,4 +112,4 @@
             "l": 50
         }
     }
-}
+}}}

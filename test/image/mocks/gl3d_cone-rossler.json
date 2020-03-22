@@ -11332,7 +11332,7 @@
       "anchor": "center"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 600,
     "title": "Cone plot along a trajectory within the Rössler attractor",
     "scene": {
@@ -11369,4 +11369,4 @@
     },
     "height": 450
   }
-}
+}}}

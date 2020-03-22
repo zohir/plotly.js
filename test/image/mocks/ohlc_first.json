@@ -960,7 +960,7 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "range": [
         1472577187875,
@@ -980,4 +980,4 @@
     "height": 600,
     "width": 1100
   }
-}
+}}}

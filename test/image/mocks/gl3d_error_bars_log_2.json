@@ -10,7 +10,7 @@
             "visible": true
         }
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "scene": {
             "zaxis": {
                 "type": "log"
@@ -19,4 +19,4 @@
         "width": 800,
         "height": 800
     }
-}
+}}}

@@ -31,7 +31,7 @@
             "xaxis": "x2"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 700,
         "height": 500,
         "showlegend": false,
@@ -61,4 +61,4 @@
             "tickvals": [0,1,2]
         }
     }
-}
+}}}

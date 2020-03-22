@@ -51,7 +51,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "plotly repos | April 10 2019"
         },
@@ -61,4 +61,4 @@
         "funnelmode": "group",
         "showlegend": true
     }
-}
+}}}

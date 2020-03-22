@@ -256,7 +256,7 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "coloraxis": {
             "colorscale": "Portland"
         },
@@ -330,4 +330,4 @@
             }
         }
     }
-}
+}}}

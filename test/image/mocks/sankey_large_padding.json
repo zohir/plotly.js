@@ -292,10 +292,10 @@
     "type": "sankey",
     "orientation": "h"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "font": {
       "size": 10
     },
     "title": "Injection in VISpm"
   }
-}
+}}}

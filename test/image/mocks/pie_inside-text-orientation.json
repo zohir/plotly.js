@@ -350,7 +350,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 925,
         "height": 750,
         "margin": {
@@ -368,4 +368,4 @@
             "size": 14
         }
     }
-}
+}}}

@@ -6776,7 +6776,7 @@
             "type": "surface"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Cufflinks - Surface Plot",
         "titlefont": {
             "color": "#D9D9D9"
@@ -6818,4 +6818,4 @@
         "paper_bgcolor": "#151516",
         "plot_bgcolor": "#151516"
     }
-}
+}}}

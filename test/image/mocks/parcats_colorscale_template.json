@@ -22,7 +22,7 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "template": {
       "data": {
         "parcats": [
@@ -38,4 +38,4 @@
       }
     }
   }
-}
+}}}

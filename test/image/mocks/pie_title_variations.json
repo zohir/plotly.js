@@ -72,8 +72,8 @@
       "title": "The<br>Night<br>Cafe"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 400,
     "width": 500
   }
-}
+}}}

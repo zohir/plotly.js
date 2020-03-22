@@ -65,7 +65,7 @@
             "yaxis": "y2"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "dragmode": "pan",
         "shapes": [
             {
@@ -154,4 +154,4 @@
             ]
         }
     }
-}
+}}}

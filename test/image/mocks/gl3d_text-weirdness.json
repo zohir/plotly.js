@@ -40,11 +40,11 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "autosize": true,
     "title": "Scatter3d with text weirdness",
     "showlegend": false,
     "height": 758,
     "width": 1310
   }
-}
+}}}

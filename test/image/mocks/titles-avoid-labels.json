@@ -31,7 +31,7 @@
             "zmax": 4
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "plot title",
         "xaxis": {
             "range": [
@@ -177,4 +177,4 @@
         "hidesources": false,
         "showlegend": false
     }
-}
+}}}

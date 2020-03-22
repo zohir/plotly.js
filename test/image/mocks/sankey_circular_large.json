@@ -223,9 +223,9 @@
       "hovertemplate": "%{label}<br><b>flow.labelConcentration</b>: %{flow.labelConcentration:0.2%}<br><b>flow.concentration</b>: %{flow.concentration:0.2%}<br><b>flow.value</b>: %{flow.value}"
     }
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
       "hovermode": "x",
       "width": 800,
       "height": 800
   }
-}
+}}}

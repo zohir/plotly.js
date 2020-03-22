@@ -116,11 +116,11 @@
       "type": "scatter"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "legend": {
       "bordercolor": "#000000",
       "borderwidth": 1,
       "bgcolor": "#eeffee"
     }
   }
-}
+}}}

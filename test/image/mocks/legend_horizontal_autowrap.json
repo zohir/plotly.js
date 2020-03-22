@@ -421,7 +421,7 @@
       "hoverinfo": "text"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "margin": {
       "t": 34.8976,
       "r": 75.5906,
@@ -539,4 +539,4 @@
     "width": 680,
     "height": 450
   }
-}
+}}}

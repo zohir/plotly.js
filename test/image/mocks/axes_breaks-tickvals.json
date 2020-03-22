@@ -14,7 +14,7 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "rangebreaks": [
         {"bounds": [
@@ -48,4 +48,4 @@
       "xref": "paper"
     }
   }
-}
+}}}

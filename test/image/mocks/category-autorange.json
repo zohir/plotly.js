@@ -24,7 +24,7 @@
         "xaxis": "x4",
         "yaxis": "y4"
     }],
-    "layout":{
+    "layout": { "template": { "layout":{
         "xaxis":{
             "categoryarray": ["a", "b", "c", "d"],
             "anchor": "x",
@@ -192,4 +192,4 @@
             "y0": 1, "y1": 2.75
         }]
     }
-}
+}}}

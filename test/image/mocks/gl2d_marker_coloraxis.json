@@ -779,7 +779,7 @@
       "yaxis": "y"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "annotations": [
       {
         "showarrow": false,
@@ -908,4 +908,4 @@
       "autorange": true
     }
   }
-}
+}}}

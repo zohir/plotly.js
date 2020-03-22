@@ -136,7 +136,7 @@
             "mode": "markers"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "scatter + colorbar = <3",
         "xaxis": {
             "type": "linear",
@@ -159,4 +159,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

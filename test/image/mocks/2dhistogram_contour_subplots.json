@@ -12047,7 +12047,7 @@
       "type": "histogram"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false,
     "autosize": false,
     "width": 600,
@@ -12090,4 +12090,4 @@
       "zeroline": false
     }
   }
-}
+}}}

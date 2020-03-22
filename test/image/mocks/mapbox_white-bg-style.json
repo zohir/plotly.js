@@ -7,7 +7,7 @@
       "lat": [ 20, 10 ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 200,
     "height": 200,
     "margin": {"t": 0, "b": 0, "l": 0, "r": 0},
@@ -15,4 +15,4 @@
       "style": "white-bg"
     }
   }
-}
+}}}

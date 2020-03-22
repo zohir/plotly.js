@@ -1231,7 +1231,7 @@
       "coloraxis": "coloraxis2"
   }],
 
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "gl3d trace with shared coloraxes",
 
     "scene": {
@@ -1260,4 +1260,4 @@
       }
     }
   }
-}
+}}}

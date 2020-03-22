@@ -265,7 +265,7 @@
          "notched":true
       }
    ],
-   "layout":{
+   "layout": { "template": { "layout":{
       "showlegend":false,
       "yaxis":{
          "title":"Grade [%]",
@@ -279,4 +279,4 @@
       "width":1080,
       "autosize":true
    }
-}
+}}}

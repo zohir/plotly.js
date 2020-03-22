@@ -53,7 +53,7 @@
             "lightposition": { "x": 0, "y": 2000, "z": 1000 }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "height": 800,
         "width": 800,
         "title": {
@@ -75,4 +75,4 @@
             }
         }
     }
-}
+}}}

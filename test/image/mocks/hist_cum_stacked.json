@@ -31,11 +31,11 @@
         "line": {"color": "red"},
         "showlegend": false
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "yaxis": {"domain": [0, 0.8]},
         "yaxis2": {"domain": [0.8, 1], "showline": false, "showticklabels": false},
         "height": 300,
         "width": 400,
         "barmode": "stack"
     }
-}
+}}}

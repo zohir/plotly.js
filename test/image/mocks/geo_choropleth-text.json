@@ -410,7 +410,7 @@
             "zauto": false
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo": {
             "showframe": false
         },
@@ -430,4 +430,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

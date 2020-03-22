@@ -63,7 +63,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "grid": {
       "columns": 2,
       "rows": 1,
@@ -106,4 +106,4 @@
     },
     "showlegend": false
   }
-}
+}}}

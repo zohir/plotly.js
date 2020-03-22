@@ -26,7 +26,7 @@
       "type": "scatter"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Global Font",
     "font": {
       "family": "Courier New, monospace",
@@ -34,4 +34,4 @@
       "color": "#7f7f7f"
     }
   }
-}
+}}}

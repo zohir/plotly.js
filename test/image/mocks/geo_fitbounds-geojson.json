@@ -133,7 +133,7 @@
       }]
     }
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 600,
     "height": 400,
     "showlegend": false,
@@ -177,4 +177,4 @@
     }],
     "margin": {"l": 20, "r": 20, "b": 20, "t": 40}
   }
-}
+}}}

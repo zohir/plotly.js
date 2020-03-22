@@ -21,7 +21,7 @@
       "subplot": "mapbox3"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "grid": {"rows": 1, "columns": 3},
 
     "legend": {
@@ -41,4 +41,4 @@
       "style": "stamen-watercolor"
     }
   }
-}
+}}}

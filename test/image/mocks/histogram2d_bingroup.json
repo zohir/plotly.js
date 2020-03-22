@@ -68,7 +68,7 @@
       "yaxis": "y8"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "grid": {
       "rows": 4,
       "columns": 2,
@@ -100,4 +100,4 @@
     "height": 600,
     "width": 500
   }
-}
+}}}

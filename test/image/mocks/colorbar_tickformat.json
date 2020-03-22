@@ -15,9 +15,9 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 500,
         "height": 400,
         "title": "colorbar tickformat"
     }
-}
+}}}

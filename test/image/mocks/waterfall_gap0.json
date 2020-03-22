@@ -15,7 +15,7 @@
       "type": "waterfall"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "waterfallgap": 0,
     "xaxis": {
       "type": "category",
@@ -37,4 +37,4 @@
     "width": 1100,
     "autosize": false
   }
-}
+}}}

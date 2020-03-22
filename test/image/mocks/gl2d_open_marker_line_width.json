@@ -5,8 +5,8 @@
     "type": "scattergl",
     "mode": "markers"
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 400,
     "width": 480
   }
-}
+}}}

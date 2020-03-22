@@ -3,11 +3,11 @@
         "x": ["c","a","e","b","d"],
         "y": [15,11,12,13,14]}
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "categoryarray with truncated tails (y, q, k not plotted)",
         "xaxis": {
             "type": "category",
             "categoryorder": "array",
             "categoryarray": ["y","b","x","a","d","z","e","c", "q", "k"]
         }}
-}
+}}}

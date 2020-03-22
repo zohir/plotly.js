@@ -16,11 +16,11 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": {
             "text": "Should draw transparent mesh<br>when having transparent rgba color"
         },
         "width": 400,
         "height": 400
     }
-}
+}}}

@@ -43,7 +43,7 @@
       }
     }
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 600,
     "height": 400,
     "mapbox": {
@@ -68,4 +68,4 @@
       "colorscale": "Viridis"
     }
   }
-}
+}}}

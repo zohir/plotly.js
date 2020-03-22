@@ -15,10 +15,10 @@
       "type": "heatmap"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 400,
     "height": 400,
     "xaxis": {"zeroline": false, "showline": true, "mirror": true, "dtick": 1},
     "yaxis": {"zeroline": false, "showline": true, "mirror": true, "dtick": 1}
   }
-}
+}}}

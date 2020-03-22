@@ -16,10 +16,10 @@
         "meta": {"text": "meta"},
         "mode": "markers+text"
       }],
-  "layout": {
+  "layout": { "template": { "layout": {
       "showlegend": true,
       "width": 400,
       "height": 400,
       "margin": {"t": 20, "l": 0, "r": 0, "b": 0}
   }
-}
+}}}

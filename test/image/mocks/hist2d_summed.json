@@ -29,8 +29,8 @@
             "histfunc": "sum"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "height": 300,
         "width": 400
     }
-}
+}}}

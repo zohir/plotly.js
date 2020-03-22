@@ -5,7 +5,7 @@
       "y": [0, 10, 20, 30, 40, 50, 60]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "title": {
         "text": "Bottom X Axis<br><i>2nd line</i>",
@@ -21,4 +21,4 @@
     "height": 400,
     "margin": {"l": 0, "t": 0, "b": 0, "r": 0}
   }
-}
+}}}

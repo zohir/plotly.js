@@ -11,7 +11,7 @@
       "mode": "markers"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "template": {
       "data": {
         "scatter": [
@@ -30,4 +30,4 @@
       }
     }
   }
-}
+}}}

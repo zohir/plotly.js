@@ -53,7 +53,7 @@
       "type": "scattergl"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "showlegend": false
   }
-}
+}}}

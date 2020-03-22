@@ -44,7 +44,7 @@
     }
 
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title":"scatter3d lines with good/bad/no input texts (including undefined, null & blank variations) should be displayed well on WEBGL",
     "width": 1200,
     "height": 900,
@@ -56,4 +56,4 @@
       }
     }
   }
-}
+}}}

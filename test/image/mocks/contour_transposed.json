@@ -10415,7 +10415,7 @@
             "transpose": true
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "transposed contour plot"
     }
-}
+}}}

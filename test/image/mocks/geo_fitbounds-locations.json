@@ -510,7 +510,7 @@
       "hoverinfo": "skip"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "grid": {
       "rows": 8,
       "columns": 3
@@ -760,4 +760,4 @@
       "fitbounds": "locations"
     }
   }
-}
+}}}

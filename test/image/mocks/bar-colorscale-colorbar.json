@@ -49,7 +49,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "bars + colorbar = <3",
         "xaxis": {
             "type": "linear",
@@ -72,4 +72,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

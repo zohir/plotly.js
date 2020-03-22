@@ -20,7 +20,7 @@
       "color": "rgba(255, 255, 255, 0.5)"
     }
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 400,
     "height": 300,
     "xaxis": {
@@ -48,4 +48,4 @@
   "config": {
     "responsive": true
   }
-}
+}}}

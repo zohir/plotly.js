@@ -144,7 +144,7 @@
             "type": "bar"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "bar trace with colorscales for both marker color and marker line color",
         "xaxis": {
             "type": "linear",
@@ -167,4 +167,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

@@ -146,7 +146,7 @@
       ]
     }
   ],
-  "layout":{
+  "layout": { "template": { "layout":{
     "dragmode":"pan",
     "width":800,
     "height":600,
@@ -155,4 +155,4 @@
       "tickformat":".2f"
     }
   }
-}
+}}}

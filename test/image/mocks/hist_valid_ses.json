@@ -41,7 +41,7 @@
             "type": "histogram"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "type": "linear",
             "range": [
@@ -61,4 +61,4 @@
         "width": 1000,
         "autosize": true
     }
-}
+}}}

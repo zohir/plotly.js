@@ -168,7 +168,7 @@
       "zmin": 0
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "hovermode": "closest",
     "xaxis": {
       "type": "linear",
@@ -190,4 +190,4 @@
     "width": 1100,
     "autosize": true
   }
-}
+}}}

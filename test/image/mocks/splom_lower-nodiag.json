@@ -694,7 +694,7 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
 	"title": "Iris dataset splom",
   	"width": 600,
 	"height": 500,
@@ -703,4 +703,4 @@
       "xanchor": "right"
     }
   }
-}
+}}}

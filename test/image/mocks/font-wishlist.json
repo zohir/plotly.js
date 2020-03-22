@@ -16,7 +16,7 @@
             "mode": "markers"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 700,
         "height": 500,
         "xaxis": {
@@ -198,4 +198,4 @@
             }
         ]
     }
-}
+}}}

@@ -15,7 +15,7 @@
       "domain": {"x": [0.5, 1]}
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "annotations": [
       {
           "showarrow": false,
@@ -35,4 +35,4 @@
       }
     ]
   }
-}
+}}}

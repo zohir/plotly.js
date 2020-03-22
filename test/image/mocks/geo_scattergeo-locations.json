@@ -22,7 +22,7 @@
             ]
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "geo": {
             "projection": {
                 "type": "natural earth"
@@ -46,4 +46,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

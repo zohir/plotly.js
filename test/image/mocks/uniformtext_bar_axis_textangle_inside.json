@@ -99,7 +99,7 @@
             "yaxis": "y4"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "uniformtext": {
             "mode": "hide",
             "minsize": 10
@@ -162,4 +162,4 @@
             ]
         }
     }
-}
+}}}

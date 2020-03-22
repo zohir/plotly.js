@@ -9,7 +9,7 @@
 		"lat": [44.065041, 42.012902],
 		"lon": [-82.649583, -82.545763]
 	}],
-	"layout": {
+	"layout": { "template": { "layout": {
 		"margin": {"t": 70, "b": 40, "l": 10, "r": 10},
 	  	"geo": {
 			"projection": {
@@ -38,4 +38,4 @@
 			"subunitcolor": "rgb(224,224,224)"
 	  	}
 	}
-}
+}}}

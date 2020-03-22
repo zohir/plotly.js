@@ -37,7 +37,7 @@
       }
     }
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "dragmode": "lasso",
     "showlegend": false,
     "width": 700,
@@ -48,4 +48,4 @@
       }
     }
   }
-}
+}}}

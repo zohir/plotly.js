@@ -3,11 +3,11 @@
         "x": ["c","a","e","b","d"],
         "y": [15,11,12,13,14]}
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "title": "category ascending",
             "type": "category",
             "categoryorder": "category ascending",
             "categoryarray": ["y","b","x","a","d","z","e","c", "q", "k"]
         }}
-}
+}}}

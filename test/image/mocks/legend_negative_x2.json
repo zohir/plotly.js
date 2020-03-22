@@ -16,7 +16,7 @@
       "name": "Plot Plot Plot"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "paper_bgcolor": "pink",
     "legend": {
       "orientation": "h",
@@ -25,4 +25,4 @@
     },
     "width": 400
   }
-}
+}}}

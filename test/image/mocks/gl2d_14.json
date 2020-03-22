@@ -96,7 +96,7 @@
             "type": "scattergl"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Silicon Photovoltaics Learning Curve",
         "titlefont": {
             "color": "",
@@ -242,4 +242,4 @@
         "separators": ".,",
         "hidesources": false
     }
-}
+}}}

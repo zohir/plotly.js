@@ -29,7 +29,7 @@
             "zmax": "50"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Simple surface",
         "scene": {
             "aspectratio": {
@@ -43,4 +43,4 @@
         "autosize": true,
         "showlegend": false
     }
-}
+}}}

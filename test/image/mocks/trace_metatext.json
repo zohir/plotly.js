@@ -32,7 +32,7 @@
     "meta": {"column": "full-time"},
     "title": {"text": "Employee %{meta.column} -- %{layout.meta.global}"}
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "meta": {
       "global": "GrApH",
       "item": "mEtA"
@@ -128,4 +128,4 @@
       }]
     }]
   }
-}
+}}}

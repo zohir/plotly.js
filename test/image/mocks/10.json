@@ -227,7 +227,7 @@
             "type": "scatter"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "Math Score Box Plots",
         "titlefont": {
             "color": "",
@@ -373,4 +373,4 @@
         "separators": ".,",
         "hidesources": false
     }
-}
+}}}

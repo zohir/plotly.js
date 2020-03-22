@@ -15,7 +15,7 @@
     {"type": "scattergeo", "lon": [0, -75], "lat": [0, 45], "marker": {"size": [20, 30]}},
     {"type": "heatmap", "z": [[1, 2], [4, 1]], "showscale": false, "xaxis": "x3", "yaxis": "y3"}
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {"title": "x"},
     "xaxis2": {"title": "x2"},
     "yaxis": {"title": "y"},
@@ -29,4 +29,4 @@
     "width": 700,
     "height": 700
   }
-}
+}}}

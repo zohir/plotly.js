@@ -548,7 +548,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "RGBA colorscales",
         "xaxis": {
             "range": [
@@ -569,4 +569,4 @@
         "width": 1100,
         "autosize": true
     }
-}
+}}}

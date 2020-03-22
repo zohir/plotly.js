@@ -355,7 +355,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "margin": { "r": 10, "t": 25, "b": 40, "l": 60 },
     "grid": {"rows": 1, "columns": 2, "pattern": "independent"},
     "showlegend": false,
@@ -386,4 +386,4 @@
     "width": 600,
     "height": 300
   }
-}
+}}}

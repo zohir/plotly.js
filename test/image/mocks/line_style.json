@@ -154,7 +154,7 @@
       "type": "scatter"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Quarter 1 Growth",
     "xaxis": {
       "zeroline": false,
@@ -166,4 +166,4 @@
       "title": "Percent"
     }
   }
-}
+}}}

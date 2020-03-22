@@ -32,7 +32,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "grid": {
       "rows": 2,
       "columns": 1,
@@ -74,4 +74,4 @@
       "line": {"color": "red"}
     }]
   }
-}
+}}}

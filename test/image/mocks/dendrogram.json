@@ -3579,7 +3579,7 @@
       "yaxis": "y2"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "font": {
       "color": "rgba(0, 0, 0, 1)",
       "family": "",
@@ -3894,4 +3894,4 @@
     "height": 1000,
     "width": 1100
   }
-}
+}}}

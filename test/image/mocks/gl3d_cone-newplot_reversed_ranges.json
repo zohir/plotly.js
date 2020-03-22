@@ -127,7 +127,7 @@
       "type": "cone"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 758,
     "width": 1310,
     "title": "Cone objects with Y-axis using autorange: 'reversed'",
@@ -144,4 +144,4 @@
       }
     }
   }
-}
+}}}

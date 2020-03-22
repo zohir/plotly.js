@@ -278,7 +278,7 @@
             "type": "surface"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "IBM Volatility",
         "titlefont": {
             "size": 24,
@@ -359,4 +359,4 @@
             ]
         }
     }
-}
+}}}

@@ -13,7 +13,7 @@
       "type": "heatmap"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "constrain": "domain",
       "fixedrange": true
@@ -25,4 +25,4 @@
       "fixedrange": true
     }
   }
-}
+}}}

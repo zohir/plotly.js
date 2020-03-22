@@ -32,9 +32,9 @@
         "box": {"visible": true},
         "xaxis": "x2",
         "yaxis": "y2"
-        
+
     }],
-    "layout": {
+    "layout": { "template": { "layout": {
         "xaxis": {
             "anchor": "y"
         },
@@ -55,4 +55,4 @@
         },
         "showlegend": false
     }
-}
+}}}

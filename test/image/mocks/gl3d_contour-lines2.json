@@ -651,7 +651,7 @@
       "cauto": true
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "width": 1000,
     "height": 600,
     "margin": {
@@ -823,4 +823,4 @@
       "aspectmode": "auto"
     }
   }
-}
+}}}

@@ -585,7 +585,7 @@
       "ybingroup": "y"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "annotations": [
       {
         "showarrow": false,
@@ -753,4 +753,4 @@
       }
     }
   }
-}
+}}}

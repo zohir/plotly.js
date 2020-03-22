@@ -18,7 +18,7 @@
             "name":"Col2"
         }
     ],
-    "layout":{
+    "layout": { "template": { "layout":{
         "boxmode":"overlay",
         "paper_bgcolor":"#fff",
         "height":790,
@@ -479,4 +479,4 @@
             "autoexpand":true
         }
     }
-}
+}}}

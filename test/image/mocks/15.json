@@ -403,7 +403,7 @@
             "type": "scatter"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "title": "World Primary Power Consumption",
         "titlefont": {
             "color": "",
@@ -411,7 +411,7 @@
             "size": 0
         },
         "font": {
-            "family": "Arial, sans-serif", 
+            "family": "Arial, sans-serif",
             "size": 14,
             "color": "#000"
         },
@@ -551,4 +551,4 @@
         "separators": ".,",
         "hidesources": false
     }
-}
+}}}

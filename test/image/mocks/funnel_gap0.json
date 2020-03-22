@@ -16,7 +16,7 @@
       "textfont": { "size": 18 }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "margin": { "l": 20, "r": 20, "t": 20, "b": 50 },
     "funnelgap": 0,
     "xaxis": {
@@ -37,4 +37,4 @@
     "width": 900,
     "autosize": false
   }
-}
+}}}

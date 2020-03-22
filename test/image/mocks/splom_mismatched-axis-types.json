@@ -34,7 +34,7 @@
       ]
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "hovermode": "closest",
     "margin": {"b": 80, "l": 80, "r": 30, "t": 30},
     "xaxis3": {"type": "linear"},
@@ -49,4 +49,4 @@
       "borderpad": 5
     }]
   }
-}
+}}}

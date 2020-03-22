@@ -260,7 +260,7 @@
       "whiskerwidth": 0.5
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "xaxis": {
       "rangeslider": {
 	    "visible": false
@@ -273,4 +273,4 @@
     "width": 1100,
     "autosize": true
   }
-}
+}}}

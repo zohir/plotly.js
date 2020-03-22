@@ -36,7 +36,7 @@
       "name": "This<br> contains<br>a break"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "legend": {
       "orientation": "h",
       "xanchor": "center",
@@ -55,4 +55,4 @@
     "width": 360,
     "height": 600
   }
-}
+}}}

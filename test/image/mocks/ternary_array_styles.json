@@ -108,7 +108,7 @@
             }
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "ternary": {
             "aaxis": {
                 "showline": true,
@@ -134,4 +134,4 @@
         "width": 700,
         "autosize": false
     }
-}
+}}}

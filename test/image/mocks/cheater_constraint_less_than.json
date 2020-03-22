@@ -181,7 +181,7 @@
       "yaxis": "y4"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "title": "Less than constraint",
     "width": 600,
     "height": 800,
@@ -261,4 +261,4 @@
       }
     ]
   }
-}
+}}}

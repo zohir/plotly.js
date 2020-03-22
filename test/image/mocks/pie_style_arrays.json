@@ -51,11 +51,11 @@
       "type": "pie"
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "height": 600,
     "width": 400,
     "paper_bgcolor": "#ddd",
     "margin": {"b": 200},
     "showlegend": false
   }
-}
+}}}

@@ -61,11 +61,11 @@
       }
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
       "width": 600,
       "heigh": 600,
       "title": {
           "text": "Histogram error bars inherit color from marker.line not marker"
       }
   }
-}
+}}}

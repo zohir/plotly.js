@@ -9,7 +9,7 @@
       "automargin": true
     }
   ],
-  "layout": {
+  "layout": { "template": { "layout": {
     "legend": {
       "orientation": "h",
       "y": 1.2,
@@ -20,4 +20,4 @@
     "width": 700,
     "height": 450
   }
-}
+}}}

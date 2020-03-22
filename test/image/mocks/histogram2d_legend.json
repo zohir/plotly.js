@@ -133,7 +133,7 @@
             "name": "histogram2dcontour reversed scale"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "legend": {
             "title": {
                 "text": "<i>histogram2d</i> &<br><b>histogram2dcontour</b> legends:",
@@ -200,4 +200,4 @@
             ]
         }
     }
-}
+}}}

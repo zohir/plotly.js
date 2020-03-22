@@ -7,7 +7,7 @@
           "type": "scattergl"
         }
     ],
-    "layout": {
+    "layout": { "template": { "layout": {
         "width": 600,
         "height": 500,
         "xaxis": {
@@ -19,4 +19,4 @@
             "linecolor": "#d3d3d3", "mirror": true, "zeroline": false
         }
     }
-}
+}}}

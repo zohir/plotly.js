@@ -64,7 +64,7 @@
       "value": [3.5, 4.5]
     }]
   }],
-  "layout": {
+  "layout": { "template": { "layout": {
     "dragmode": "lasso",
     "legend": {
       "x": 0,
@@ -74,4 +74,4 @@
     },
     "width": 600
   }
-}
+}}}
