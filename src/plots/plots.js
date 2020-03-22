@@ -1490,7 +1490,9 @@ plots.supplyLayoutGlobalDefaults = function(layoutIn, layoutOut, formatObj) {
     // to pass through the autosize routine
     //
     // This behavior is subject to change in v2.
-    coerce('autosize', !(layoutIn.width && layoutIn.height));
+    var hasWidth = !!(layoutIn.width || (layoutOut._template || {}).width);
+    var hasHeight = !!(layoutIn.height || (layoutOut._template || {}).height);
+    coerce('autosize', !(hasWidth && hasHeight));
 
     coerce('width');
     coerce('height');
@@ -1501,7 +1503,7 @@ plots.supplyLayoutGlobalDefaults = function(layoutIn, layoutOut, formatObj) {
     coerce('margin.pad');
     coerce('margin.autoexpand');
 
-    if(layoutIn.width && layoutIn.height) plots.sanitizeMargins(layoutOut);
+    if(hasWidth && hasHeight) plots.sanitizeMargins(layoutOut);
 
     Registry.getComponentMethod('grid', 'sizeDefaults')(layoutIn, layoutOut);
 
