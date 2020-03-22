@@ -121,6 +121,13 @@ function toImage(gd, opts) {
 
     var fullOpts = {};
 
+    var template = layout.template;
+    if(Lib.isPlainObject(template)) {
+        fullOpts.template = template;
+        fullOpts._template = template.layout;
+        fullOpts._dataTemplate = template.data;
+    }
+
     function coerce(attr, dflt) {
         return Lib.coerce(opts, fullOpts, attrs, attr, dflt);
     }
@@ -169,8 +176,8 @@ function toImage(gd, opts) {
     function convert() {
         return new Promise(function(resolve, reject) {
             var svg = toSVG(clonedGd, format, scale);
-            var width = clonedGd._fullLayout.width;
-            var height = clonedGd._fullLayout.height;
+            var _width = clonedGd._fullLayout.width;
+            var _height = clonedGd._fullLayout.height;
 
             function cleanup() {
                 plotApi.purge(clonedGd);
@@ -204,8 +211,8 @@ function toImage(gd, opts) {
 
             svgToImg({
                 format: format,
-                width: width,
-                height: height,
+                width: _width,
+                height: _height,
                 scale: scale,
                 canvas: canvas,
                 svg: svg,

@@ -23,6 +23,14 @@ module.exports = function getRequestOpts(specs) {
         scale: specs.scale || DEFAULT_SCALE
     };
 
+    var layout = figure.layout || {};
+    var tempLayout = (layout.template || {}).layout || {};
+    var autosize = layout.autosize || tempLayout.autosize;
+    if(autosize !== true) {
+        body.width = layout.width || tempLayout.width;
+        body.height = layout.height || tempLayout.height;
+    }
+
     if(specs.width) body.width = specs.width;
     if(specs.height) body.height = specs.height;
 
