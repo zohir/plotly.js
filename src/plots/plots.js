@@ -88,13 +88,26 @@ plots.resize = function(gd) {
 
         gd._redrawTimer = setTimeout(function() {
             // return if there is nothing to resize or is hidden
-            if(!gd.layout || (gd.layout.width && gd.layout.height) || Lib.isHidden(gd)) {
+
+            if(!gd.layout || Lib.isHidden(gd)) {
+                resolve(gd);
+                return;
+            }
+
+            var initWidth = gd.layout.width || (gd._fullLayout._template || {}).width;
+            var initHeight = gd.layout.height || (gd._fullLayout._template || {}).height;
+
+            if(initWidth && initHeight) {
                 resolve(gd);
                 return;
             }
 
             delete gd.layout.width;
             delete gd.layout.height;
+            if(gd.layout.template && gd.layout.template.layout) {
+                delete gd.layout.template.layout.width;
+                delete gd.layout.template.layout.height;
+            }
 
             // autosizing doesn't count as a change that needs saving
             var oldchanged = gd.changed;
@@ -1490,9 +1503,9 @@ plots.supplyLayoutGlobalDefaults = function(layoutIn, layoutOut, formatObj) {
     // to pass through the autosize routine
     //
     // This behavior is subject to change in v2.
-    var hasWidth = !!(layoutIn.width || (layoutOut._template || {}).width);
-    var hasHeight = !!(layoutIn.height || (layoutOut._template || {}).height);
-    coerce('autosize', !(hasWidth && hasHeight));
+    var initWidth = layoutIn.width || (layoutOut._template || {}).width;
+    var initHeight = layoutIn.height || (layoutOut._template || {}).height;
+    coerce('autosize', !(initWidth && initHeight));
 
     coerce('width');
     coerce('height');
@@ -1503,7 +1516,7 @@ plots.supplyLayoutGlobalDefaults = function(layoutIn, layoutOut, formatObj) {
     coerce('margin.pad');
     coerce('margin.autoexpand');
 
-    if(hasWidth && hasHeight) plots.sanitizeMargins(layoutOut);
+    if(initWidth && initHeight) plots.sanitizeMargins(layoutOut);
 
     Registry.getComponentMethod('grid', 'sizeDefaults')(layoutIn, layoutOut);
 
@@ -1587,9 +1600,12 @@ plots.plotAutoSize = function plotAutoSize(gd, layout, fullLayout) {
     if(newWidth < minWidth) newWidth = minWidth;
     if(newHeight < minHeight) newHeight = minHeight;
 
-    var widthHasChanged = !layout.width &&
+    var initWidth = layout.width || (fullLayout._template || {}).width;
+    var initHeight = layout.height || (fullLayout._template || {}).height;
+
+    var widthHasChanged = !initWidth &&
         (Math.abs(fullLayout.width - newWidth) > 1);
-    var heightHasChanged = !layout.height &&
+    var heightHasChanged = !initHeight &&
         (Math.abs(fullLayout.height - newHeight) > 1);
 
     if(heightHasChanged || widthHasChanged) {
