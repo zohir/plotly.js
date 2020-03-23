@@ -52,7 +52,7 @@ module.exports = function colorbarDefaults(containerIn, containerOut, layout) {
     coerce('borderwidth');
     coerce('bgcolor');
 
-    handleTickValueDefaults(colorbarIn, colorbarOut, coerce, 'linear');
+    handleTickValueDefaults(colorbarIn, colorbarOut, coerce, 'linear'); // TODO: pass opts with axTemplate
 
     var opts = {outerTicks: false, font: layout.font};
     handleTickLabelDefaults(colorbarIn, colorbarOut, coerce, 'linear', opts);

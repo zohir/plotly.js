@@ -91,7 +91,7 @@ module.exports = function handleAxisDefaults(containerIn, containerOut, coerce, 
         color: dfltFontColor
     });
 
-    handleTickValueDefaults(containerIn, containerOut, coerce, axType);
+    handleTickValueDefaults(containerIn, containerOut, coerce, axType, options);
     handleTickLabelDefaults(containerIn, containerOut, coerce, axType, options, {pass: 2});
     handleTickMarkDefaults(containerIn, containerOut, coerce, options);
     handleLineGridDefaults(containerIn, containerOut, coerce, {

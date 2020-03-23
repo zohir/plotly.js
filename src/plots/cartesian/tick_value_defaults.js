@@ -10,15 +10,23 @@
 
 var cleanTicks = require('./clean_ticks');
 
-module.exports = function handleTickValueDefaults(containerIn, containerOut, coerce, axType) {
+module.exports = function handleTickValueDefaults(containerIn, containerOut, coerce, axType, options) {
+    function read(attr) {
+        return containerIn[attr] || ((options || {}).axTemplate || {})[attr];
+    }
+
+    var _tick0 = read('tick0');
+    var _dtick = read('dtick');
+    var _tickvals = read('tickvals');
+    var _tickmode = read('tickmode');
     var tickmode;
 
-    if(containerIn.tickmode === 'array' &&
+    if(_tickmode === 'array' &&
             (axType === 'log' || axType === 'date')) {
         tickmode = containerOut.tickmode = 'auto';
     } else {
-        var tickmodeDefault = Array.isArray(containerIn.tickvals) ? 'array' :
-            containerIn.dtick ? 'linear' :
+        var tickmodeDefault = Array.isArray(_tickvals) ? 'array' :
+            _dtick ? 'linear' :
             'auto';
         tickmode = coerce('tickmode', tickmodeDefault);
     }
@@ -29,9 +37,9 @@ module.exports = function handleTickValueDefaults(containerIn, containerOut, coe
         // special strings available for log or date axes
         // tick0 also has special logic
         var dtick = containerOut.dtick = cleanTicks.dtick(
-            containerIn.dtick, axType);
+            _dtick, axType);
         containerOut.tick0 = cleanTicks.tick0(
-            containerIn.tick0, axType, containerOut.calendar, dtick);
+            _tick0, axType, containerOut.calendar, dtick);
     } else if(axType !== 'multicategory') {
         var tickvals = coerce('tickvals');
         if(tickvals === undefined) containerOut.tickmode = 'auto';

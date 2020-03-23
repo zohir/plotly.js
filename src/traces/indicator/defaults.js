@@ -135,7 +135,7 @@ function supplyDefaults(traceIn, traceOut, defaultColor, layout) {
         traceOut._range = coerceGaugeAxis('range', traceOut._range);
 
         var opts = {outerTicks: true};
-        handleTickValueDefaults(axisIn, axisOut, coerceGaugeAxis, 'linear');
+        handleTickValueDefaults(axisIn, axisOut, coerceGaugeAxis, 'linear'); // TODO: pass opts with axTemplate
         handleTickLabelDefaults(axisIn, axisOut, coerceGaugeAxis, 'linear', opts);
         handleTickMarkDefaults(axisIn, axisOut, coerceGaugeAxis, opts);
     } else {

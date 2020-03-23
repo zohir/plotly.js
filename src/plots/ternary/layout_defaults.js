@@ -97,7 +97,7 @@ function handleAxisDefaults(containerIn, containerOut, options, ternaryLayoutOut
     // range is just set by 'min' - max is determined by the other axes mins
     coerce('min');
 
-    handleTickValueDefaults(containerIn, containerOut, coerce, 'linear');
+    handleTickValueDefaults(containerIn, containerOut, coerce, 'linear'); // TODO: pass opts with axTemplate
     handleTickLabelDefaults(containerIn, containerOut, coerce, 'linear', {});
     handleTickMarkDefaults(containerIn, containerOut, coerce,
         { outerTicks: true });

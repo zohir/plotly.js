@@ -133,7 +133,7 @@ module.exports = function handleAxisDefaults(containerIn, containerOut, options)
 
     coerce('fixedrange');
 
-    handleTickValueDefaults(containerIn, containerOut, coerce, axType);
+    handleTickValueDefaults(containerIn, containerOut, coerce, axType); // TODO: pass opts with axTemplate
     handleTickLabelDefaults(containerIn, containerOut, coerce, axType, options);
     handleCategoryOrderDefaults(containerIn, containerOut, coerce, {
         data: options.data,

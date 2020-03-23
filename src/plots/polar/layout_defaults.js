@@ -145,7 +145,7 @@ function handleDefaults(contIn, contOut, coerce, opts) {
         }
 
         if(visible) {
-            handleTickValueDefaults(axIn, axOut, coerceAxis, axOut.type);
+            handleTickValueDefaults(axIn, axOut, coerceAxis, axOut.type); // TODO: pass opts with axTemplate
             handleTickLabelDefaults(axIn, axOut, coerceAxis, axOut.type, {
                 tickSuffixDflt: axOut.thetaunit === 'degrees' ? '°' : undefined
             });
