@@ -37,11 +37,35 @@ function hoverOnBars(pointData, xval, yval, hovermode) {
     var cd = pointData.cd;
     var trace = cd[0].trace;
     var t = cd[0].t;
+
+    var posVal, sizeVal, posLetter, sizeLetter, dx, dy;
+
+    if(trace.orientation === 'h') {
+        posVal = yval;
+        sizeVal = xval;
+        posLetter = 'y';
+        sizeLetter = 'x';
+        dx = sizeFn;
+        dy = positionFn;
+    } else {
+        posVal = xval;
+        sizeVal = yval;
+        posLetter = 'x';
+        sizeLetter = 'y';
+        dy = sizeFn;
+        dx = positionFn;
+    }
+
+    var sa = pointData[sizeLetter + 'a'];
+    var pa = pointData[posLetter + 'a'];
+    var pRangeCalc = Math.abs(
+        pa.r2c(pa.range[1]) -
+        pa.r2c(pa.range[0])
+    );
+
     var isClosest = (hovermode === 'closest');
     var isWaterfall = (trace.type === 'waterfall');
     var maxHoverDistance = pointData.maxHoverDistance;
-
-    var posVal, sizeVal, posLetter, sizeLetter, dx, dy, pRangeCalc;
 
     function thisBarMinPos(di) { return di[posLetter] - di.w / 2; }
     function thisBarMaxPos(di) { return di[posLetter] + di.w / 2; }
@@ -103,27 +127,6 @@ function hoverOnBars(pointData, xval, yval, hovermode) {
         // bar makes it a little closer match
         return Fx.inbox(b - v, s - v, maxHoverDistance + (s - v) / (s - b) - 1);
     }
-
-    if(trace.orientation === 'h') {
-        posVal = yval;
-        sizeVal = xval;
-        posLetter = 'y';
-        sizeLetter = 'x';
-        dx = sizeFn;
-        dy = positionFn;
-    } else {
-        posVal = xval;
-        sizeVal = yval;
-        posLetter = 'x';
-        sizeLetter = 'y';
-        dy = sizeFn;
-        dx = positionFn;
-    }
-
-    var pa = pointData[posLetter + 'a'];
-    var sa = pointData[sizeLetter + 'a'];
-
-    pRangeCalc = Math.abs(pa.r2c(pa.range[1]) - pa.r2c(pa.range[0]));
 
     function dxy(di) { return (dx(di) + dy(di)) / 2; }
     var distfn = Fx.getDistanceFunction(hovermode, dx, dy, dxy);
