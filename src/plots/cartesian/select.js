@@ -1302,7 +1302,6 @@ function addNewShapes(outlines, dragOptions) {
 
         var shape = {
             editable: true,
-            editing: false,
 
             xref: onPaper ? 'paper' : xaxis._id,
             yref: onPaper ? 'paper' : yaxis._id,
