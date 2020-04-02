@@ -27,7 +27,7 @@ module.exports = function relinkPrivateKeys(toContainer, fromContainer) {
         if(toVal === fromVal) {
             continue;
         }
-        if(k.charAt(0) === '_' || typeof fromVal === 'function') {
+        if((k.charAt(0) === '_' && k !== '_categories') || typeof fromVal === 'function') {
             // if it already exists at this point, it's something
             // that we recreate each time around, so ignore it
             if(k in toContainer) continue;
