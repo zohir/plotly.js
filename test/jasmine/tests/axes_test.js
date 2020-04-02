@@ -1650,6 +1650,87 @@ describe('Test axes', function() {
             .catch(failTest)
             .then(done);
         });
+
+        it('should rebuild categories when reacting matching axes', function(done) {
+            var fig = {
+                data: [{
+                    yaxis: 'y',
+                    xaxis: 'x',
+                    y: [
+                        0,
+                        0
+                    ],
+                    x: [
+                        'A',
+                        'Z'
+                    ]
+                },
+                {
+                    yaxis: 'y2',
+                    xaxis: 'x2',
+                    y: [
+                        0,
+                        0
+                    ],
+                    x: [
+                        'A',
+                        'Z'
+                    ]
+                }],
+                layout: {
+                    width: 400,
+                    height: 300,
+                    showlegend: false,
+                    xaxis: {
+                        matches: 'x2', // N.B. this should not cause problem.
+                        domain: [
+                            0,
+                            1
+                        ]
+                    },
+                    yaxis: {
+                        domain: [
+                            0.6,
+                            1
+                        ],
+                        anchor: 'x'
+                    },
+                    xaxis2: {
+                        domain: [
+                            0,
+                            1
+                        ],
+                        anchor: 'y2'
+                    },
+                    yaxis2: {
+                        domain: [
+                            0,
+                            0.4
+                        ],
+                        anchor: 'x2'
+                    }
+                }
+            };
+
+            Plotly.newPlot(gd, fig)
+            .then(function() {
+                // copy data
+                var newFig = JSON.parse(JSON.stringify(fig));
+
+                // flip order
+                newFig.data[0].x.reverse();
+                newFig.data[0].y.reverse();
+                newFig.data[1].x.reverse();
+                newFig.data[1].y.reverse();
+
+                return Plotly.react(gd, newFig);
+            }).then(function() {
+                expect(gd._fullLayout.xaxis._categories).toEqual([ 'Z', 'A' ]);
+                expect(gd._fullLayout.xaxis._categoriesMap).toEqual({ Z: 0, A: 1 });
+            })
+            .catch(failTest)
+            .then(done);
+        });
     });
 
     describe('categoryorder', function() {
