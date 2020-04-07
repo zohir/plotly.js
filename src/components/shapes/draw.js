@@ -103,6 +103,12 @@ function drawOne(gd, index) {
         var lineWidth = options.line.width;
         var lineDash = options.line.dash;
 
+        var isActiveShape = options.editable && gd._fullLayout._activeShapeIndex === index;
+        if(isActiveShape) {
+            fillColor = gd._fullLayout.activeshape.fillcolor;
+            opacity = gd._fullLayout.activeshape.opacity;
+        }
+
         var path = shapeLayer.append('path')
             .attr(attrs)
             .style('opacity', opacity)
@@ -112,7 +118,7 @@ function drawOne(gd, index) {
 
         setClipPath(path, gd, options);
 
-        if(gd._context.edits.shapePosition || (options.editable && gd._fullLayout._activeShapeIndex === index)) {
+        if(gd._context.edits.shapePosition || isActiveShape) {
             setupDragElement(gd, path, options, index, shapeLayer);
         }
 

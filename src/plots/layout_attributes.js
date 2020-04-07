@@ -494,7 +494,7 @@ module.exports = {
             valType: 'number',
             min: 0,
             max: 1,
-            dflt: 0.5,
+            dflt: 1,
             role: 'info',
             editType: 'none',
             description: 'Sets the opacity of new shapes.'
@@ -536,6 +536,31 @@ module.exports = {
             ].join(' ')
         },
 
+        editType: 'none'
+    },
+
+    activeshape: {
+        fillcolor: {
+            valType: 'color',
+            dflt: 'rgb(255,0,255)',
+            role: 'style',
+            editType: 'none',
+            description: 'Sets the color filling the active shape\' interior.'
+        },
+        opacity: {
+            valType: 'number',
+            min: 0,
+            max: 1,
+            dflt: 0.5,
+            role: 'info',
+            editType: 'none',
+            description: [
+                'Sets the opacity of the active shape.',
+                'If using a value greater than half,',
+                'drag inside the active shape starts moving shape,',
+                'otherwise it starts drawing a new shape.'
+            ].join(' ')
+        },
         editType: 'none'
     },
 

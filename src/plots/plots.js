@@ -1538,6 +1538,9 @@ plots.supplyLayoutGlobalDefaults = function(layoutIn, layoutOut, formatObj) {
         coerce('newshape.line.dash');
     }
 
+    coerce('activeshape.fillcolor');
+    coerce('activeshape.opacity');
+
     coerce('meta');
 
     // do not include defaults in fullLayout when users do not set transition
