@@ -135,21 +135,24 @@ function drawOne(gd, index) {
     }
 
     function clickFn(path) {
-        var fullLayout = gd._fullLayout;
         var element = path.node();
         var id = +element.getAttribute('data-index');
 
-        delete fullLayout._activeShapeIndex;
-
-        for(var q = 0; q < fullLayout.shapes.length; q++) {
-            var shapeIn = fullLayout.shapes[q]._input;
+        var prev = gd._fullLayout._activeShapeIndex;
+        for(var q = 0; q < gd._fullLayout.shapes.length; q++) {
+            var shapeIn = gd._fullLayout.shapes[q]._input;
             if(q === id && shapeIn.editable) {
-                fullLayout._activeShapeIndex = q;
+                gd._fullLayout._activeShapeIndex = q;
                 break;
             }
         }
 
-        if(fullLayout._activeShapeIndex >= 0) {
+        if(gd._fullLayout._activeShapeIndex >= 0) {
+            // de-activate if it is already active
+            if(prev === gd._fullLayout._activeShapeIndex) {
+                delete gd._fullLayout._activeShapeIndex;
+            }
+
             // redraw all
             draw(gd);
         }
