@@ -34,7 +34,8 @@ var helpers = require('./helpers');
 
 module.exports = {
     draw: draw,
-    drawOne: drawOne
+    drawOne: drawOne,
+    eraseActiveShape: eraseActiveShape
 };
 
 function draw(gd) {
@@ -138,21 +139,20 @@ function drawOne(gd, index) {
         var element = path.node();
         var id = +element.getAttribute('data-index');
 
-        var newShapes = [];
+        delete fullLayout._activeShapeIndex;
+
         for(var q = 0; q < fullLayout.shapes.length; q++) {
             var shapeIn = fullLayout.shapes[q]._input;
             if(q === id && shapeIn.editable) {
                 fullLayout._activeShapeIndex = q;
-            }
-
-            if(q !== id || fullLayout.dragmode !== 'eraseshape') {
-                newShapes.push(shapeIn);
+                break;
             }
         }
 
-        Registry.call('relayout', gd, {
-            shapes: newShapes
-        });
+        if(fullLayout._activeShapeIndex >= 0) {
+            // redraw all
+            draw(gd);
+        }
     }
 }
 
@@ -684,4 +684,25 @@ function movePath(pathIn, moveX, moveY) {
 
         return segmentType + paramString;
     });
+}
+
+function eraseActiveShape(gd) {
+    var fullLayout = gd._fullLayout;
+    var id = fullLayout._activeShapeIndex;
+    if(id >= 0) {
+        var newShapes = [];
+        for(var q = 0; q < fullLayout.shapes.length; q++) {
+            var shapeIn = fullLayout.shapes[q]._input;
+
+            if(q !== id) {
+                newShapes.push(shapeIn);
+            }
+        }
+
+        delete fullLayout._activeShapeIndex;
+
+        Registry.call('relayout', gd, {
+            shapes: newShapes
+        });
+    }
 }

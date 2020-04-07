@@ -13,6 +13,7 @@ var Plots = require('../../plots/plots');
 var axisIds = require('../../plots/cartesian/axis_ids');
 var Lib = require('../../lib');
 var Icons = require('../../fonts/ploticon');
+var eraseActiveShape = require('../shapes/draw').eraseActiveShape;
 
 var _ = Lib._;
 
@@ -181,11 +182,9 @@ modeBarButtons.ellipsedraw = {
 
 modeBarButtons.eraseshape = {
     name: 'eraseshape',
-    title: function(gd) { return _(gd, 'Erase Shape'); },
-    attr: 'dragmode',
-    val: 'eraseshape',
+    title: function(gd) { return _(gd, 'Erase Active Shape'); },
     icon: Icons.eraseshape,
-    click: handleCartesian
+    click: eraseActiveShape
 };
 
 modeBarButtons.zoomIn2d = {
