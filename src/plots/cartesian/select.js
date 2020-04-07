@@ -1125,6 +1125,9 @@ function addNewShapes(outlines, dragOptions) {
     var newShapes = [];
     var fullLayout = gd._fullLayout;
 
+    // de-activate previous active shape
+    delete fullLayout._activeShapeIndex;
+
     var polygons = readPaths(d, fullLayout._size, plotinfo);
 
     for(var i = 0; i < polygons.length; i++) {
