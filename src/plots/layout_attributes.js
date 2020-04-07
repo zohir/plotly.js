@@ -526,14 +526,13 @@ module.exports = {
             valType: 'enumerated',
             role: 'info',
             values: ['immediate', 'gradual'],
+            dflt: 'immediate',
             editType: 'none',
             description: [
                 'Determines how the shapes are added.',
                 'With *immediate* the drawn outline is added right after mouseup.',
-                'The *immediate* option is the default for creating rectangles, ellipses and lines.',
                 'With *gradual* the initial outline could be modified at vertex level; ',
-                'while new regions could also be added or subtracted (similar to selection).',
-                'The *immediate* option is the default for creating closed/open free paths.'
+                'while new regions could also be added or subtracted (similar to selection).'
             ].join(' ')
         },
 

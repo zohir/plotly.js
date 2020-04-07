@@ -19,7 +19,6 @@ var Color = require('../components/color');
 var BADNUM = require('../constants/numerical').BADNUM;
 
 var axisIDs = require('./cartesian/axis_ids');
-var freeMode = require('../components/dragelement/helpers').freeMode;
 
 var animationAttrs = require('./animation_attributes');
 var frameAttrs = require('./frame_attributes');
@@ -1526,7 +1525,7 @@ plots.supplyLayoutGlobalDefaults = function(layoutIn, layoutOut, formatObj) {
     coerce('modebar.activecolor', Color.addOpacity(modebarDefaultColor, 0.7));
     coerce('modebar.uirevision', uirevision);
 
-    coerce('newshape.drawstep', freeMode(layoutIn.dragmode) ? 'gradual' : 'immediate');
+    coerce('newshape.drawstep');
     coerce('newshape.drawdirection');
     coerce('newshape.layer');
     coerce('newshape.fillcolor');
