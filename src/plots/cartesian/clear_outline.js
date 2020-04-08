@@ -9,11 +9,18 @@
 
 'use strict';
 
-module.exports = function clearSelect(gd) {
+function clearOutlineControllers(gd) {
     var zoomLayer = gd._fullLayout._zoomlayer;
     if(zoomLayer) {
         zoomLayer.selectAll('.outline-controllers').remove();
+    }
+}
 
+function clearSelect(gd) {
+    clearOutlineControllers(gd);
+
+    var zoomLayer = gd._fullLayout._zoomlayer;
+    if(zoomLayer) {
         // until we get around to persistent selections, remove the outline
         // here. The selection itself will be removed when the plot redraws
         // at the end.
@@ -21,4 +28,9 @@ module.exports = function clearSelect(gd) {
     }
 
     gd._fullLayout._drawing = false;
+}
+
+module.exports = {
+    clearOutlineControllers: clearOutlineControllers,
+    clearSelect: clearSelect
 };

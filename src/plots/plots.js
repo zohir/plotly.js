@@ -19,6 +19,7 @@ var Color = require('../components/color');
 var BADNUM = require('../constants/numerical').BADNUM;
 
 var axisIDs = require('./cartesian/axis_ids');
+var clearSelect = require('./cartesian/clear_outline').clearSelect;
 
 var animationAttrs = require('./animation_attributes');
 var frameAttrs = require('./frame_attributes');
@@ -487,8 +488,9 @@ plots.supplyDefaults = function(gd, opts) {
     // we should try to come up with a better solution when implementing
     // https://github.com/plotly/plotly.js/issues/1851
     if(oldFullLayout._zoomlayer && !gd._dragging) {
-        oldFullLayout._zoomlayer.selectAll('.outline-controllers').remove();
-        oldFullLayout._zoomlayer.selectAll('.select-outline').remove();
+        clearSelect({ // mock old gd
+            _fullLayout: oldFullLayout
+        });
     }
 
 

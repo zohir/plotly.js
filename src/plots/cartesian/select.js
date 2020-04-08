@@ -37,6 +37,8 @@ var MINSELECT = constants.MINSELECT;
 var filteredPolygon = polygon.filter;
 var polygonTester = polygon.tester;
 
+var clearSelect = require('./clear_outline').clearSelect;
+
 var newShape = require('./new_shape');
 var displayOutlines = newShape.displayOutlines;
 var handleEllipse = newShape.handleEllipse;
@@ -47,7 +49,6 @@ var getAxId = helpers.getAxId;
 var p2r = helpers.p2r;
 var axValue = helpers.axValue;
 var getTransform = helpers.getTransform;
-var clearSelect = require('./clear_select');
 
 function prepSelect(e, startX, startY, dragOptions, mode) {
     var isFreeMode = freeMode(mode);

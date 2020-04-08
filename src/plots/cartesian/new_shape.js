@@ -29,7 +29,9 @@ var SQRT2 = Math.sqrt(2);
 var helpers = require('./helpers');
 var p2r = helpers.p2r;
 var getTransform = helpers.getTransform;
-var clearSelect = require('./clear_select');
+var clearOutline = require('./clear_outline');
+var clearOutlineControllers = clearOutline.clearOutlineControllers;
+var clearSelect = clearOutline.clearSelect;
 
 function displayOutlines(polygons, outlines, dragOptions, nCalls) {
     if(!nCalls) nCalls = 0;
@@ -47,7 +49,6 @@ function displayOutlines(polygons, outlines, dragOptions, nCalls) {
     var gd = dragOptions.gd;
     var fullLayout = gd._fullLayout;
     var layer = fullLayout._zoomlayer;
-    layer.selectAll('.outline-controllers').remove();
 
     var dragmode = dragOptions.dragmode;
     var isDrawMode = drawMode(dragmode);
@@ -62,8 +63,12 @@ function displayOutlines(polygons, outlines, dragOptions, nCalls) {
             providePath(polygons[k], isOpenMode)
         );
     }
+
     // make outline
     outlines.attr('d', writePaths(paths, isOpenMode));
+
+    // remove previous controllers
+    clearOutlineControllers(gd);
 
     // add controllers
     var rVertexController = MINSELECT * 1.5; // bigger vertex buttons

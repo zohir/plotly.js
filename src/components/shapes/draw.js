@@ -13,6 +13,8 @@ var Registry = require('../../registry');
 var Lib = require('../../lib');
 var Axes = require('../../plots/cartesian/axes');
 var newShape = require('../../plots/cartesian/new_shape');
+var clearOutlineControllers = require('../../plots/cartesian/clear_outline').clearOutlineControllers;
+
 var readPaths = newShape.readPaths;
 var displayOutlines = newShape.displayOutlines;
 
@@ -710,22 +712,20 @@ function movePath(pathIn, moveX, moveY) {
 }
 
 function eraseActiveShape(gd) {
-    var fullLayout = gd._fullLayout;
-    var layer = fullLayout._zoomlayer;
-    layer.selectAll('.outline-controllers').remove();
+    clearOutlineControllers(gd);
 
-    var id = fullLayout._activeShapeIndex;
+    var id = gd._fullLayout._activeShapeIndex;
     if(id >= 0) {
         var shapes = [];
-        for(var q = 0; q < fullLayout.shapes.length; q++) {
-            var shapeIn = fullLayout.shapes[q]._input;
+        for(var q = 0; q < gd._fullLayout.shapes.length; q++) {
+            var shapeIn = gd._fullLayout.shapes[q]._input;
 
             if(q !== id) {
                 shapes.push(shapeIn);
             }
         }
 
-        delete fullLayout._activeShapeIndex;
+        delete gd._fullLayout._activeShapeIndex;
 
         Registry.call('relayout', gd, {
             shapes: shapes
