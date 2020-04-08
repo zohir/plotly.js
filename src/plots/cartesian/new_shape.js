@@ -25,13 +25,13 @@ var MINSELECT = constants.MINSELECT;
 var CIRCLE_SIDES = 32; // should be divisible by 8
 var SQRT2 = Math.sqrt(2);
 
-
 var helpers = require('./helpers');
 var p2r = helpers.p2r;
 var getTransform = helpers.getTransform;
-var clearOutline = require('./clear_outline');
-var clearOutlineControllers = clearOutline.clearOutlineControllers;
-var clearSelect = clearOutline.clearSelect;
+
+var handleOutline = require('./handle_outline');
+var clearOutlineControllers = handleOutline.clearOutlineControllers;
+var clearSelect = handleOutline.clearSelect;
 
 function displayOutlines(polygons, outlines, dragOptions, nCalls) {
     if(!nCalls) nCalls = 0;

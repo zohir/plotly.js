@@ -12,11 +12,14 @@
 var Registry = require('../../registry');
 var Lib = require('../../lib');
 var Axes = require('../../plots/cartesian/axes');
-var newShape = require('../../plots/cartesian/new_shape');
-var clearOutlineControllers = require('../../plots/cartesian/clear_outline').clearOutlineControllers;
 
+var newShape = require('../../plots/cartesian/new_shape');
 var readPaths = newShape.readPaths;
 var displayOutlines = newShape.displayOutlines;
+
+var handleOutline = require('../../plots/cartesian/handle_outline');
+var activateShape = handleOutline.activateShape;
+var eraseActiveShape = handleOutline.eraseActiveShape;
 
 var Color = require('../color');
 var Drawing = require('../drawing');
@@ -157,27 +160,7 @@ function drawOne(gd, index) {
     }
 
     function clickFn(path) {
-        var element = path.node();
-        var id = +element.getAttribute('data-index');
-
-        var prev = gd._fullLayout._activeShapeIndex;
-        for(var q = 0; q < gd._fullLayout.shapes.length; q++) {
-            var shapeIn = gd._fullLayout.shapes[q]._input;
-            if(q === id && shapeIn.editable) {
-                gd._fullLayout._activeShapeIndex = q;
-                break;
-            }
-        }
-
-        if(gd._fullLayout._activeShapeIndex >= 0) {
-            // de-activate if it is already active
-            if(prev === gd._fullLayout._activeShapeIndex) {
-                delete gd._fullLayout._activeShapeIndex;
-            }
-
-            // redraw all
-            draw(gd);
-        }
+        return activateShape(gd, path, draw);
     }
 }
 
@@ -709,26 +692,4 @@ function movePath(pathIn, moveX, moveY) {
 
         return segmentType + paramString;
     });
-}
-
-function eraseActiveShape(gd) {
-    clearOutlineControllers(gd);
-
-    var id = gd._fullLayout._activeShapeIndex;
-    if(id >= 0) {
-        var shapes = [];
-        for(var q = 0; q < gd._fullLayout.shapes.length; q++) {
-            var shapeIn = gd._fullLayout.shapes[q]._input;
-
-            if(q !== id) {
-                shapes.push(shapeIn);
-            }
-        }
-
-        delete gd._fullLayout._activeShapeIndex;
-
-        Registry.call('relayout', gd, {
-            shapes: shapes
-        });
-    }
 }

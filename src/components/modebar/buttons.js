@@ -11,10 +11,9 @@
 var Registry = require('../../registry');
 var Plots = require('../../plots/plots');
 var axisIds = require('../../plots/cartesian/axis_ids');
-var Lib = require('../../lib');
 var Icons = require('../../fonts/ploticon');
-var eraseActiveShape = require('../shapes/draw').eraseActiveShape;
-
+var eraseActiveShape = require('../../plots/cartesian/handle_outline').eraseActiveShape;
+var Lib = require('../../lib');
 var _ = Lib._;
 
 var modeBarButtons = module.exports = {};

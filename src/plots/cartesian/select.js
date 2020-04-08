@@ -37,7 +37,7 @@ var MINSELECT = constants.MINSELECT;
 var filteredPolygon = polygon.filter;
 var polygonTester = polygon.tester;
 
-var clearSelect = require('./clear_outline').clearSelect;
+var clearSelect = require('./handle_outline').clearSelect;
 
 var newShape = require('./new_shape');
 var displayOutlines = newShape.displayOutlines;
