@@ -9,6 +9,8 @@
 
 'use strict';
 
+var parseSvgPath = require('parse-svg-path');
+
 var Registry = require('../../registry');
 var dragElement = require('../../components/dragelement');
 var dragHelpers = require('../../components/dragelement/helpers');
@@ -40,12 +42,12 @@ function displayOutlines(polygons, outlines, dragOptions, nCalls) {
     }
 
     var plotinfo = dragOptions.plotinfo;
-    var transform = getTransform(plotinfo);
+    var transform = dragOptions.isActiveShape ? '' : getTransform(plotinfo);
 
     var gd = dragOptions.gd;
     var fullLayout = gd._fullLayout;
-    var zoomLayer = fullLayout._zoomlayer;
-    zoomLayer.selectAll('.outline-controllers').remove();
+    var layer = fullLayout._zoomlayer;
+    layer.selectAll('.outline-controllers').remove();
 
     var dragmode = dragOptions.dragmode;
     var isDrawMode = drawMode(dragmode);
@@ -72,8 +74,10 @@ function displayOutlines(polygons, outlines, dragOptions, nCalls) {
 
     saveInitPositions();
 
-    if(isDrawMode && fullLayout.newshape.drawstep === 'gradual') {
-        var g = zoomLayer.append('g').attr('class', 'outline-controllers');
+    if(dragOptions.isActiveShape ||
+        (isDrawMode && fullLayout.newshape.drawstep === 'gradual')
+    ) {
+        var g = layer.append('g').attr('class', 'outline-controllers');
         addVertexControllers(g);
     }
 
@@ -274,39 +278,93 @@ function writePaths(paths, isOpenMode) {
     return paths.length > 0 ? 'M' + paths.join('M') + (isOpenMode ? '' : 'Z') : 'M0,0Z';
 }
 
-function readPaths(str, size, plotinfo) {
-    var allParts = str
-        .replace('Z', '') // remove Z from end
-        .substring(1) // remove M from start
-        .split('M');
+function readPaths(str, plotinfo, size) {
+    var cmd = parseSvgPath(str);
 
-    var allPaths = [];
-    for(var i = 0; i < allParts.length; i++) {
-        var part = allParts[i].split('L');
+    var polys = [];
+    var n = -1;
+    var newPoly = function() {
+        n++;
+        polys[n] = [];
+    };
 
-        var path = [];
-        for(var j = 0; j < part.length; j++) {
-            var pos = part[j].split(',');
-            var x = +pos[0];
-            var y = +pos[1];
+    var x = 0;
+    var y = 0;
+    var initX;
+    var initY;
+    var recStart = function() {
+        initX = x;
+        initY = y;
+    };
 
-            if(plotinfo.domain) {
-                path.push([
+    recStart();
+    for(var i = 0; i < cmd.length; i++) {
+        var c = cmd[i][0];
+        switch(c) {
+            case 'M':
+                newPoly();
+                x = +cmd[i][1];
+                y = +cmd[i][2];
+                recStart();
+                break;
+
+            case 'm':
+                newPoly();
+                x += +cmd[i][1];
+                y += +cmd[i][2];
+                break;
+
+            case 'L':
+                x = +cmd[i][1];
+                y = +cmd[i][2];
+                break;
+
+            case 'l':
+                x += +cmd[i][1];
+                y += +cmd[i][2];
+                break;
+
+            case 'H':
+                x = +cmd[i][1];
+                break;
+
+            case 'h':
+                x += +cmd[i][1];
+                break;
+
+            case 'V':
+                y = +cmd[i][1];
+                break;
+
+            case 'v':
+                y += +cmd[i][1];
+                break;
+        }
+
+        if(c === 'Z') {
+            x = initX;
+            y = initY;
+        } else {
+            if(!plotinfo) {
+                polys[n].push([
+                    x,
+                    y
+                ]);
+            } else if(plotinfo.domain) {
+                polys[n].push([
                     plotinfo.domain.x[0] + x / size.w,
                     plotinfo.domain.y[1] - y / size.h
                 ]);
             } else {
-                path.push([
+                polys[n].push([
                     p2r(plotinfo.xaxis, x),
                     p2r(plotinfo.yaxis, y)
                 ]);
             }
         }
-
-        allPaths.push(path);
     }
 
-    return allPaths;
+    return polys;
 }
 
 function fixDatesOnPaths(path, xaxis, yaxis) {
@@ -474,7 +532,7 @@ function addNewShapes(outlines, dragOptions) {
     // de-activate previous active shape
     delete fullLayout._activeShapeIndex;
 
-    var polygons = readPaths(d, fullLayout._size, plotinfo);
+    var polygons = readPaths(d, plotinfo, fullLayout._size);
 
     for(var i = 0; i < polygons.length; i++) {
         var cell = polygons[i];
@@ -567,5 +625,6 @@ function addNewShapes(outlines, dragOptions) {
 module.exports = {
     displayOutlines: displayOutlines,
     handleEllipse: handleEllipse,
-    addNewShapes: addNewShapes
+    addNewShapes: addNewShapes,
+    readPaths: readPaths
 };
