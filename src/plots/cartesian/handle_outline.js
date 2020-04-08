@@ -16,7 +16,6 @@ function activateShape(gd, path, drawShapes) {
     var element = path.node();
     var id = +element.getAttribute('data-index');
 
-    var prev = gd._fullLayout._activeShapeIndex;
     for(var q = 0; q < gd._fullLayout.shapes.length; q++) {
         var shapeIn = gd._fullLayout.shapes[q]._input;
         if(q === id && shapeIn.editable) {
@@ -26,11 +25,6 @@ function activateShape(gd, path, drawShapes) {
     }
 
     if(gd._fullLayout._activeShapeIndex >= 0) {
-        // de-activate if it is already active
-        if(prev === gd._fullLayout._activeShapeIndex) {
-            delete gd._fullLayout._activeShapeIndex;
-        }
-
         drawShapes(gd);
     }
 }
