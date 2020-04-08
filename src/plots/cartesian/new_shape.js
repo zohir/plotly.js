@@ -11,7 +11,6 @@
 
 var parseSvgPath = require('parse-svg-path');
 
-var Registry = require('../../registry');
 var dragElement = require('../../components/dragelement');
 var dragHelpers = require('../../components/dragelement/helpers');
 var drawMode = dragHelpers.drawMode;
@@ -43,12 +42,13 @@ function displayOutlines(polygons, outlines, dragOptions, nCalls) {
         }
     }
 
+    var isActiveShape = dragOptions.isActiveShape;
     var plotinfo = dragOptions.plotinfo;
-    var transform = dragOptions.isActiveShape ? '' : getTransform(plotinfo);
+    var transform = isActiveShape ? '' : getTransform(plotinfo);
 
     var gd = dragOptions.gd;
     var fullLayout = gd._fullLayout;
-    var layer = fullLayout._zoomlayer;
+    var zoomLayer = fullLayout._zoomlayer;
 
     var dragmode = dragOptions.dragmode;
     var isDrawMode = drawMode(dragmode);
@@ -79,10 +79,10 @@ function displayOutlines(polygons, outlines, dragOptions, nCalls) {
 
     saveInitPositions();
 
-    if(dragOptions.isActiveShape ||
+    if(isActiveShape ||
         (isDrawMode && fullLayout.newshape.drawstep === 'gradual')
     ) {
-        var g = layer.append('g').attr('class', 'outline-controllers');
+        var g = zoomLayer.append('g').attr('class', 'outline-controllers');
         addVertexControllers(g);
     }
 
@@ -270,6 +270,17 @@ function displayOutlines(polygons, outlines, dragOptions, nCalls) {
                 dragElement.init(vertexDragOptions[i][j]);
             }
         }
+    }
+
+    if(isActiveShape) {
+        /*
+        var shapes = addNewShapes(outlines, dragOptions);
+        if(shapes) {
+            Registry.call('relayout', gd, {
+                shapes: shapes // update active shape
+            });
+        }
+        */
     }
 }
 
@@ -518,30 +529,64 @@ function ellipseOver(pos) {
 
 function addNewShapes(outlines, dragOptions) {
     if(!outlines.length) return;
-    var gd = dragOptions.gd;
-    var drwStyle = gd._fullLayout.newshape;
-    var isOpenMode = openMode(dragOptions.dragmode);
-    var plotinfo = dragOptions.plotinfo;
-    var xaxis = plotinfo.xaxis;
-    var yaxis = plotinfo.yaxis;
-    var onPaper = plotinfo.domain;
-    var dragmode = dragOptions.dragmode;
-
     var e = outlines[0][0]; // pick first
     if(!e) return;
     var d = e.getAttribute('d');
 
+    var gd = dragOptions.gd;
+    var drwStyle = gd._fullLayout.newshape;
+
+    var plotinfo = dragOptions.plotinfo;
+    var xaxis = plotinfo.xaxis;
+    var yaxis = plotinfo.yaxis;
+    var onPaper = plotinfo.domain;
+
+    var isActiveShape = dragOptions.isActiveShape;
+    var dragmode = dragOptions.dragmode;
+    if(isActiveShape) {
+        var s = gd._fullLayout.shapes[
+            gd._fullLayout._activeShapeIndex
+        ];
+
+        switch(s.type) {
+            case 'rect':
+                dragmode = 'rectdraw';
+                break;
+            case 'circle':
+                dragmode = 'ellipsedraw';
+                break;
+            case 'line':
+                dragmode = 'linedraw';
+                break;
+            default:
+                if(d[d.length - 1] === 'Z') {
+                    dragmode = 'closedfreedraw';
+                } else {
+                    dragmode = 'openfreedraw';
+                }
+                break;
+        }
+    }
+    var isOpenMode = openMode(dragmode);
+
     var newShapes = [];
     var fullLayout = gd._fullLayout;
 
-    // de-activate previous active shape
-    delete fullLayout._activeShapeIndex;
+    if(!isActiveShape) {
+        // de-activate previous active shape
+        delete fullLayout._activeShapeIndex;
+    }
 
     var polygons = readPaths(d, plotinfo, fullLayout._size);
-
     for(var i = 0; i < polygons.length; i++) {
         var cell = polygons[i];
-        var len = cell.length - (isOpenMode ? 0 : 1); // skip closing point
+        var len = cell.length;
+        if(
+            cell[0][0] === cell[len - 1][0] &&
+            cell[0][1] === cell[len - 1][1]
+        ) {
+            len -= 1;
+        }
         if(len < 2) continue;
 
         var shape = {
@@ -615,16 +660,59 @@ function addNewShapes(outlines, dragOptions) {
     // remove outline and controllers
     clearSelect(gd);
 
+    var shapes;
     if(newShapes.length) {
-        var oldShapes = [];
+        var updatedActiveShape = false;
+        shapes = [];
         for(var q = 0; q < fullLayout.shapes.length; q++) {
-            oldShapes.push(fullLayout.shapes[q]._input);
+            var beforeEdit = fullLayout.shapes[q];
+            shapes[q] = beforeEdit._input;
+
+            if(
+                isActiveShape &&
+                q === fullLayout._activeShapeIndex
+            ) {
+                var afterEdit = newShapes[0]; // pick first
+
+                switch(afterEdit.type) {
+                    case 'line':
+                    case 'rect':
+                    case 'circle':
+                        updatedActiveShape = hasChanged(beforeEdit, afterEdit, ['x0', 'x1', 'y0', 'y1']);
+                        if(updatedActiveShape) { // update active shape
+                            shapes[q].x0 = afterEdit.x0;
+                            shapes[q].x1 = afterEdit.x1;
+                            shapes[q].y0 = afterEdit.y0;
+                            shapes[q].y1 = afterEdit.y1;
+                        }
+                        break;
+
+                    case 'path':
+                        updatedActiveShape = hasChanged(beforeEdit, afterEdit, ['path']);
+                        if(updatedActiveShape) { // update active shape
+                            shapes[q].path = afterEdit.path;
+                        }
+                        break;
+                }
+            }
         }
 
-        Registry.call('relayout', gd, {
-            shapes: oldShapes.concat(newShapes) // add new shapes to the end.
-        });
+        if(!isActiveShape) {
+            shapes = shapes.concat(newShapes); // add new shapes
+        }
     }
+
+    return shapes;
+}
+
+function hasChanged(beforeEdit, afterEdit, keys) {
+    for(var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if(beforeEdit[k] !== afterEdit[k]) {
+            return true;
+        }
+    }
+    return false;
 }
 
 module.exports = {

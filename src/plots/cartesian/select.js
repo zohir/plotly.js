@@ -605,12 +605,17 @@ function clearSelectionsCache(dragOptions) {
         var zoomLayer = fullLayout._zoomlayer;
 
         var outlines = zoomLayer.selectAll('.select-outline-' + plotinfo.id);
-        if(outlines) {
+        if(outlines && gd._fullLayout._drawing) {
             // add shape
-            addNewShapes(outlines, dragOptions);
-        }
+            var shapes = addNewShapes(outlines, dragOptions);
+            if(shapes) {
+                Registry.call('relayout', gd, {
+                    shapes: shapes
+                });
+            }
 
-        gd._fullLayout._drawing = false;
+            gd._fullLayout._drawing = false;
+        }
     }
 
     plotinfo.selection = {};
