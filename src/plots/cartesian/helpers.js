@@ -37,24 +37,9 @@ function getTransform(plotinfo) {
         plotinfo.yaxis._offset + ')';
 }
 
-// until we get around to persistent selections, remove the outline
-// here. The selection itself will be removed when the plot redraws
-// at the end.
-function clearSelect(gd) {
-    var fullLayout = gd._fullLayout || {};
-    var zoomLayer = fullLayout._zoomlayer;
-    if(zoomLayer) {
-        zoomLayer.selectAll('.outline-controllers').remove();
-        zoomLayer.selectAll('.select-outline').remove();
-    }
-
-    fullLayout._drawing = false;
-}
-
 module.exports = {
     getAxId: getAxId,
     p2r: p2r,
     axValue: axValue,
-    getTransform: getTransform,
-    clearSelect: clearSelect
+    getTransform: getTransform
 };

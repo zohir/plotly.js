@@ -47,7 +47,7 @@ var getAxId = helpers.getAxId;
 var p2r = helpers.p2r;
 var axValue = helpers.axValue;
 var getTransform = helpers.getTransform;
-var clearSelect = helpers.clearSelect;
+var clearSelect = require('./clear_select');
 
 function prepSelect(e, startX, startY, dragOptions, mode) {
     var isFreeMode = freeMode(mode);

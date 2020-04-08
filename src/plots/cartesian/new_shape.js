@@ -29,7 +29,7 @@ var SQRT2 = Math.sqrt(2);
 var helpers = require('./helpers');
 var p2r = helpers.p2r;
 var getTransform = helpers.getTransform;
-var clearSelect = helpers.clearSelect;
+var clearSelect = require('./clear_select');
 
 function displayOutlines(polygons, outlines, dragOptions, nCalls) {
     if(!nCalls) nCalls = 0;
