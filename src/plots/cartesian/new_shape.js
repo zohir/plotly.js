@@ -271,17 +271,6 @@ function displayOutlines(polygons, outlines, dragOptions, nCalls) {
             }
         }
     }
-
-    if(isActiveShape) {
-        /*
-        var shapes = addNewShapes(outlines, dragOptions);
-        if(shapes) {
-            Registry.call('relayout', gd, {
-                shapes: shapes // update active shape
-            });
-        }
-        */
-    }
 }
 
 function providePath(cell, isOpenMode) {
@@ -577,7 +566,7 @@ function addNewShapes(outlines, dragOptions) {
         delete fullLayout._activeShapeIndex;
     }
 
-    var polygons = readPaths(d, plotinfo, fullLayout._size);
+    var polygons = isActiveShape ? readPaths(d) : readPaths(d, plotinfo, fullLayout._size);
     for(var i = 0; i < polygons.length; i++) {
         var cell = polygons[i];
         var len = cell.length;
