@@ -32,7 +32,26 @@ var handleOutline = require('./handle_outline');
 var clearOutlineControllers = handleOutline.clearOutlineControllers;
 var clearSelect = handleOutline.clearSelect;
 
-function displayOutlines(polygons, outlines, dragOptions, nCalls) {
+function recordPositions(polygonsOut, polygonsIn) {
+    for(var i = 0; i < polygonsIn.length; i++) {
+        polygonsOut[i] = [];
+        var len = polygonsIn[i].length;
+        for(var j = 0; j < len; j++) {
+            // skip close points
+            if(dist(polygonsIn[i][j], polygonsIn[i][(j + 1) % len]) < 1) continue;
+
+            polygonsOut[i].push([
+                polygonsIn[i][j][0],
+                polygonsIn[i][j][1]
+            ]);
+        }
+    }
+    return polygonsOut;
+}
+
+function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
+    var polygons = recordPositions([], polygonsIn);
+
     if(!nCalls) nCalls = 0;
 
     function redraw() {
@@ -77,26 +96,13 @@ function displayOutlines(polygons, outlines, dragOptions, nCalls) {
     var indexJ; // vertex or cell-controller index
     var copyPolygons;
 
-    saveInitPositions();
+    copyPolygons = recordPositions([], polygons);
 
     if(isActiveShape ||
         (isDrawMode && fullLayout.newshape.drawstep === 'gradual')
     ) {
         var g = zoomLayer.append('g').attr('class', 'outline-controllers');
         addVertexControllers(g);
-    }
-
-    function saveInitPositions() {
-        copyPolygons = [];
-        for(var i = 0; i < polygons.length; i++) {
-            copyPolygons[i] = [];
-            for(var j = 0; j < polygons[i].length; j++) {
-                copyPolygons[i][j] = [];
-                for(var k = 0; k < polygons[i][j].length; k++) {
-                    copyPolygons[i][j][k] = polygons[i][j][k];
-                }
-            }
-        }
     }
 
     function startDragVertex(evt) {
