@@ -116,7 +116,7 @@ function drawOne(gd, index) {
         var lineWidth = options.line.width;
         var lineDash = options.line.dash;
 
-        var isActiveShape = options.editable && gd._fullLayout._activeShapeIndex === index;
+        var isActiveShape = options.activable && gd._fullLayout._activeShapeIndex === index;
         if(isActiveShape) {
             fillColor = gd._fullLayout.activeshape.fillcolor;
             opacity = gd._fullLayout.activeshape.opacity;

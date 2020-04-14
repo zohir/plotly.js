@@ -18,7 +18,7 @@ function activateShape(gd, path, drawShapes) {
 
     for(var q = 0; q < gd._fullLayout.shapes.length; q++) {
         var shapeIn = gd._fullLayout.shapes[q]._input;
-        if(q === id && shapeIn.editable) {
+        if(q === id && shapeIn.activable) {
             gd._fullLayout._activeShapeIndex = q;
             break;
         }
