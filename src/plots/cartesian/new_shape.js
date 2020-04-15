@@ -539,9 +539,8 @@ function addNewShapes(outlines, dragOptions) {
     var isActiveShape = dragOptions.isActiveShape;
     var dragmode = dragOptions.dragmode;
     if(isActiveShape) {
-        var s = gd._fullLayout.shapes[
-            gd._fullLayout._activeShapeIndex
-        ];
+        var id = gd._fullLayout._activeShapeIndex;
+        var s = id >= 0 ? gd._fullLayout.shapes[id] : {};
 
         switch(s.type) {
             case 'rect':
