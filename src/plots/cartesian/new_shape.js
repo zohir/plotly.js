@@ -58,6 +58,7 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
     var gd = dragOptions.gd;
 
     function redraw() {
+        dragOptions.isActiveShape = false; // i.e. to disable controllers
         var shapes = addNewShapes(outlines, dragOptions);
         if(shapes) {
             delete gd._fullLayout._activeShapeIndex;
@@ -65,8 +66,6 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
             Registry.call('_guiRelayout', gd, {
                 shapes: shapes // update active shape
             });
-
-            nCalls = -1;
         }
 
         if(nCalls !== -1) {
