@@ -16,6 +16,7 @@ var dragHelpers = require('../../components/dragelement/helpers');
 var drawMode = dragHelpers.drawMode;
 var openMode = dragHelpers.openMode;
 
+var Registry = require('../../registry');
 var Lib = require('../../lib');
 var setCursor = require('../../lib/setcursor');
 
@@ -54,7 +55,20 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
 
     if(!nCalls) nCalls = 0;
 
+    var gd = dragOptions.gd;
+
     function redraw() {
+        var shapes = addNewShapes(outlines, dragOptions);
+        if(shapes) {
+            delete gd._fullLayout._activeShapeIndex;
+
+            Registry.call('_guiRelayout', gd, {
+                shapes: shapes // update active shape
+            });
+
+            nCalls = -1;
+        }
+
         if(nCalls !== -1) {
             // recursive call
             displayOutlines(polygons, outlines, dragOptions, nCalls++);
@@ -64,8 +78,6 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
     var isActiveShape = dragOptions.isActiveShape;
     var plotinfo = dragOptions.plotinfo;
     var transform = isActiveShape ? '' : getTransform(plotinfo);
-
-    var gd = dragOptions.gd;
     var fullLayout = gd._fullLayout;
     var zoomLayer = fullLayout._zoomlayer;
 
