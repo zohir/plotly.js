@@ -77,7 +77,7 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
         gd._fullLayout.newshape.drawstep === 'gradual'
     ) {
         gd._fullLayout._activeShapeIndex = gd._fullLayout.shapes.length; // set index one more than the number of shapes
-        dragOptions.isActiveShape = false;
+        dragOptions.isActiveShape = 'gradual';
     }
 
     // remove previous controllers - only if there is an active shape
@@ -85,7 +85,12 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
 
     var isActiveShape = dragOptions.isActiveShape;
     var plotinfo = dragOptions.plotinfo;
-    var transform = isActiveShape !== undefined ? '' : getTransform(plotinfo);
+    var transform = '';
+    if(plotinfo && (
+        isActiveShape === 'gradual'
+    )) {
+        transform = getTransform(plotinfo);
+    }
     var fullLayout = gd._fullLayout;
     var zoomLayer = fullLayout._zoomlayer;
 
@@ -383,7 +388,7 @@ function readPaths(str, plotinfo, size, isActiveShape) {
                     plotinfo.domain.x[0] + x / size.w,
                     plotinfo.domain.y[1] - y / size.h
                 ]);
-            } else if(isActiveShape !== undefined) {
+            } else if(isActiveShape === false || isActiveShape === 'gradual') {
                 polys[n].push([
                     p2r(plotinfo.xaxis, x - plotinfo.xaxis._offset),
                     p2r(plotinfo.yaxis, y - plotinfo.yaxis._offset)
