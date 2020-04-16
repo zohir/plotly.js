@@ -61,6 +61,9 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
         dragOptions.isActiveShape = false; // i.e. to disable controllers
         var shapes = addNewShapes(outlines, dragOptions);
         if(shapes) {
+            // remove old active shape before adding new shapes - TODO: why we need this here?
+            shapes.splice(gd._fullLayout._activeShapeIndex, 1);
+
             delete gd._fullLayout._activeShapeIndex;
 
             Registry.call('_guiRelayout', gd, {
