@@ -64,8 +64,6 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
             // remove old active shape before adding new shapes - TODO: why we need this here?
             shapes.splice(gd._fullLayout._activeShapeIndex, 1);
 
-            delete gd._fullLayout._activeShapeIndex;
-
             Registry.call('_guiRelayout', gd, {
                 shapes: shapes // update active shape
             });
@@ -580,11 +578,6 @@ function addNewShapes(outlines, dragOptions) {
     var newShapes = [];
     var fullLayout = gd._fullLayout;
 
-    if(!isActiveShape) {
-        // de-activate previous active shape
-        delete fullLayout._activeShapeIndex;
-    }
-
     var polygons = isActiveShape ? readPaths(d) : readPaths(d, plotinfo, fullLayout._size);
     for(var i = 0; i < polygons.length; i++) {
         var cell = polygons[i];
@@ -677,7 +670,7 @@ function addNewShapes(outlines, dragOptions) {
             shapes[q] = beforeEdit._input;
 
             if(
-                isActiveShape &&
+                isActiveShape !== undefined &&
                 q === fullLayout._activeShapeIndex
             ) {
                 var afterEdit = newShapes[0]; // pick first
