@@ -385,8 +385,8 @@ function readPaths(str, plotinfo, size, isActiveShape) {
                 ]);
             } else if(isActiveShape !== undefined) {
                 polys[n].push([
-                    p2r(plotinfo.xaxis, x - size.l),
-                    p2r(plotinfo.yaxis, y - size.t)
+                    p2r(plotinfo.xaxis, x - plotinfo.xaxis._offset),
+                    p2r(plotinfo.yaxis, y - plotinfo.yaxis._offset)
                 ]);
             } else {
                 polys[n].push([
