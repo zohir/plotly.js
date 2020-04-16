@@ -33,7 +33,7 @@ function eraseActiveShape(gd) {
     clearOutlineControllers(gd);
 
     var id = gd._fullLayout._activeShapeIndex;
-    if(id >= 0) {
+    if(id < gd._fullLayout.shapes.length) {
         var shapes = [];
         for(var q = 0; q < gd._fullLayout.shapes.length; q++) {
             var shapeIn = gd._fullLayout.shapes[q]._input;

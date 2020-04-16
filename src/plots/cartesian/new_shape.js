@@ -72,9 +72,20 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
         }
     }
 
+    if(
+        gd._fullLayout._drawing &&
+        gd._fullLayout.newshape.drawstep === 'gradual'
+    ) {
+        gd._fullLayout._activeShapeIndex = gd._fullLayout.shapes.length; // set index one more than the number of shapes
+        dragOptions.isActiveShape = false;
+    }
+
+    // remove previous controllers - only if there is an active shape
+    if(gd._fullLayout._activeShapeIndex >= 0) clearOutlineControllers(gd);
+
     var isActiveShape = dragOptions.isActiveShape;
     var plotinfo = dragOptions.plotinfo;
-    var transform = isActiveShape ? '' : getTransform(plotinfo);
+    var transform = isActiveShape !== undefined ? '' : getTransform(plotinfo);
     var fullLayout = gd._fullLayout;
     var zoomLayer = fullLayout._zoomlayer;
 
@@ -94,11 +105,6 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
 
     // make outline
     outlines.attr('d', writePaths(paths, isOpenMode));
-
-    // remove previous controllers - only if there is an active shape
-    if(gd._fullLayout._activeShapeIndex >= 0) {
-        clearOutlineControllers(gd);
-    }
 
     // add controllers
     var rVertexController = MINSELECT * 1.5; // bigger vertex buttons
@@ -556,25 +562,25 @@ function addNewShapes(outlines, dragOptions) {
     var dragmode = dragOptions.dragmode;
     if(isActiveShape !== undefined) {
         var id = gd._fullLayout._activeShapeIndex;
-        var s = id >= 0 ? gd._fullLayout.shapes[id] : {};
-
-        switch(s.type) {
-            case 'rect':
-                dragmode = 'rectdraw';
-                break;
-            case 'circle':
-                dragmode = 'ellipsedraw';
-                break;
-            case 'line':
-                dragmode = 'linedraw';
-                break;
-            default:
-                if(d[d.length - 1] === 'Z') {
-                    dragmode = 'closedfreedraw';
-                } else {
-                    dragmode = 'openfreedraw';
-                }
-                break;
+        if(id < gd._fullLayout.shapes.length) {
+            switch(gd._fullLayout.shapes[id].type) {
+                case 'rect':
+                    dragmode = 'rectdraw';
+                    break;
+                case 'circle':
+                    dragmode = 'ellipsedraw';
+                    break;
+                case 'line':
+                    dragmode = 'linedraw';
+                    break;
+                case 'path':
+                    if(d[d.length - 1] === 'Z') {
+                        dragmode = 'closedfreedraw';
+                    } else {
+                        dragmode = 'openfreedraw';
+                    }
+                    break;
+            }
         }
     }
     var isOpenMode = openMode(dragmode);
@@ -699,7 +705,10 @@ function addNewShapes(outlines, dragOptions) {
             }
         }
 
-        if(isActiveShape === undefined) {
+        if(
+            isActiveShape === undefined ||
+            gd._fullLayout._activeShapeIndex === gd._fullLayout.shapes.length // case of gradual
+        ) {
             shapes = shapes.concat(newShapes); // add new shapes
         }
     }
