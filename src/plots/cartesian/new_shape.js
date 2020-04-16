@@ -95,8 +95,10 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
     // make outline
     outlines.attr('d', writePaths(paths, isOpenMode));
 
-    // remove previous controllers
-    clearOutlineControllers(gd);
+    // remove previous controllers - only if there is an active shape
+    if(gd._fullLayout._activeShapeIndex >= 0) {
+        clearOutlineControllers(gd);
+    }
 
     // add controllers
     var rVertexController = MINSELECT * 1.5; // bigger vertex buttons
