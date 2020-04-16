@@ -379,7 +379,7 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
             }
         }).catch(Lib.error);
 
-        if(isDrawMode && fullLayout.newshape.drawstep === 'immediate') {
+        if(isDrawMode) {
             clearSelectionsCache(dragOptions);
         }
     };

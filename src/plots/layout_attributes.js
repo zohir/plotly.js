@@ -522,19 +522,6 @@ module.exports = {
                 '*vertical* allows vertical extend.'
             ].join(' ')
         },
-        drawstep: {
-            valType: 'enumerated',
-            role: 'info',
-            values: ['immediate', 'gradual'],
-            dflt: 'immediate',
-            editType: 'none',
-            description: [
-                'Determines how the shapes are added.',
-                'With *immediate* the drawn outline is added right after mouseup.',
-                'With *gradual* the initial outline could be modified at vertex level; ',
-                'while new regions could also be added or subtracted (similar to selection).'
-            ].join(' ')
-        },
 
         editType: 'none'
     },

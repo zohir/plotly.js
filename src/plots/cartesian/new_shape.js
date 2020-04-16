@@ -27,7 +27,6 @@ var SQRT2 = Math.sqrt(2);
 
 var helpers = require('./helpers');
 var p2r = helpers.p2r;
-var getTransform = helpers.getTransform;
 
 var handleOutline = require('./handle_outline');
 var clearOutlineControllers = handleOutline.clearOutlineControllers;
@@ -72,25 +71,10 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
         }
     }
 
-    if(
-        gd._fullLayout._drawing &&
-        gd._fullLayout.newshape.drawstep === 'gradual'
-    ) {
-        gd._fullLayout._activeShapeIndex = gd._fullLayout.shapes.length; // set index one more than the number of shapes
-        dragOptions.isActiveShape = 'gradual';
-    }
-
     // remove previous controllers - only if there is an active shape
     if(gd._fullLayout._activeShapeIndex >= 0) clearOutlineControllers(gd);
 
     var isActiveShape = dragOptions.isActiveShape;
-    var plotinfo = dragOptions.plotinfo;
-    var transform = '';
-    if(plotinfo && (
-        isActiveShape === 'gradual'
-    )) {
-        transform = getTransform(plotinfo);
-    }
     var fullLayout = gd._fullLayout;
     var zoomLayer = fullLayout._zoomlayer;
 
@@ -120,9 +104,7 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
 
     copyPolygons = recordPositions([], polygons);
 
-    if(isActiveShape ||
-        (isDrawMode && fullLayout.newshape.drawstep === 'gradual')
-    ) {
+    if(isActiveShape) {
         var g = zoomLayer.append('g').attr('class', 'outline-controllers');
         addVertexControllers(g);
     }
@@ -235,7 +217,6 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
 
                 var rIcon = 3;
                 var button = g.append(onRect ? 'rect' : 'circle')
-                .attr('transform', transform)
                 .style({
                     'mix-blend-mode': 'luminosity',
                     fill: 'black',
@@ -259,7 +240,6 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
                 var vertex = g.append(onRect ? 'rect' : 'circle')
                 .attr('data-i', i)
                 .attr('data-j', j)
-                .attr('transform', transform)
                 .style({
                     opacity: 0
                 });
@@ -388,7 +368,7 @@ function readPaths(str, plotinfo, size, isActiveShape) {
                     plotinfo.domain.x[0] + x / size.w,
                     plotinfo.domain.y[1] - y / size.h
                 ]);
-            } else if(isActiveShape === false || isActiveShape === 'gradual') {
+            } else if(isActiveShape === false) {
                 polys[n].push([
                     p2r(plotinfo.xaxis, x - plotinfo.xaxis._offset),
                     p2r(plotinfo.yaxis, y - plotinfo.yaxis._offset)
@@ -710,10 +690,7 @@ function addNewShapes(outlines, dragOptions) {
             }
         }
 
-        if(
-            isActiveShape === undefined ||
-            gd._fullLayout._activeShapeIndex === gd._fullLayout.shapes.length // case of gradual
-        ) {
+        if(isActiveShape === undefined) {
             shapes = shapes.concat(newShapes); // add new shapes
         }
     }
