@@ -580,9 +580,7 @@ function addNewShapes(outlines, dragOptions) {
     var isOpenMode = openMode(dragmode);
 
     var newShapes = [];
-    var fullLayout = gd._fullLayout;
-
-    var polygons = readPaths(d, plotinfo, fullLayout._size, isActiveShape);
+    var polygons = readPaths(d, plotinfo, gd._fullLayout._size, isActiveShape);
     for(var i = 0; i < polygons.length; i++) {
         var cell = polygons[i];
         var len = cell.length;
@@ -668,13 +666,13 @@ function addNewShapes(outlines, dragOptions) {
     if(newShapes.length) {
         var updatedActiveShape = false;
         shapes = [];
-        for(var q = 0; q < fullLayout.shapes.length; q++) {
-            var beforeEdit = fullLayout.shapes[q];
+        for(var q = 0; q < gd._fullLayout.shapes.length; q++) {
+            var beforeEdit = gd._fullLayout.shapes[q];
             shapes[q] = beforeEdit._input;
 
             if(
                 isActiveShape !== undefined &&
-                q === fullLayout._activeShapeIndex
+                q === gd._fullLayout._activeShapeIndex
             ) {
                 var afterEdit = newShapes[0]; // pick first
 
