@@ -301,7 +301,7 @@ function writePaths(paths, isOpenMode) {
     return paths.length > 0 ? 'M' + paths.join('M') + (isOpenMode ? '' : 'Z') : 'M0,0Z';
 }
 
-function readPaths(str, plotinfo, size) {
+function readPaths(str, plotinfo, size, isActiveShape) {
     var cmd = parseSvgPath(str);
 
     var polys = [];
@@ -377,6 +377,11 @@ function readPaths(str, plotinfo, size) {
                 polys[n].push([
                     plotinfo.domain.x[0] + x / size.w,
                     plotinfo.domain.y[1] - y / size.h
+                ]);
+            } else if(isActiveShape !== undefined) {
+                polys[n].push([
+                    p2r(plotinfo.xaxis, x - size.l),
+                    p2r(plotinfo.yaxis, y - size.t)
                 ]);
             } else {
                 polys[n].push([
@@ -578,7 +583,7 @@ function addNewShapes(outlines, dragOptions) {
     var newShapes = [];
     var fullLayout = gd._fullLayout;
 
-    var polygons = isActiveShape ? readPaths(d) : readPaths(d, plotinfo, fullLayout._size);
+    var polygons = readPaths(d, plotinfo, fullLayout._size, isActiveShape);
     for(var i = 0; i < polygons.length; i++) {
         var cell = polygons[i];
         var len = cell.length;
