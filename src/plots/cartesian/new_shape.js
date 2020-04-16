@@ -591,7 +591,7 @@ function addNewShapes(outlines, dragOptions) {
         if(len < 2) continue;
 
         var shape = {
-            activable: true,
+            editable: true,
 
             xref: onPaper ? 'paper' : xaxis._id,
             yref: onPaper ? 'paper' : yaxis._id,
