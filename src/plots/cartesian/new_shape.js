@@ -358,7 +358,7 @@ function readPaths(str, plotinfo, size, isActiveShape) {
             x = initX;
             y = initY;
         } else {
-            if(!plotinfo) {
+            if(!plotinfo || !(plotinfo.xaxis && plotinfo.yaxis)) {
                 polys[n].push([
                     x,
                     y
@@ -541,7 +541,7 @@ function addNewShapes(outlines, dragOptions) {
     var plotinfo = dragOptions.plotinfo;
     var xaxis = plotinfo.xaxis;
     var yaxis = plotinfo.yaxis;
-    var onPaper = plotinfo.domain;
+    var onPaper = plotinfo.domain || !plotinfo || !(plotinfo.xaxis && plotinfo.yaxis);
 
     var isActiveShape = dragOptions.isActiveShape;
     var dragmode = dragOptions.dragmode;
@@ -641,7 +641,9 @@ function addNewShapes(outlines, dragOptions) {
             shape.y1 = pos.y1;
         } else {
             shape.type = 'path';
-            fixDatesOnPaths(cell, xaxis, yaxis);
+            if(xaxis && yaxis) {
+                fixDatesOnPaths(cell, xaxis, yaxis);
+            }
 
             shape.path = writePaths([
                 providePath(cell, isOpenMode)
