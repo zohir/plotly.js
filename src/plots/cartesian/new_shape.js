@@ -57,17 +57,15 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
     var gd = dragOptions.gd;
 
     function redraw() {
+        // recursive call
+        displayOutlines(polygons, outlines, dragOptions, nCalls++);
+
         dragOptions.isActiveShape = false; // i.e. to disable controllers
         var shapes = addNewShapes(outlines, dragOptions);
         if(shapes) {
             Registry.call('_guiRelayout', gd, {
                 shapes: shapes // update active shape
             });
-        }
-
-        if(nCalls !== -1) {
-            // recursive call
-            displayOutlines(polygons, outlines, dragOptions, nCalls++);
         }
     }
 
