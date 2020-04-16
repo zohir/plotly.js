@@ -662,7 +662,6 @@ function addNewShapes(outlines, dragOptions) {
         newShapes.push(shape);
     }
 
-    // remove outline and controllers
     clearSelect(gd);
 
     var shapes;
@@ -679,7 +678,7 @@ function addNewShapes(outlines, dragOptions) {
             ) {
                 var afterEdit = newShapes[0]; // pick first
 
-                switch(afterEdit.type) {
+                switch(beforeEdit.type) {
                     case 'line':
                     case 'rect':
                     case 'circle':
