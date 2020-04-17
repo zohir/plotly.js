@@ -607,6 +607,10 @@ function clearSelectionsCache(dragOptions) {
 
     if(drawMode(dragmode)) {
         var gd = dragOptions.gd;
+        if(gd._fullLayout._activeShapeIndex >= 0) {
+            deactivateShape(gd);
+        }
+
         var fullLayout = gd._fullLayout;
         var zoomLayer = fullLayout._zoomlayer;
 
