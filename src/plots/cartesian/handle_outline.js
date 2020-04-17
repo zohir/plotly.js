@@ -29,6 +29,22 @@ function activateShape(gd, path, drawShapes) {
     }
 }
 
+function deactivateShape(gd) {
+    clearOutlineControllers(gd);
+
+    var shapes = [];
+    for(var q = 0; q < gd._fullLayout.shapes.length; q++) {
+        var shapeIn = gd._fullLayout.shapes[q]._input;
+        shapes.push(shapeIn);
+    }
+
+    delete gd._fullLayout._activeShapeIndex;
+
+    Registry.call('_guiRelayout', gd, {
+        shapes: shapes
+    });
+}
+
 function eraseActiveShape(gd) {
     clearOutlineControllers(gd);
 
@@ -72,6 +88,7 @@ function clearSelect(gd) {
 
 module.exports = {
     activateShape: activateShape,
+    deactivateShape: deactivateShape,
     eraseActiveShape: eraseActiveShape,
     clearOutlineControllers: clearOutlineControllers,
     clearSelect: clearSelect

@@ -37,7 +37,9 @@ var MINSELECT = constants.MINSELECT;
 var filteredPolygon = polygon.filter;
 var polygonTester = polygon.tester;
 
-var clearSelect = require('./handle_outline').clearSelect;
+var handleOutline = require('./handle_outline');
+var clearSelect = handleOutline.clearSelect;
+var deactivateShape = handleOutline.deactivateShape;
 
 var newShape = require('./new_shape');
 var displayOutlines = newShape.displayOutlines;
@@ -317,11 +319,15 @@ function prepSelect(e, startX, startY, dragOptions, mode) {
     };
 
     dragOptions.clickFn = function(numClicks, evt) {
-        var clickmode = fullLayout.clickmode;
-
         corners.remove();
 
+        if(gd._fullLayout._activeShapeIndex >= 0) {
+            deactivateShape(gd);
+            return;
+        }
         if(isDrawMode) return;
+
+        var clickmode = fullLayout.clickmode;
 
         throttle.done(throttleID).then(function() {
             throttle.clear(throttleID);
