@@ -195,7 +195,9 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
         for(var i = 0; i < polygons.length; i++) {
             var cell = polygons[i];
 
-            var onRect = (pointsShapeRectangle(cell));
+            var onRect = pointsShapeRectangle(cell);
+            var onEllipse = !onRect && pointsShapeEllipse(cell);
+
             var minX;
             var minY;
             var maxX;
@@ -210,6 +212,15 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
 
             vertexDragOptions[i] = [];
             for(var j = 0; j < cell.length; j++) {
+                if(onEllipse &&
+                    j !== 0 &&
+                    j !== CIRCLE_SIDES * 0.25 &&
+                    j !== CIRCLE_SIDES * 0.5 &&
+                    j !== CIRCLE_SIDES * 0.75
+                ) {
+                    continue;
+                }
+
                 var x = cell[j][0];
                 var y = cell[j][1];
 
@@ -390,15 +401,21 @@ function readPaths(str, plotinfo, size, isActiveShape) {
                 break;
 
             case 'A':
-                var dx = +cmd[i][1];
-                var dy = +cmd[i][2];
+                var rx = +cmd[i][1];
+                var ry = +cmd[i][2];
+                if(!+cmd[i][4]) {
+                    rx = -rx;
+                    ry = -ry;
+                }
 
-                if(+cmd[i][4]) {
-                    newPos.push([x - dx, y - dy]);
-                    newPos.push([x - 2 * dx, y]);
-                } else {
-                    newPos.push([x + dx, y + dy]);
-                    newPos.push([x + 2 * dx, y]);
+                var cenX = x - rx;
+                var cenY = y;
+                for(var k = 1; k <= CIRCLE_SIDES / 2; k++) {
+                    var t = 2 * Math.PI * k / CIRCLE_SIDES;
+                    newPos.push([
+                        cenX + rx * Math.cos(t),
+                        cenY + ry * Math.sin(t)
+                    ]);
                 }
 
                 break;
@@ -684,23 +701,28 @@ function addNewShapes(outlines, dragOptions) {
             shape.type = 'circle'; // an ellipse!
             var pos = {};
             if(isActiveShape === false) {
-                var x0 = (cell[1][0] + cell[3][0]) / 2;
-                var y0 = (cell[0][1] + cell[2][1]) / 2;
-                var rx = (cell[3][0] - cell[1][0] + cell[2][0] - cell[0][0]) / 2;
-                var ry = (cell[3][1] - cell[1][1] + cell[2][1] - cell[0][1]) / 2;
-                var t = Math.PI / 4;
-                var cos = Math.cos(t);
-                var sin = Math.sin(t);
+                var i0 = 0;
+                var i1 = Math.floor(CIRCLE_SIDES * 0.25);
+                var i2 = Math.floor(CIRCLE_SIDES * 0.5);
+                var i3 = Math.floor(CIRCLE_SIDES * 0.75);
+
+                var x0 = (cell[i1][0] + cell[i3][0]) / 2;
+                var y0 = (cell[i0][1] + cell[i2][1]) / 2;
+                var rx = (cell[i3][0] - cell[i1][0] + cell[i2][0] - cell[i0][0]) / 2;
+                var ry = (cell[i3][1] - cell[i1][1] + cell[i2][1] - cell[i0][1]) / 2;
+                var a = Math.PI / 4;
+                var cosA = Math.cos(a);
+                var sinA = Math.sin(a);
 
                 pos = ellipseOver({
                     x0: x0,
                     y0: y0,
-                    x1: x0 + rx * cos,
-                    y1: y0 + ry * sin
+                    x1: x0 + rx * cosA,
+                    y1: y0 + ry * sinA
                 });
             } else {
-                var j = Math.floor((CIRCLE_SIDES + 1) / 2);
-                var k = Math.floor((CIRCLE_SIDES + 1) / 8);
+                var j = Math.floor(CIRCLE_SIDES / 2);
+                var k = Math.floor(CIRCLE_SIDES / 8);
                 pos = ellipseOver({
                     x0: (cell[0][0] + cell[j][0]) / 2,
                     y0: (cell[0][1] + cell[j][1]) / 2,
