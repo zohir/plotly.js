@@ -701,9 +701,7 @@ function addNewShapes(outlines, dragOptions) {
             shape.y1 = cell[1][1];
         } else if(
             dragmode === 'ellipsedraw' &&
-            (isActiveShape === false || pointsShapeEllipse(cell, len)) && // should pass len here which is equal to cell.length - 1 i.e. because of the closing point
-            xaxis.type !== 'log' && yaxis.type !== 'log' &&
-            xaxis.type !== 'date' && yaxis.type !== 'date'
+            (isActiveShape === false || pointsShapeEllipse(cell, len)) // should pass len here which is equal to cell.length - 1 i.e. because of the closing point
         ) {
             shape.type = 'circle'; // an ellipse!
             var pos = {};
