@@ -627,19 +627,38 @@ function addNewShapes(outlines, dragOptions) {
             shape.y1 = cell[1][1];
         } else if(
             dragmode === 'ellipsedraw' &&
-            pointsShapeEllipse(cell, len) && // should pass len here which is equal to cell.length - 1 i.e. because of the closing point
+            (isActiveShape === false || pointsShapeEllipse(cell, len)) && // should pass len here which is equal to cell.length - 1 i.e. because of the closing point
             xaxis.type !== 'log' && yaxis.type !== 'log' &&
             xaxis.type !== 'date' && yaxis.type !== 'date'
         ) {
             shape.type = 'circle'; // an ellipse!
-            var j = Math.floor((CIRCLE_SIDES + 1) / 2);
-            var k = Math.floor((CIRCLE_SIDES + 1) / 8);
-            var pos = ellipseOver({
-                x0: (cell[0][0] + cell[j][0]) / 2,
-                y0: (cell[0][1] + cell[j][1]) / 2,
-                x1: cell[k][0],
-                y1: cell[k][1]
-            });
+            var pos = {};
+            if(isActiveShape === false) {
+                var x0 = (cell[1][0] + cell[3][0]) / 2;
+                var y0 = (cell[0][1] + cell[2][1]) / 2;
+                var rx = (cell[3][0] - cell[1][0] + cell[2][0] - cell[0][0]) / 2;
+                var ry = (cell[3][1] - cell[1][1] + cell[2][1] - cell[0][1]) / 2;
+                var t = Math.PI / 4;
+                var cos = Math.cos(t);
+                var sin = Math.sin(t);
+
+                pos = ellipseOver({
+                    x0: x0,
+                    y0: y0,
+                    x1: x0 + rx * cos,
+                    y1: y0 + ry * sin
+                });
+            } else {
+                var j = Math.floor((CIRCLE_SIDES + 1) / 2);
+                var k = Math.floor((CIRCLE_SIDES + 1) / 8);
+                pos = ellipseOver({
+                    x0: (cell[0][0] + cell[j][0]) / 2,
+                    y0: (cell[0][1] + cell[j][1]) / 2,
+                    x1: cell[k][0],
+                    y1: cell[k][1]
+                });
+            }
+
             shape.x0 = pos.x0;
             shape.y0 = pos.y0;
             shape.x1 = pos.x1;
