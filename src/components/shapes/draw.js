@@ -136,6 +136,10 @@ function drawOne(gd, index) {
         setClipPath(path, gd, options);
 
         if(isActiveShape) {
+            path.style({
+                'cursor': 'move',
+            });
+
             var dragOptions = {
                 element: path.node(),
                 plotinfo: plotinfo,
