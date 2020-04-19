@@ -32,14 +32,6 @@ var handleOutline = require('./handle_outline');
 var clearOutlineControllers = handleOutline.clearOutlineControllers;
 var clearSelect = handleOutline.clearSelect;
 
-var SHAPE_CONTROLLERS = [
-    { // move should be first to have zero index - since we don't want to show a button
-        name: 'move',
-        color: '#FA3',
-        label: '\u2B0C'
-    }
-];
-
 function recordPositions(polygonsOut, polygonsIn) {
     for(var i = 0; i < polygonsIn.length; i++) {
         polygonsOut[i] = [];
@@ -103,7 +95,6 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
     outlines.attr('d', writePaths(paths, isOpenMode));
 
     // add controllers
-    var rShapeController = MINSELECT * 0.75; // smaller shape buttons
     var rVertexController = MINSELECT * 1.5; // bigger vertex buttons
     var vertexDragOptions;
     var shapeDragOptions;
@@ -116,7 +107,7 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
     if(isActiveShape) {
         var g = zoomLayer.append('g').attr('class', 'outline-controllers');
         addVertexControllers(g);
-        addShapeControllers(g);
+        addShapeControllers();
     }
 
     function startDragVertex(evt) {
@@ -302,11 +293,7 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
     }
 
     function moveShapeController(dx, dy) {
-        switch(SHAPE_CONTROLLERS[indexI].name) {
-            case 'move':
-                moveShape(dx, dy);
-                break;
-        }
+        moveShape(dx, dy);
 
         redraw();
     }
@@ -322,83 +309,21 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
         Lib.noop(evt);
     }
 
-    function addShapeControllers(g) {
+    function addShapeControllers() {
         shapeDragOptions = [];
 
         if(!polygons.length) return;
 
-        var center = calcShapeCenter(polygons);
+        var i = 0;
+        shapeDragOptions[i] = {
+            element: outlines[0][0],
+            gd: gd,
+            prepFn: startDragShapeController,
+            doneFn: endDragShapeController
+        };
 
-        var num = SHAPE_CONTROLLERS.length;
-        for(var i = 0; i < num; i++) {
-            var pos;
-            var isMove = false;
-            switch(SHAPE_CONTROLLERS[i].name) {
-                case 'move':
-                    isMove = true;
-                    pos = center;
-                    break;
-            }
-
-            var button;
-            if(!isMove) {
-                button = g.append('circle')
-                .attr('data-i', i)
-                .attr('cx', pos[0])
-                .attr('cy', pos[1])
-                .attr('r', rShapeController)
-                .style({
-                    fill: SHAPE_CONTROLLERS[i].color,
-                    stroke: 'white',
-                    'stroke-width': 1
-                });
-
-                var fontSize = Math.floor(1.5 * rShapeController);
-                g.append('text')
-                .text(SHAPE_CONTROLLERS[i].label)
-                .attr('text-anchor', 'middle')
-                .attr('x', pos[0])
-                .attr('y', pos[1] + fontSize / 3)
-                .style({
-                    'font-family': 'Arial, sans-serif',
-                    'font-size': fontSize + 'px',
-                    fill: 'black'
-                });
-            }
-
-            shapeDragOptions[i] = {
-                element: isMove ? outlines[0][0] : button.node(),
-                gd: gd,
-                prepFn: startDragShapeController,
-                doneFn: endDragShapeController
-            };
-
-            dragElement.init(shapeDragOptions[i]);
-        }
+        dragElement.init(shapeDragOptions[i]);
     }
-}
-
-function calcCellCenter(cell) {
-    var len = cell.length;
-    var cx = 0;
-    var cy = 0;
-    for(var i = 0; i < len; i++) {
-        cx += cell[i][0] / len;
-        cy += cell[i][1] / len;
-    }
-    return [cx, cy];
-}
-
-function calcShapeCenter(polygons) {
-    var len = polygons.length;
-    var cx = 0;
-    var cy = 0;
-    for(var i = 0; i < len; i++) {
-        var pos = calcCellCenter(polygons[i]);
-        cx += pos[0] / len;
-        cy += pos[1] / len;
-    }
-    return [cx, cy];
 }
 
 function providePath(cell, isOpenMode) {
