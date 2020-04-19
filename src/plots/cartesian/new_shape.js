@@ -178,7 +178,7 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
     function clickVertexController(numClicks) {
         if(numClicks === 2) {
             var cell = polygons[indexI];
-            if(cell.length > 2 && !(pointsShapeRectangle(cell))) {
+            if(cell.length > 4) {
                 removeVertex();
             }
 
