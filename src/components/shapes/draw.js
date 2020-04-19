@@ -116,9 +116,13 @@ function drawOne(gd, index) {
         var lineWidth = options.line.width;
         var lineDash = options.line.dash;
 
+        var isOpen = d[d.length - 1] !== 'Z';
+
         var isActiveShape = options.editable && gd._fullLayout._activeShapeIndex === index;
         if(isActiveShape) {
-            fillColor = gd._fullLayout.activeshape.fillcolor;
+            fillColor = isOpen ? 'rgba(0,0,0,0)' :
+                gd._fullLayout.activeshape.fillcolor;
+
             opacity = gd._fullLayout.activeshape.opacity;
         }
 
@@ -136,6 +140,7 @@ function drawOne(gd, index) {
                 element: path.node(),
                 plotinfo: plotinfo,
                 gd: gd,
+                dragmode: gd._fullLayout.dragmode,
                 isActiveShape: true // i.e. to enable controllers
             };
 
@@ -151,7 +156,7 @@ function drawOne(gd, index) {
                 !gd._context.edits.shapePosition && // for backward compatibility
                 (lineWidth >= 1) && ( // has border
                     (Color.opacity(fillColor) * opacity <= 0.5) || // too transparent
-                    (d[d.length - 1] !== 'Z') // is closed
+                    isOpen
                 ) ?
                 'stroke' : 'all'
             );
