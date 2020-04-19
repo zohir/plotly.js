@@ -23,6 +23,13 @@ var setCursor = require('../../lib/setcursor');
 var constants = require('./constants');
 var MINSELECT = constants.MINSELECT;
 var CIRCLE_SIDES = 32; // should be divisible by 8
+var i000 = 0;
+var i045 = CIRCLE_SIDES / 8;
+var i090 = CIRCLE_SIDES / 4;
+var i180 = CIRCLE_SIDES / 2;
+var i270 = CIRCLE_SIDES / 4 * 3;
+var cos45 = Math.cos(Math.PI / 4);
+var sin45 = Math.sin(Math.PI / 4);
 var SQRT2 = Math.sqrt(2);
 
 var helpers = require('./helpers');
@@ -701,33 +708,22 @@ function addNewShapes(outlines, dragOptions) {
             shape.type = 'circle'; // an ellipse!
             var pos = {};
             if(isActiveShape === false) {
-                var i0 = 0;
-                var i1 = Math.floor(CIRCLE_SIDES * 0.25);
-                var i2 = Math.floor(CIRCLE_SIDES * 0.5);
-                var i3 = Math.floor(CIRCLE_SIDES * 0.75);
-
-                var x0 = (cell[i1][0] + cell[i3][0]) / 2;
-                var y0 = (cell[i0][1] + cell[i2][1]) / 2;
-                var rx = (cell[i3][0] - cell[i1][0] + cell[i2][0] - cell[i0][0]) / 2;
-                var ry = (cell[i3][1] - cell[i1][1] + cell[i2][1] - cell[i0][1]) / 2;
-                var a = Math.PI / 4;
-                var cosA = Math.cos(a);
-                var sinA = Math.sin(a);
-
+                var x0 = (cell[i090][0] + cell[i270][0]) / 2;
+                var y0 = (cell[i000][1] + cell[i180][1]) / 2;
+                var rx = (cell[i270][0] - cell[i090][0] + cell[i180][0] - cell[i000][0]) / 2;
+                var ry = (cell[i270][1] - cell[i090][1] + cell[i180][1] - cell[i000][1]) / 2;
                 pos = ellipseOver({
                     x0: x0,
                     y0: y0,
-                    x1: x0 + rx * cosA,
-                    y1: y0 + ry * sinA
+                    x1: x0 + rx * cos45,
+                    y1: y0 + ry * sin45
                 });
             } else {
-                var j = Math.floor(CIRCLE_SIDES / 2);
-                var k = Math.floor(CIRCLE_SIDES / 8);
                 pos = ellipseOver({
-                    x0: (cell[0][0] + cell[j][0]) / 2,
-                    y0: (cell[0][1] + cell[j][1]) / 2,
-                    x1: cell[k][0],
-                    y1: cell[k][1]
+                    x0: (cell[i000][0] + cell[i180][0]) / 2,
+                    y0: (cell[i000][1] + cell[i180][1]) / 2,
+                    x1: cell[i045][0],
+                    y1: cell[i045][1]
                 });
             }
 
