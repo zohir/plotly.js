@@ -192,9 +192,6 @@ function displayOutlines(polygonsIn, outlines, dragOptions, nCalls) {
         for(var i = 0; i < polygons.length; i++) {
             var cell = polygons[i];
 
-            if(dragmode === 'ellipsedraw' && pointsShapeEllipse(cell)) {
-                return; // no need for vertex modifiers on ellipses
-            }
             var onRect = (pointsShapeRectangle(cell));
             var minX;
             var minY;
@@ -310,45 +307,50 @@ function readPaths(str, plotinfo, size, isActiveShape) {
 
     recStart();
     for(var i = 0; i < cmd.length; i++) {
+        var newPos = [];
+
         var c = cmd[i][0];
         switch(c) {
             case 'M':
                 newPoly();
                 x = +cmd[i][1];
                 y = +cmd[i][2];
-                recStart();
-                break;
+                newPos.push([x, y]);
 
-            case 'm':
-                newPoly();
-                x += +cmd[i][1];
-                y += +cmd[i][2];
+                recStart();
                 break;
 
             case 'L':
                 x = +cmd[i][1];
                 y = +cmd[i][2];
-                break;
+                newPos.push([x, y]);
 
-            case 'l':
-                x += +cmd[i][1];
-                y += +cmd[i][2];
                 break;
 
             case 'H':
                 x = +cmd[i][1];
-                break;
+                newPos.push([x, y]);
 
-            case 'h':
-                x += +cmd[i][1];
                 break;
 
             case 'V':
                 y = +cmd[i][1];
+                newPos.push([x, y]);
+
                 break;
 
-            case 'v':
-                y += +cmd[i][1];
+            case 'A':
+                var dx = +cmd[i][1];
+                var dy = +cmd[i][2];
+
+                if(+cmd[i][4]) {
+                    newPos.push([x - dx, y - dy]);
+                    newPos.push([x - 2 * dx, y]);
+                } else {
+                    newPos.push([x + dx, y + dy]);
+                    newPos.push([x + 2 * dx, y]);
+                }
+
                 break;
         }
 
@@ -356,26 +358,31 @@ function readPaths(str, plotinfo, size, isActiveShape) {
             x = initX;
             y = initY;
         } else {
-            if(!plotinfo || !(plotinfo.xaxis && plotinfo.yaxis)) {
-                polys[n].push([
-                    x,
-                    y
-                ]);
-            } else if(plotinfo.domain) {
-                polys[n].push([
-                    plotinfo.domain.x[0] + x / size.w,
-                    plotinfo.domain.y[1] - y / size.h
-                ]);
-            } else if(isActiveShape === false) {
-                polys[n].push([
-                    p2r(plotinfo.xaxis, x - plotinfo.xaxis._offset),
-                    p2r(plotinfo.yaxis, y - plotinfo.yaxis._offset)
-                ]);
-            } else {
-                polys[n].push([
-                    p2r(plotinfo.xaxis, x),
-                    p2r(plotinfo.yaxis, y)
-                ]);
+            for(var j = 0; j < newPos.length; j++) {
+                x = newPos[j][0];
+                y = newPos[j][1];
+
+                if(!plotinfo || !(plotinfo.xaxis && plotinfo.yaxis)) {
+                    polys[n].push([
+                        x,
+                        y
+                    ]);
+                } else if(plotinfo.domain) {
+                    polys[n].push([
+                        plotinfo.domain.x[0] + x / size.w,
+                        plotinfo.domain.y[1] - y / size.h
+                    ]);
+                } else if(isActiveShape === false) {
+                    polys[n].push([
+                        p2r(plotinfo.xaxis, x - plotinfo.xaxis._offset),
+                        p2r(plotinfo.yaxis, y - plotinfo.yaxis._offset)
+                    ]);
+                } else {
+                    polys[n].push([
+                        p2r(plotinfo.xaxis, x),
+                        p2r(plotinfo.yaxis, y)
+                    ]);
+                }
             }
         }
     }
