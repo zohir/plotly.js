@@ -245,7 +245,7 @@ module.exports = templatedArray('shape', {
         role: 'info',
         editType: 'arraydraw',
         description: [
-            'Determines the shape\'s interior.',
+            'Determines the path\'s interior.',
             'For more info please visit https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/fill-rule'
         ].join(' ')
     },

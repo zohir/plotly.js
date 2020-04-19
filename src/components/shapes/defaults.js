@@ -32,20 +32,20 @@ function handleShapeDefaults(shapeIn, shapeOut, fullLayout) {
     var visible = coerce('visible');
     if(!visible) return;
 
-    coerce('editable');
+    var dfltType = shapeIn.path ? 'path' : 'rect';
+    var shapeType = coerce('type', dfltType);
 
+    coerce('editable');
     coerce('layer');
     coerce('opacity');
     coerce('fillcolor');
-    coerce('fillrule');
+    if(shapeType === 'path') coerce('fillrule');
     var lineWidth = coerce('line.width');
     if(lineWidth) {
         coerce('line.color');
         coerce('line.dash');
     }
 
-    var dfltType = shapeIn.path ? 'path' : 'rect';
-    var shapeType = coerce('type', dfltType);
     var xSizeMode = coerce('xsizemode');
     var ySizeMode = coerce('ysizemode');
 
