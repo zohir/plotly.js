@@ -217,7 +217,7 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
         axLetter = axName.charAt(0);
 
         if(!Lib.isPlainObject(layoutIn[axName])) {
-            layoutIn[axName] = {};
+            layoutIn[axName] = (layoutOut._template || {})[axName] || {};
         }
 
         axLayoutIn = layoutIn[axName];
@@ -292,7 +292,7 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
         axLetter = axName.charAt(0);
 
         if(!Lib.isPlainObject(layoutIn[axName])) {
-            layoutIn[axName] = {};
+            layoutIn[axName] = (layoutOut._template || {})[axName] || {};
         }
 
         axLayoutIn = layoutIn[axName];
