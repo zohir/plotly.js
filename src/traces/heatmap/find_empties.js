@@ -68,7 +68,7 @@ module.exports = function findEmpties(z) {
                 // if all neighbors that could exist do, we don't
                 // need this for finding farther neighbors
                 if(neighborCount < 4) {
-                    neighborHash[i + 'X' + j] = [i, j, neighborCount];
+                    neighborHash['_' + [i, j]] = [i, j, neighborCount];
                 }
 
                 empties.push([i, j, neighborCount]);
@@ -89,14 +89,14 @@ module.exports = function findEmpties(z) {
             j = thisPt[1];
 
             neighborCount = (
-                (neighborHash[(i - 1) + 'X' + j] || blank)[2] +
-                (neighborHash[(i + 1) + 'X' + j] || blank)[2] +
-                (neighborHash[i + 'X' + (j - 1)] || blank)[2] +
-                (neighborHash[i + 'X' + (j + 1)] || blank)[2]
+                (neighborHash['_' + [(i - 1), j]] || blank)[2] +
+                (neighborHash['_' + [(i + 1), j]] || blank)[2] +
+                (neighborHash['_' + [i, (j - 1)]] || blank)[2] +
+                (neighborHash['_' + [i, (j + 1)]] || blank)[2]
             ) / 20;
 
             if(neighborCount) {
-                newNeighborHash[i + 'X' + j] = [i, j, neighborCount];
+                newNeighborHash['_' + thisPt] = [i, j, neighborCount];
                 noNeighborList.splice(p, 1);
                 foundNewNeighbors = true;
             }
@@ -108,10 +108,7 @@ module.exports = function findEmpties(z) {
 
         // put these new cells into the main neighbor list
         for(thisPt in newNeighborHash) {
-            i = thisPt[0];
-            j = thisPt[1];
-
-            neighborHash[thisPt] = newNeighborHash[i + 'X' + j];
+            neighborHash[thisPt] = newNeighborHash[thisPt];
             empties.push(newNeighborHash[thisPt]);
         }
     }
