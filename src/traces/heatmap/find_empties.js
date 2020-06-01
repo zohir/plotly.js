@@ -18,14 +18,11 @@ var maxRowLength = require('../../lib').maxRowLength;
  * neighbors, and add a fractional neighborCount
  */
 module.exports = function findEmpties(z) {
+    console.log('findEmpties');
     var empties = [];
     var neighborHash = {};
     var noNeighborList = [];
-    var nextRow = z[0];
-    var row = [];
     var blank = [0, 0, 0];
-    var rowLength = maxRowLength(z);
-    var prevRow;
     var i;
     var j;
     var thisPt;
@@ -34,24 +31,38 @@ module.exports = function findEmpties(z) {
     var newNeighborHash;
     var foundNewNeighbors;
 
-    for(i = 0; i < z.length; i++) {
-        prevRow = row;
-        row = nextRow;
-        nextRow = z[i + 1] || [];
-        for(j = 0; j < rowLength; j++) {
-            if(row[j] === undefined) {
-                neighborCount = (row[j - 1] !== undefined ? 1 : 0) +
-                    (row[j + 1] !== undefined ? 1 : 0) +
-                    (prevRow[j] !== undefined ? 1 : 0) +
-                    (nextRow[j] !== undefined ? 1 : 0);
+    var ni = z.length;
+    var nj = maxRowLength(z);
+    for(i = 0; i < ni; i++) {
+        for(j = 0; j < nj; j++) {
+            if(z[i][j] === undefined) {
+                neighborCount = 0;
+                if(j > 0 && z[i][j - 1] !== undefined) {
+                    console.log('case A');
+                    neighborCount++;
+                }
+                if(j < nj - 1 && z[i][j + 1] !== undefined) {
+                    console.log('case B');
+                    neighborCount++;
+                }
+                if(i > 0 && z[i - 1][j] !== undefined) {
+                    console.log('case C');
+                    neighborCount++;
+                }
+                if(i < ni - 1 && z[i + 1][j] !== undefined) {
+                    console.log('case D');
+                    neighborCount++;
+                }
+
+                console.log('neighborCount:', neighborCount);
 
                 if(neighborCount) {
                     // for this purpose, don't count off-the-edge points
                     // as undefined neighbors
                     if(i === 0) neighborCount++;
                     if(j === 0) neighborCount++;
-                    if(i === z.length - 1) neighborCount++;
-                    if(j === row.length - 1) neighborCount++;
+                    if(i === ni - 1) neighborCount++;
+                    if(j === nj - 1) neighborCount++;
 
                     // if all neighbors that could exist do, we don't
                     // need this for finding farther neighbors
@@ -64,6 +75,8 @@ module.exports = function findEmpties(z) {
             }
         }
     }
+
+    console.log('noNeighborList.length:', noNeighborList.length);
 
     while(noNeighborList.length) {
         newNeighborHash = {};
@@ -99,5 +112,7 @@ module.exports = function findEmpties(z) {
     }
 
     // sort the full list in descending order of neighbor count
-    return empties.sort(function(a, b) { return b[2] - a[2]; });
+    var result = empties.sort(function(a, b) { return b[2] - a[2]; });
+    console.log(result);
+    return result;
 };
