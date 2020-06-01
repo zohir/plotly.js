@@ -108,7 +108,10 @@ module.exports = function findEmpties(z) {
 
         // put these new cells into the main neighbor list
         for(thisPt in newNeighborHash) {
-            neighborHash[thisPt] = newNeighborHash[thisPt];
+            i = thisPt[0];
+            j = thisPt[1];
+
+            neighborHash[thisPt] = newNeighborHash[i + 'X' + j];
             empties.push(newNeighborHash[thisPt]);
         }
     }
