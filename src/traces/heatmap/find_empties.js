@@ -35,44 +35,44 @@ module.exports = function findEmpties(z) {
     var nj = maxRowLength(z);
     for(i = 0; i < ni; i++) {
         for(j = 0; j < nj; j++) {
-            if(z[i][j] === undefined) {
-                neighborCount = 0;
-                if(j > 0 && z[i][j - 1] !== undefined) {
-                    console.log('case A');
-                    neighborCount++;
-                }
-                if(j < nj - 1 && z[i][j + 1] !== undefined) {
-                    console.log('case B');
-                    neighborCount++;
-                }
-                if(i > 0 && z[i - 1][j] !== undefined) {
-                    console.log('case C');
-                    neighborCount++;
-                }
-                if(i < ni - 1 && z[i + 1][j] !== undefined) {
-                    console.log('case D');
-                    neighborCount++;
-                }
+            if(z[i][j] !== undefined) continue;
 
-                console.log('neighborCount:', neighborCount);
-
-                if(neighborCount) {
-                    // for this purpose, don't count off-the-edge points
-                    // as undefined neighbors
-                    if(i === 0) neighborCount++;
-                    if(j === 0) neighborCount++;
-                    if(i === ni - 1) neighborCount++;
-                    if(j === nj - 1) neighborCount++;
-
-                    // if all neighbors that could exist do, we don't
-                    // need this for finding farther neighbors
-                    if(neighborCount < 4) {
-                        neighborHash[[i, j]] = [i, j, neighborCount];
-                    }
-
-                    empties.push([i, j, neighborCount]);
-                } else noNeighborList.push([i, j]);
+            neighborCount = 0;
+            if(j > 0 && z[i][j - 1] !== undefined) {
+                console.log('case A');
+                neighborCount++;
             }
+            if(j < nj - 1 && z[i][j + 1] !== undefined) {
+                console.log('case B');
+                neighborCount++;
+            }
+            if(i > 0 && z[i - 1][j] !== undefined) {
+                console.log('case C');
+                neighborCount++;
+            }
+            if(i < ni - 1 && z[i + 1][j] !== undefined) {
+                console.log('case D');
+                neighborCount++;
+            }
+
+            console.log('neighborCount:', neighborCount);
+
+            if(neighborCount) {
+                // for this purpose, don't count off-the-edge points
+                // as undefined neighbors
+                if(i === 0) neighborCount++;
+                if(j === 0) neighborCount++;
+                if(i === ni - 1) neighborCount++;
+                if(j === nj - 1) neighborCount++;
+
+                // if all neighbors that could exist do, we don't
+                // need this for finding farther neighbors
+                if(neighborCount < 4) {
+                    neighborHash[i + 'X' + j] = [i, j, neighborCount];
+                }
+
+                empties.push([i, j, neighborCount]);
+            } else noNeighborList.push([i, j]);
         }
     }
 
@@ -88,13 +88,15 @@ module.exports = function findEmpties(z) {
             i = thisPt[0];
             j = thisPt[1];
 
-            neighborCount = ((neighborHash[[i - 1, j]] || blank)[2] +
-                (neighborHash[[i + 1, j]] || blank)[2] +
-                (neighborHash[[i, j - 1]] || blank)[2] +
-                (neighborHash[[i, j + 1]] || blank)[2]) / 20;
+            neighborCount = (
+                (neighborHash[(i - 1) + 'X' + j] || blank)[2] +
+                (neighborHash[(i + 1) + 'X' + j] || blank)[2] +
+                (neighborHash[i + 'X' + (j - 1)] || blank)[2] +
+                (neighborHash[i + 'X' + (j + 1)] || blank)[2]
+            ) / 20;
 
             if(neighborCount) {
-                newNeighborHash[thisPt] = [i, j, neighborCount];
+                newNeighborHash[i + 'X' + j] = [i, j, neighborCount];
                 noNeighborList.splice(p, 1);
                 foundNewNeighbors = true;
             }
