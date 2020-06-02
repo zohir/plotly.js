@@ -442,6 +442,7 @@ proto.update = function(data) {
             rawCoords[0][j][k] = this.getXat(j, k, data.xcalendar, sceneLayout.xaxis);
             rawCoords[1][j][k] = this.getYat(j, k, data.ycalendar, sceneLayout.yaxis);
             rawCoords[2][j][k] = this.getZat(j, k, data.zcalendar, sceneLayout.zaxis);
+            console.log(j, k, rawCoords[2][j][k]);
         }
     }
 
