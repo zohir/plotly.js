@@ -69,6 +69,8 @@ proto.getYat = function(a, b, calendar, axis) {
 proto.getZat = function(a, b, calendar, axis) {
     var v = this.data.z[b][a];
 
+    console.log('v=', v);
+
     if(v === null && this.data.connectgaps && this.data._interpolatedZ) {
         v = this.data._interpolatedZ[b][a];
     }
