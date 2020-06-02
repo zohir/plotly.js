@@ -18,7 +18,7 @@ var maxRowLength = require('../../lib').maxRowLength;
  * neighbors, and add a fractional neighborCount
  */
 module.exports = function findEmpties(z) {
-    console.log('findEmpties');
+    console.log('findEmpties', z);
     var empties = [];
     var neighborHash = {};
     var noNeighborList = [];
