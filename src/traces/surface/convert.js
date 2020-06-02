@@ -428,11 +428,9 @@ proto.update = function(data) {
         rawCoords[i] = [];
         for(j = 0; j < xlen; j++) {
             rawCoords[i][j] = [];
-            /*
             for(k = 0; k < ylen; k++) {
                 rawCoords[i][j][k] = undefined;
             }
-            */
         }
     }
 
