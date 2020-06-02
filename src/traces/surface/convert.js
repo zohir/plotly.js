@@ -75,6 +75,8 @@ proto.getZat = function(a, b, calendar, axis) {
         v = this.data._interpolatedZ[b][a];
     }
 
+    console.log(calendar === undefined);
+
     return (calendar === undefined) ? v : axis.d2l(v, 0, calendar);
 };
 
