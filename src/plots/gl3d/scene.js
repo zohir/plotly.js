@@ -180,6 +180,7 @@ proto.initializeGLCamera = function() {
         eye: [cameraData.eye.x, cameraData.eye.y, cameraData.eye.z],
         up: [cameraData.up.x, cameraData.up.y, cameraData.up.z],
         _ortho: isOrtho,
+        delay: 500,
         zoomMin: 0.01,
         zoomMax: 100,
         mode: 'orbit'
