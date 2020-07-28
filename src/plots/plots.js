@@ -10,6 +10,7 @@
 
 var d3 = require('@plotly/d3');
 var timeFormatLocale = require('d3-time-format').timeFormatLocale;
+var formatLocale = require('d3-format').formatLocale;
 var isNumeric = require('fast-isnumeric');
 
 var Registry = require('../registry');
@@ -725,7 +726,13 @@ function getFormatter(formatObj, separators) {
     formatObj.thousands = separators.charAt(1);
 
     return {
-        numberFormat: d3.locale(formatObj).numberFormat,
+        numberFormat: function(a) {
+            var b = Lib.adjustFormat(a);
+
+            // console.log('"' + a + '" > "' + b + '"');
+
+            return formatLocale(formatObj).format(b);
+        },
         timeFormat: timeFormatLocale(formatObj).utcFormat
     };
 }
