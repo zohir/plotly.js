@@ -943,17 +943,22 @@ proto.saveLayout = function(layout) {
             cameraData = scene.getCamera();
             cameraNestedProp = Lib.nestedProperty(layout, scene.id + '.camera');
             cameraDataLastSave = cameraNestedProp.get();
-
-            preGUI[scene.id + '.camera'] = cameraDataLastSave;
+            if(cameraDataLastSave) {
+                preGUI[scene.id + '.camera'] = cameraDataLastSave;
+            }
         }
         if(aspectChanged) {
             aspectData = scene.glplot.getAspectratio();
             aspectNestedProp = Lib.nestedProperty(layout, scene.id + '.aspectratio');
             aspectDataLastSave = aspectNestedProp.get();
-
-            preGUI[scene.id + '.aspectratio'] = aspectDataLastSave;
+            if(aspectDataLastSave) {
+                preGUI[scene.id + '.aspectratio'] = aspectDataLastSave;
+            }
         }
-        Registry.call('_storeDirectGUIEdit', layout, fullLayout._preGUI, preGUI);
+
+        if(cameraDataLastSave || aspectDataLastSave) {
+            Registry.call('_storeDirectGUIEdit', layout, fullLayout._preGUI, preGUI);
+        }
 
         if(cameraChanged) {
             cameraNestedProp.set(cameraData);
