@@ -1,6 +1,7 @@
 var Plotly = require('@lib');
 var Plots = require('@src/plots/plots');
 var Lib = require('@src/lib');
+var Axes = require('@src/plots/cartesian/axes');
 
 var ScatterMapbox = require('@src/traces/scattermapbox');
 var convert = require('@src/traces/scattermapbox/convert');
@@ -10,6 +11,7 @@ var destroyGraphDiv = require('../assets/destroy_graph_div');
 var failTest = require('../assets/fail_test');
 var supplyAllDefaults = require('../assets/supply_defaults');
 
+var assertHoverLabelContent = require('../assets/custom_assertions').assertHoverLabelContent;
 var mouseEvent = require('../assets/mouse_event');
 var click = require('../assets/click');
 var HOVERMINTIME = require('@src/components/fx').constants.HOVERMINTIME;
@@ -29,9 +31,9 @@ describe('scattermapbox defaults', function() {
     'use strict';
 
     function _supply(traceIn) {
-        var traceOut = { visible: true },
-            defaultColor = '#444',
-            layout = { _dataLength: 1 };
+        var traceOut = { visible: true };
+        var defaultColor = '#444';
+        var layout = { _dataLength: 1 };
 
         ScatterMapbox.supplyDefaults(traceIn, traceOut, defaultColor, layout);
 
@@ -138,7 +140,15 @@ describe('scattermapbox convert', function() {
         Plots.doCalcdata(gd, fullTrace);
 
         var calcTrace = gd.calcdata[0];
-        return convert(calcTrace);
+
+        var mockAxis = {type: 'linear'};
+        Axes.setConvert(mockAxis, gd._fullLayout);
+
+        gd._fullLayout.mapbox._subplot = {
+            mockAxis: mockAxis
+        };
+
+        return convert(gd, calcTrace);
     }
 
     function assertVisibility(opts, expectations) {
@@ -418,11 +428,11 @@ describe('scattermapbox convert', function() {
 
         assertVisibility(opts, ['visible', 'visible', 'visible', 'none']);
 
-        var segment1 = [[10, 20], [20, 20], [30, 10]],
-            segment2 = [[20, 10], [10, 20]];
+        var segment1 = [[10, 20], [20, 20], [30, 10]];
+        var segment2 = [[20, 10], [10, 20]];
 
-        var lineCoords = [segment1, segment2],
-            fillCoords = [[segment1], [segment2]];
+        var lineCoords = [segment1, segment2];
+        var fillCoords = [[segment1], [segment2]];
 
         expect(opts.line.geojson.coordinates).toEqual(lineCoords, 'line coords');
         expect(opts.fill.geojson.coordinates).toEqual(fillCoords, 'fill coords');
@@ -455,6 +465,30 @@ describe('scattermapbox convert', function() {
         expect(symbolProps).toEqual(expected, 'geojson properties');
     });
 
+
+    it('should allow symbols to be rotated and overlapped', function() {
+        var opts = _convert(Lib.extendFlat({}, base, {
+            mode: 'markers',
+            marker: {
+                symbol: ['monument', 'music', 'harbor'],
+                angle: [0, 90, 45],
+                allowoverlap: true
+            },
+        }));
+
+        var symbolAngle = opts.symbol.geojson.features.map(function(f) {
+            return f.properties.angle;
+        });
+
+        var expected = [0, 90, 45, 0, 0];
+        expect(symbolAngle).toEqual(expected, 'geojson properties');
+
+
+        expect(opts.symbol.layout['icon-rotate'].property).toEqual('angle', 'symbol.layout.icon-rotate');
+        expect(opts.symbol.layout['icon-allow-overlap']).toEqual(true, 'symbol.layout.icon-allow-overlap');
+    });
+
+
     it('should generate correct output for text + lines traces', function() {
         var opts = _convert(Lib.extendFlat({}, base, {
             mode: 'lines+text',
@@ -475,6 +509,70 @@ describe('scattermapbox convert', function() {
         });
 
         expect(actualText).toEqual(['A', 'B', 'C', 'F', undefined]);
+    });
+
+    it('should generate correct output for texttemplate without text', function() {
+        var opts = _convert(Lib.extendFlat({}, base, {
+            mode: 'lines+text',
+            connectgaps: true,
+            textposition: 'outside',
+            texttemplate: ['A', 'B', 'C', 'D', 'E', 'F']
+        }));
+
+        var actualText = opts.symbol.geojson.features.map(function(f) {
+            return f.properties.text;
+        });
+
+        expect(actualText).toEqual(['A', 'B', 'C', 'F', '']);
+    });
+
+    it('should convert \\n to \'\' and <br> to \\n', function() {
+        var opts = _convert(Lib.extendFlat({}, base, {
+            mode: 'text',
+            text: ['one\nline', 'two<br>lines', 'three<BR>lines<br />yep']
+        }));
+
+        var actualText = opts.symbol.geojson.features.map(function(f) {
+            return f.properties.text;
+        });
+
+        expect(actualText).toEqual(['oneline', 'two\nlines', 'three\nlines\nyep', undefined, undefined]);
+    });
+
+    it('should convert \\n to \'\' and <br> to \\n - texttemplate case', function() {
+        var opts = _convert(Lib.extendFlat({}, base, {
+            mode: 'text',
+            texttemplate: ['%{lon}\none\nline', '%{lat}<br>two<br>lines', '%{lon}\n%{lat}<br>more<br>lines']
+        }));
+
+        var actualText = opts.symbol.geojson.features.map(function(f) {
+            return f.properties.text;
+        });
+
+        expect(actualText).toEqual(['10oneline', '20\ntwo\nlines', '3010\nmore\nlines', '', '']);
+    });
+
+    it('should generate correct output for texttemplate', function() {
+        var mock = {
+            'type': 'scattermapbox',
+            'mode': 'markers+text',
+            'lon': [-73.57, -79.24, -123.06],
+            'lat': [45.5, 43.4, 49.13],
+            'text': ['Montreal', 'Toronto', 'Vancouver'],
+            'texttemplate': '%{text} (%{lon}, %{lat}): %{customdata:.2s}',
+            'textposition': 'top center',
+            'customdata': [1780000, 2930000, 675218]
+        };
+        var opts = _convert(mock);
+        var actualText = opts.symbol.geojson.features.map(function(f) {
+            return f.properties.text;
+        });
+
+        expect(actualText).toEqual([
+            'Montreal (−73.57, 45.5): 1.8M',
+            'Toronto (−79.24, 43.4): 2.9M',
+            'Vancouver (−123.06, 49.13): 680k'
+        ]);
     });
 
     it('should generate correct output for lines traces with trailing gaps', function() {
@@ -601,9 +699,18 @@ describe('@noCI scattermapbox hover', function() {
         };
     }
 
-    it('should generate hover label info (base case)', function() {
-        var xval = 11,
-            yval = 11;
+    function checkHoverLabel(pos, content) {
+        mouseEvent('mousemove', pos[0], pos[1]);
+
+        assertHoverLabelContent({
+            nums: content[0],
+            name: content[1]
+        });
+    }
+
+    it('@gl should generate hover label info (base case)', function() {
+        var xval = 11;
+        var yval = 11;
 
         var out = hoverPoints(getPointData(gd), xval, yval)[0];
 
@@ -615,7 +722,7 @@ describe('@noCI scattermapbox hover', function() {
         expect(out.color).toEqual('#1f77b4');
     });
 
-    it('should generate hover label info (lon > 180 case)', function() {
+    it('@gl should generate hover label info (lon > 180 case)', function() {
         var xval = 301;
         var yval = 11;
         var out = hoverPoints(getPointData(gd), xval, yval)[0];
@@ -628,10 +735,10 @@ describe('@noCI scattermapbox hover', function() {
         expect(out.color).toEqual('#1f77b4');
     });
 
-    it('should skip over blank and non-string text items', function(done) {
-        var xval = 11,
-            yval = 11,
-            out;
+    it('@gl should skip over blank and non-string text items', function(done) {
+        var xval = 11;
+        var yval = 11;
+        var out;
 
         Plotly.restyle(gd, 'text', [['', 'B', 'C']]).then(function() {
             out = hoverPoints(getPointData(gd), xval, yval)[0];
@@ -658,9 +765,9 @@ describe('@noCI scattermapbox hover', function() {
         .then(done);
     });
 
-    it('should generate hover label info (positive winding case)', function() {
-        var xval = 11 + 720,
-            yval = 11;
+    it('@gl should generate hover label info (positive winding case)', function() {
+        var xval = 11 + 720;
+        var yval = 11;
 
         var out = hoverPoints(getPointData(gd), xval, yval)[0];
 
@@ -672,9 +779,9 @@ describe('@noCI scattermapbox hover', function() {
         expect(out.color).toEqual('#1f77b4');
     });
 
-    it('should generate hover label info (negative winding case)', function() {
-        var xval = 11 - 1080,
-            yval = 11;
+    it('@gl should generate hover label info (negative winding case)', function() {
+        var xval = 11 - 1080;
+        var yval = 11;
 
         var out = hoverPoints(getPointData(gd), xval, yval)[0];
 
@@ -686,10 +793,10 @@ describe('@noCI scattermapbox hover', function() {
         expect(out.color).toEqual('#1f77b4');
     });
 
-    it('should generate hover label info (hoverinfo: \'lon\' case)', function(done) {
+    it('@gl should generate hover label info (hoverinfo: \'lon\' case)', function(done) {
         Plotly.restyle(gd, 'hoverinfo', 'lon').then(function() {
-            var xval = 11,
-                yval = 11;
+            var xval = 11;
+            var yval = 11;
 
             var out = hoverPoints(getPointData(gd), xval, yval)[0];
 
@@ -698,10 +805,10 @@ describe('@noCI scattermapbox hover', function() {
         });
     });
 
-    it('should generate hover label info (hoverinfo: \'lat\' case)', function(done) {
+    it('@gl should generate hover label info (hoverinfo: \'lat\' case)', function(done) {
         Plotly.restyle(gd, 'hoverinfo', 'lat').then(function() {
-            var xval = 11,
-                yval = 11;
+            var xval = 11;
+            var yval = 11;
 
             var out = hoverPoints(getPointData(gd), xval, yval)[0];
 
@@ -710,10 +817,10 @@ describe('@noCI scattermapbox hover', function() {
         });
     });
 
-    it('should generate hover label info (hoverinfo: \'text\' + \'text\' array case)', function(done) {
+    it('@gl should generate hover label info (hoverinfo: \'text\' + \'text\' array case)', function(done) {
         Plotly.restyle(gd, 'hoverinfo', 'text').then(function() {
-            var xval = 11,
-                yval = 11;
+            var xval = 11;
+            var yval = 11;
 
             var out = hoverPoints(getPointData(gd), xval, yval)[0];
 
@@ -722,10 +829,10 @@ describe('@noCI scattermapbox hover', function() {
         });
     });
 
-    it('should generate hover label info (hoverinfo: \'text\' + \'hovertext\' array case)', function(done) {
+    it('@gl should generate hover label info (hoverinfo: \'text\' + \'hovertext\' array case)', function(done) {
         Plotly.restyle(gd, 'hovertext', ['Apple', 'Banana', 'Orange']).then(function() {
-            var xval = 11,
-                yval = 11;
+            var xval = 11;
+            var yval = 11;
 
             var out = hoverPoints(getPointData(gd), xval, yval)[0];
 
@@ -734,7 +841,7 @@ describe('@noCI scattermapbox hover', function() {
         });
     });
 
-    it('should generate hover label (\'marker.color\' array case)', function(done) {
+    it('@gl should generate hover label (\'marker.color\' array case)', function(done) {
         Plotly.restyle(gd, 'marker.color', [['red', 'blue', 'green']]).then(function() {
             var out = hoverPoints(getPointData(gd), 11, 11)[0];
 
@@ -743,7 +850,7 @@ describe('@noCI scattermapbox hover', function() {
         .then(done);
     });
 
-    it('should generate hover label (\'marker.color\' w/ colorscale case)', function(done) {
+    it('@gl should generate hover label (\'marker.color\' w/ colorscale case)', function(done) {
         Plotly.restyle(gd, 'marker.color', [[10, 5, 30]]).then(function() {
             var out = hoverPoints(getPointData(gd), 11, 11)[0];
 
@@ -752,7 +859,7 @@ describe('@noCI scattermapbox hover', function() {
         .then(done);
     });
 
-    it('should generate hover label (\'hoverinfo\' array case)', function(done) {
+    it('@gl should generate hover label (\'hoverinfo\' array case)', function(done) {
         function check(expected) {
             var out = hoverPoints(getPointData(gd), 11, 11)[0];
             expect(out.extraText).toEqual(expected);
@@ -775,6 +882,29 @@ describe('@noCI scattermapbox hover', function() {
         })
         .catch(failTest)
         .then(done);
+    });
+
+    it('@gl should pass along hovertemplate', function(done) {
+        Plotly.restyle(gd, 'hovertemplate', 'tpl').then(function() {
+            var xval = 11;
+            var yval = 11;
+
+            var out = hoverPoints(getPointData(gd), xval, yval)[0];
+
+            expect(out.hovertemplate).toEqual('tpl');
+            done();
+        });
+    });
+
+    it('@gl should always display hoverlabel when hovertemplate is defined', function(done) {
+        Plotly.restyle(gd, {
+            name: '',
+            hovertemplate: 'tpl2<extra></extra>'
+        })
+        .then(function() {
+            checkHoverLabel([190, 215], ['tpl2', '']);
+            done();
+        });
     });
 });
 
@@ -812,16 +942,16 @@ describe('@noCI Test plotly events on a scattermapbox plot:', function() {
             });
         });
 
-        it('should not be trigged when not on data points', function() {
+        it('@gl should not be trigged when not on data points', function() {
             click(blankPos[0], blankPos[1]);
             expect(futureData).toBe(undefined);
         });
 
-        it('should contain the correct fields', function() {
+        it('@gl should contain the correct fields', function() {
             click(pointPos[0], pointPos[1]);
 
-            var pt = futureData.points[0],
-                evt = futureData.event;
+            var pt = futureData.points[0];
+            var evt = futureData.event;
 
             expect(Object.keys(pt)).toEqual([
                 'data', 'fullData', 'curveNumber', 'pointNumber', 'pointIndex', 'lon', 'lat'
@@ -856,12 +986,12 @@ describe('@noCI Test plotly events on a scattermapbox plot:', function() {
             });
         });
 
-        it('should not be trigged when not on data points', function() {
+        it('@gl should not be trigged when not on data points', function() {
             click(blankPos[0], blankPos[1], clickOpts);
             expect(futureData).toBe(undefined);
         });
 
-        it('does not register right-clicks', function() {
+        it('@gl does not register right-clicks', function() {
             click(pointPos[0], pointPos[1], clickOpts);
             expect(futureData).toBe(undefined);
 
@@ -900,7 +1030,7 @@ describe('@noCI Test plotly events on a scattermapbox plot:', function() {
             });
         });
 
-        it('should contain the correct fields', function() {
+        it('@gl should contain the correct fields', function() {
             mouseEvent('mousemove', blankPos[0], blankPos[1]);
             mouseEvent('mousemove', pointPos[0], pointPos[1]);
 
@@ -932,7 +1062,7 @@ describe('@noCI Test plotly events on a scattermapbox plot:', function() {
             });
         });
 
-        it('should contain the correct fields', function(done) {
+        it('@gl should contain the correct fields', function(done) {
             move(pointPos[0], pointPos[1], nearPos[0], nearPos[1], HOVERMINTIME + 10).then(function() {
                 var pt = futureData.points[0];
                 var evt = futureData.event;

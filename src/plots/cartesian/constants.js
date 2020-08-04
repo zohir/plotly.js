@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -7,11 +7,10 @@
 */
 
 'use strict';
+
 var counterRegex = require('../../lib/regex').counter;
 
-
 module.exports = {
-
     idRegex: {
         x: counterRegex('x'),
         y: counterRegex('y')
@@ -31,6 +30,9 @@ module.exports = {
 
     // and for 2D subplots
     SUBPLOT_PATTERN: /^x([0-9]*)y([0-9]*)$/,
+
+    HOUR_PATTERN: 'hour',
+    WEEKDAY_PATTERN: 'day of week',
 
     // pixels to move mouse before you stop clamping to starting point
     MINDRAG: 8,
@@ -63,14 +65,22 @@ module.exports = {
     // Layers to keep trace types in the right order
     // N.B. each  'unique' plot method must have its own layer
     traceLayerClasses: [
+        'imagelayer',
         'heatmaplayer',
         'contourcarpetlayer', 'contourlayer',
-        'barlayer',
+        'funnellayer', 'waterfalllayer', 'barlayer',
         'carpetlayer',
         'violinlayer',
         'boxlayer',
         'ohlclayer',
         'scattercarpetlayer', 'scatterlayer'
+    ],
+
+    clipOnAxisFalseQuery: [
+        '.scatterlayer',
+        '.barlayer',
+        '.funnellayer',
+        '.waterfalllayer'
     ],
 
     layerValue2layerClass: {

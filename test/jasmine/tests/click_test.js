@@ -1,12 +1,14 @@
 var Plotly = require('@lib/index');
 var Lib = require('@src/lib');
 var Drawing = require('@src/components/drawing');
-var DBLCLICKDELAY = require('@src/constants/interactions').DBLCLICKDELAY;
+var DBLCLICKDELAY = require('@src/plot_api/plot_config').dfltConfig.doubleClickDelay;
 
 var d3 = require('d3');
 var createGraphDiv = require('../assets/create_graph_div');
 var destroyGraphDiv = require('../assets/destroy_graph_div');
+var failTest = require('../assets/fail_test');
 var mouseEvent = require('../assets/mouse_event');
+var drag = require('../assets/drag');
 var getRectCenter = require('../assets/get_rect_center');
 
 // cartesian click events events use the hover data
@@ -25,20 +27,6 @@ function move(fromX, fromY, toX, toY, delay) {
         }, delay || DBLCLICKDELAY / 4);
     });
 }
-
-function drag(fromX, fromY, toX, toY, delay) {
-    return new Promise(function(resolve) {
-        mouseEvent('mousemove', fromX, fromY);
-        mouseEvent('mousedown', fromX, fromY);
-        mouseEvent('mousemove', toX, toY);
-
-        setTimeout(function() {
-            mouseEvent('mouseup', toX, toY);
-            resolve();
-        }, delay || DBLCLICKDELAY / 4);
-    });
-}
-
 
 describe('Test click interactions:', function() {
     var mock = require('@mocks/14.json');
@@ -252,7 +240,6 @@ describe('Test click interactions:', function() {
         var futureData = null;
 
         beforeEach(function(done) {
-
             var modifiedMockCopy = Lib.extendDeep({}, mockCopy);
             modifiedMockCopy.data[0].hoverinfo = 'skip';
             Plotly.plot(gd, modifiedMockCopy.data, modifiedMockCopy.layout)
@@ -273,7 +260,6 @@ describe('Test click interactions:', function() {
         var futureData = null;
 
         beforeEach(function(done) {
-
             var modifiedMockCopy = Lib.extendDeep({}, mockCopy);
             modifiedMockCopy.data[0].hoverinfo = 'skip';
             Plotly.plot(gd, modifiedMockCopy.data, modifiedMockCopy.layout)
@@ -294,7 +280,6 @@ describe('Test click interactions:', function() {
         var futureData;
 
         beforeEach(function(done) {
-
             var modifiedMockCopy = Lib.extendDeep({}, mockCopy);
             modifiedMockCopy.data[0].hoverinfo = 'none';
             Plotly.plot(gd, modifiedMockCopy.data, modifiedMockCopy.layout)
@@ -325,7 +310,6 @@ describe('Test click interactions:', function() {
         var futureData;
 
         beforeEach(function(done) {
-
             var modifiedMockCopy = Lib.extendDeep({}, mockCopy);
             modifiedMockCopy.data[0].hoverinfo = 'none';
             Plotly.plot(gd, modifiedMockCopy.data, modifiedMockCopy.layout)
@@ -360,7 +344,6 @@ describe('Test click interactions:', function() {
         var futureData;
 
         beforeEach(function(done) {
-
             var modifiedMockCopy = Lib.extendDeep({}, mockCopy);
             modifiedMockCopy.data[0].hoverinfo = 'none';
             Plotly.plot(gd, modifiedMockCopy.data, modifiedMockCopy.layout)
@@ -401,7 +384,6 @@ describe('Test click interactions:', function() {
             gd.on('plotly_doubleclick', function(data) {
                 futureData = data;
             });
-
         });
 
         it('should return null', function(done) {
@@ -432,17 +414,20 @@ describe('Test click interactions:', function() {
             expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
             expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
 
-            drag(pos[0], pos[1], pos[0] + 10, pos[1] + 50).then(function() {
+            drag({pos0: pos, dpos: [10, 50]})
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-3.08579746, 2.156130559]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.99100863, 1.86546098]);
-
-                return drag(pos[0], pos[1], pos[0] - 10, pos[1] - 50);
-            }).then(function() {
+            })
+            .then(function() {
+                return drag({pos0: pos, dpos: [-10, -50]});
+            })
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.99100863, 1.10938115]);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
 
         it('on ne dragbox should update the axis ranges', function(done) {
@@ -454,17 +439,20 @@ describe('Test click interactions:', function() {
             expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
             expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
 
-            drag(pos[0], pos[1], pos[0] + 50, pos[1] + 50).then(function() {
+            drag({pos0: pos, dpos: [50, 50]})
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-3.01196749, 1.72466470]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.99100863, 1.86546098]);
-
-                return drag(pos[0], pos[1], pos[0] - 50, pos[1] - 50);
-            }).then(function() {
+            })
+            .then(function() {
+                return drag({pos0: pos, dpos: [-50, -50]});
+            })
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-3.01196749, 2.08350047]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.99100863, 1.10938115]);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
 
         it('on sw dragbox should update the axis ranges', function(done) {
@@ -476,17 +464,19 @@ describe('Test click interactions:', function() {
             expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
             expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
 
-            drag(pos[0], pos[1], pos[0] + 10, pos[1] + 50).then(function() {
+            drag({pos0: pos, dpos: [10, 50]})
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-3.08579746, 2.15613055]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.36094210, 1.38938271]);
-
-                return drag(pos[0], pos[1], pos[0] - 10, pos[1] - 50);
+            })
+            .then(function() {
+                return drag({pos0: pos, dpos: [-10, -50]});
             }).then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-3.00958227, 2.15613055]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.71100706, 1.38938271]);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
 
         it('on se dragbox should update the axis ranges', function(done) {
@@ -498,17 +488,20 @@ describe('Test click interactions:', function() {
             expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
             expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
 
-            drag(pos[0], pos[1], pos[0] + 50, pos[1] + 50).then(function() {
+            drag({pos0: pos, dpos: [50, 50]})
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-3.01196749, 1.72466470]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.36094210, 1.38938271]);
-
-                return drag(pos[0], pos[1], pos[0] - 50, pos[1] - 50);
-            }).then(function() {
+            })
+            .then(function() {
+                return drag({pos0: pos, dpos: [-50, -50]});
+            })
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-3.01196749, 2.08350047]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.71100706, 1.38938271]);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
 
         it('on ew dragbox should update the xaxis range', function(done) {
@@ -520,17 +513,19 @@ describe('Test click interactions:', function() {
             expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
             expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
 
-            drag(pos[0], pos[1], pos[0] + 50, pos[1] + 50).then(function() {
+            drag({pos0: pos, dpos: [50, 50]})
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-3.375918058, 1.792179992]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
-
-                return drag(pos[0], pos[1], pos[0] - 50, pos[1] - 50);
+            })
+            .then(function() {
+                return drag({pos0: pos, dpos: [-50, -50]});
             }).then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-3.01196749, 2.15613055]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
 
         it('on w dragbox should update the xaxis range', function(done) {
@@ -542,17 +537,19 @@ describe('Test click interactions:', function() {
             expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
             expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
 
-            drag(pos[0], pos[1], pos[0] + 50, pos[1] + 50).then(function() {
+            drag({pos0: pos, dpos: [50, 50]})
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-3.40349007, 2.15613055]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
-
-                return drag(pos[0], pos[1], pos[0] - 50, pos[1] - 50);
+            })
+            .then(function() {
+                return drag({pos0: pos, dpos: [-50, -50]});
             }).then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-2.93933740, 2.15613055]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
 
         it('on e dragbox should update the xaxis range', function(done) {
@@ -564,17 +561,18 @@ describe('Test click interactions:', function() {
             expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
             expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
 
-            drag(pos[0], pos[1], pos[0] + 50, pos[1] + 50).then(function() {
+            drag({pos0: pos, dpos: [50, 50]}).then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-3.01196749, 1.7246647]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
-
-                return drag(pos[0], pos[1], pos[0] - 50, pos[1] - 50);
+            })
+            .then(function() {
+                return drag({pos0: pos, dpos: [-50, 50]});
             }).then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-3.01196749, 2.0835004]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
 
         it('on ns dragbox should update the yaxis range', function(done) {
@@ -586,17 +584,20 @@ describe('Test click interactions:', function() {
             expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
             expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
 
-            drag(pos[0], pos[1], pos[0] + 10, pos[1] + 50).then(function() {
+            drag({pos0: pos, dpos: [10, 50]})
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.59427673, 1.78611460]);
-
-                return drag(pos[0], pos[1], pos[0] - 10, pos[1] - 50);
-            }).then(function() {
+            })
+            .then(function() {
+                return drag({pos0: pos, dpos: [-10, -50]});
+            })
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
                 expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
 
         it('on s dragbox should update the yaxis range', function(done) {
@@ -608,17 +609,20 @@ describe('Test click interactions:', function() {
             expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
             expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
 
-            drag(pos[0], pos[1], pos[0] + 10, pos[1] + 50).then(function() {
+            drag({pos0: pos, dpos: [10, 50]})
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.3609421011, 1.3893827]);
-
-                return drag(pos[0], pos[1], pos[0] - 10, pos[1] - 50);
-            }).then(function() {
+            })
+            .then(function() {
+                return drag({pos0: pos, dpos: [-10, -50]});
+            })
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.7110070646, 1.3893827]);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
 
         it('on n dragbox should update the yaxis range', function(done) {
@@ -630,27 +634,29 @@ describe('Test click interactions:', function() {
             expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
             expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
 
-            drag(pos[0], pos[1], pos[0] + 10, pos[1] + 50).then(function() {
+            drag({pos0: pos, dpos: [10, 50]})
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.991008630, 1.86546098]);
-
-                return drag(pos[0], pos[1], pos[0] - 10, pos[1] - 50);
-            }).then(function() {
+            })
+            .then(function() {
+                return drag({pos0: pos, dpos: [-10, -50]});
+            })
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.991008630, 1.10938115]);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
-
     });
 
     describe('double click interactions', function() {
-        var setRangeX = [-3, 1],
-            setRangeY = [-0.5, 1];
+        var setRangeX = [-3, 1];
+        var setRangeY = [-0.5, 1];
 
-        var zoomRangeX = [-2, 0],
-            zoomRangeY = [0, 0.5];
+        var zoomRangeX = [-2, 0];
+        var zoomRangeY = [0, 0.5];
 
         var update = {
             'xaxis.range[0]': zoomRangeX[0],
@@ -725,9 +731,9 @@ describe('Test click interactions:', function() {
             }).then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray(setRangeX);
                 expect(gd.layout.yaxis.range).toBeCloseToArray(setRangeY);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
 
         it('when set to \'reset+autorange\' (the default) should autosize on 1st double click and zoom when immediately dragged', function(done) {
@@ -738,17 +744,19 @@ describe('Test click interactions:', function() {
                 expect(gd.layout.yaxis.range).toBeCloseToArray(setRangeY);
 
                 return doubleClick(blankPos[0], blankPos[1]);
-            }).then(function() {
+            })
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
                 expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
 
-                return drag(100, 100, 200, 200, DBLCLICKDELAY / 2);
-            }).then(function() {
+                return drag({pos0: [100, 100], posN: [200, 200], timeDelay: DBLCLICKDELAY / 2});
+            })
+            .then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-2.6480169249531356, -1.920115790911955]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([0.4372261777201992, 1.2306899598686027]);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
 
         it('when set to \'reset+autorange\' (the default) should follow updated auto ranges', function(done) {
@@ -757,8 +765,8 @@ describe('Test click interactions:', function() {
                 y: [[30, 0, 30]]
             };
 
-            var newAutoRangeX = [-4.482371794871794, 3.4823717948717943],
-                newAutoRangeY = [-0.8892256657741471, 1.6689872212461876];
+            var newAutoRangeX = [-4.482371794871794, 3.4823717948717943];
+            var newAutoRangeY = [-0.8892256657741471, 1.6689872212461876];
 
             Plotly.plot(gd, mockCopy.data, mockCopy.layout).then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
@@ -900,6 +908,96 @@ describe('Test click interactions:', function() {
             });
         });
 
+        it('should not try to autorange fixedrange:true axes when rangeInitial is not set', function(done) {
+            var fig = {
+                data: [{
+                    x: [1, 2, 3, 4],
+                    y: [1, 2, 3, 4]
+                }, {
+                    x: [1, 2, 3, 4],
+                    y: [0.2, 999, 0.3, 0.4],
+                    yaxis: 'y2'
+                }],
+                layout: {
+                    xaxis: {
+                        title: 'xaxis',
+                        range: [0, 4]
+                    },
+                    yaxis: {
+                        titel: 'yaxis',
+                        range: [-1, 5]
+                    },
+                    yaxis2: {
+                        title: 'yaxis2',
+                        overlaying: 'y',
+                        side: 'right',
+                        showgrid: false,
+                        zeroline: false,
+                        range: [-1, 1],
+                        fixedrange: true
+                    },
+                    width: 500,
+                    height: 500
+                }
+            };
+
+            function _assert(msg, exp) {
+                var fullLayout = gd._fullLayout;
+                var xa = fullLayout.xaxis;
+                var ya = fullLayout.yaxis;
+                var ya2 = fullLayout.yaxis2;
+
+                expect(xa._rangeInitial).toBe(undefined);
+                expect(ya._rangeInitial).toBe(undefined);
+                expect(ya2._rangeInitial).toBe(undefined);
+
+                expect(xa.range).toBeCloseToArray(exp.xRng, 1, msg);
+                expect(ya.range).toBeCloseToArray(exp.yRng, 1, msg);
+                expect(ya2.range).toBeCloseToArray(exp.y2Rng, 1, msg);
+            }
+
+            Plotly.newPlot(gd, [], {})
+            .then(function() {
+                expect(gd._fullLayout.xaxis._rangeInitial).toBe(undefined);
+                expect(gd._fullLayout.yaxis._rangeInitial).toBe(undefined);
+                expect(gd._fullLayout.yaxis2).toBe(undefined);
+            })
+            .then(function() { return Plotly.react(gd, fig); })
+            .then(function() {
+                _assert('after react into fig', {
+                    xRng: [0, 4],
+                    yRng: [-1, 5],
+                    y2Rng: [-1, 1]
+                });
+            })
+            .then(function() { return drag({pos0: [200, 200], posN: [250, 250]}); })
+            .then(function() {
+                _assert('after zoom', {
+                    xRng: [1.509, 2.138],
+                    yRng: [2.187, 3.125],
+                    y2Rng: [-1, 1]
+                });
+            })
+            .then(function() { return doubleClick(250, 250); })
+            .then(function() {
+                _assert('after double click autorange', {
+                    xRng: [0.788, 4.211],
+                    yRng: [0.788, 4.211],
+                    y2Rng: [-1, 1]
+                });
+            })
+            .then(function() { return doubleClick(250, 250); })
+            .then(function() {
+                // more info in: https://github.com/plotly/plotly.js/issues/2718
+                _assert('after 2nd double click autorange (does not reset as rangeInitial is not set)', {
+                    xRng: [0.788, 4.211],
+                    yRng: [0.788, 4.211],
+                    y2Rng: [-1, 1]
+                });
+            })
+            .catch(failTest)
+            .then(done);
+        });
     });
 
     describe('zoom interactions', function() {
@@ -911,28 +1009,26 @@ describe('Test click interactions:', function() {
             expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
             expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
 
-            drag(93, 93, 393, 293).then(function() {
+            drag({pos0: [93, 93], posN: [393, 293]}).then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-2.69897000, -0.515266602]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([-0.30069513, 1.2862324246]);
 
-                return drag(93, 93, 393, 293);
+                return drag({pos0: [93, 93], posN: [393, 293]});
             }).then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-2.56671754, -1.644025966]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([0.159513853, 1.2174655634]);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
     });
 
     describe('scroll zoom interactions', function() {
-
         beforeEach(function(done) {
             Plotly.plot(gd, mockCopy.data, mockCopy.layout, { scrollZoom: true }).then(done);
         });
 
         it('zooms in on scroll up', function() {
-
             var plot = gd._fullLayout._plots.xy.plot;
 
             mouseEvent('mousemove', 393, 243);
@@ -946,8 +1042,8 @@ describe('Test click interactions:', function() {
                 }
             };
 
-            var translate = Drawing.getTranslate(mockEl),
-                scale = Drawing.getScale(mockEl);
+            var translate = Drawing.getTranslate(mockEl);
+            var scale = Drawing.getScale(mockEl);
 
             expect([translate.x, translate.y]).toBeCloseToArray([13.93, 62.86]);
             expect([scale.x, scale.y]).toBeCloseToArray([1.105, 1.105]);
@@ -965,39 +1061,39 @@ describe('Test click interactions:', function() {
             expect(gd.layout.xaxis.range).toBeCloseToArray(autoRangeX);
             expect(gd.layout.yaxis.range).toBeCloseToArray(autoRangeY);
 
-            drag(93, 93, 393, 293).then(function() {
+            drag({pos0: [93, 93], posN: [393, 293]}).then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-5.19567089, -0.02757284]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([0.595918934, 2.976310280]);
 
-                return drag(93, 93, 393, 293);
+                return drag({pos0: [93, 93], posN: [393, 293]});
             }).then(function() {
                 expect(gd.layout.xaxis.range).toBeCloseToArray([-7.37937429, -2.21127624]);
                 expect(gd.layout.yaxis.range).toBeCloseToArray([2.182846498, 4.563237844]);
-
-                done();
-            });
+            })
+            .catch(failTest)
+            .then(done);
         });
 
 
-        it('should move the plot when panning', function() {
-            var start = 100,
-                end = 300,
-                plot = gd._fullLayout._plots.xy.plot;
+        it('should move the plot when panning', function(done) {
+            var start = 100;
+            var end = 300;
+            var plot = gd._fullLayout._plots.xy.plot;
 
-            mouseEvent('mousemove', start, start);
-            mouseEvent('mousedown', start, start);
-            mouseEvent('mousemove', end, end);
+            var fns = drag.makeFns({pos0: [start, start], posN: [end, end]});
 
-            expect(plot.attr('transform')).toBe('translate(250, 280) scale(1, 1)');
-
-            mouseEvent('mouseup', end, end);
+            fns.start().then(function() {
+                expect(plot.attr('transform')).toBe('translate(250, 280) scale(1, 1)');
+            })
+            .then(fns.end)
+            .catch(failTest)
+            .then(done);
         });
     });
 });
 
 
 describe('dragbox', function() {
-
     afterEach(destroyGraphDiv);
 
     it('should scale subplot and inverse scale scatter points', function(done) {
@@ -1012,6 +1108,7 @@ describe('dragbox', function() {
         Plotly.plot(createGraphDiv(), mock).then(function() {
             var node = d3.select('rect.nedrag').node();
             var pos = getRectCenter(node);
+            var fns = drag.makeFns({pos0: pos, dpos: [50, 0]});
 
             assertScale(d3.select('.plot').node(), 1, 1);
 
@@ -1019,11 +1116,7 @@ describe('dragbox', function() {
                 assertScale(this, 1, 1);
             });
 
-            mouseEvent('mousemove', pos[0], pos[1]);
-            mouseEvent('mousedown', pos[0], pos[1]);
-            mouseEvent('mousemove', pos[0] + 50, pos[1]);
-
-            setTimeout(function() {
+            fns.start().then(function() {
                 assertScale(d3.select('.plot').node(), 1.14, 1);
 
                 d3.select('.scatterlayer').selectAll('.point').each(function() {
@@ -1032,11 +1125,10 @@ describe('dragbox', function() {
                 d3.select('.barlayer').selectAll('.point').each(function() {
                     assertScale(this, 1, 1);
                 });
-
-                mouseEvent('mouseup', pos[0] + 50, pos[1]);
-                done();
-            }, DBLCLICKDELAY / 4);
+            })
+            .then(fns.end)
+            .catch(failTest)
+            .then(done);
         });
     });
-
 });

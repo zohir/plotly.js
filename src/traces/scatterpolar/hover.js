@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -9,8 +9,6 @@
 'use strict';
 
 var scatterHover = require('../scatter/hover');
-var Axes = require('../../plots/cartesian/axes');
-var Lib = require('../../lib');
 
 function hoverPoints(pointData, xval, yval, hovermode) {
     var scatterPointData = scatterHover(pointData, xval, yval, hovermode);
@@ -31,38 +29,43 @@ function hoverPoints(pointData, xval, yval, hovermode) {
 
     newPointData.xLabelVal = undefined;
     newPointData.yLabelVal = undefined;
-    newPointData.extraText = makeHoverPointText(cdi, trace, subplot);
-
+    makeHoverPointText(cdi, trace, subplot, newPointData);
+    newPointData.hovertemplate = trace.hovertemplate;
     return scatterPointData;
 }
 
-function makeHoverPointText(cdi, trace, subplot) {
+function makeHoverPointText(cdi, trace, subplot, pointData) {
     var radialAxis = subplot.radialAxis;
     var angularAxis = subplot.angularAxis;
-    var hoverinfo = cdi.hi || trace.hoverinfo;
-    var parts = hoverinfo.split('+');
-    var text = [];
-
     radialAxis._hovertitle = 'r';
     angularAxis._hovertitle = 'θ';
 
+    var fullLayout = {};
+    fullLayout[trace.subplot] = {_subplot: subplot};
+    var labels = trace._module.formatLabels(cdi, trace, fullLayout);
+    pointData.rLabel = labels.rLabel;
+    pointData.thetaLabel = labels.thetaLabel;
+
+    var hoverinfo = cdi.hi || trace.hoverinfo;
+    var text = [];
     function textPart(ax, val) {
-        text.push(ax._hovertitle + ': ' + Axes.tickText(ax, val, 'hover').text);
+        text.push(ax._hovertitle + ': ' + val);
     }
 
-    if(parts.indexOf('all') !== -1) parts = ['r', 'theta'];
-    if(parts.indexOf('r') !== -1) {
-        textPart(radialAxis, radialAxis.c2l(cdi.r));
-    }
-    if(parts.indexOf('theta') !== -1) {
-        var theta = cdi.theta;
-        textPart(
-            angularAxis,
-            angularAxis.thetaunit === 'degrees' ? Lib.rad2deg(theta) : theta
-        );
-    }
+    if(!trace.hovertemplate) {
+        var parts = hoverinfo.split('+');
 
-    return text.join('<br>');
+        if(parts.indexOf('all') !== -1) parts = ['r', 'theta', 'text'];
+        if(parts.indexOf('r') !== -1) textPart(radialAxis, pointData.rLabel);
+        if(parts.indexOf('theta') !== -1) textPart(angularAxis, pointData.thetaLabel);
+
+        if(parts.indexOf('text') !== -1 && pointData.text) {
+            text.push(pointData.text);
+            delete pointData.text;
+        }
+
+        pointData.extraText = text.join('<br>');
+    }
 }
 
 module.exports = {

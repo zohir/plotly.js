@@ -4,24 +4,35 @@ var path = require('path');
 var minimist = require('minimist');
 var constants = require('../../tasks/util/constants');
 
-var isCI = !!process.env.CIRCLECI;
+var isCI = Boolean(process.env.CI);
+
 var argv = minimist(process.argv.slice(4), {
     string: ['bundleTest', 'width', 'height'],
-    'boolean': ['info', 'nowatch', 'failFast', 'verbose', 'Chrome', 'Firefox'],
+    'boolean': [
+        'info',
+        'nowatch', 'randomize',
+        'failFast', 'doNotFailOnEmptyTestSuite',
+        'Chrome', 'Firefox', 'IE11',
+        'verbose', 'showSkipped', 'report-progress', 'report-spec', 'report-dots'
+    ],
     alias: {
         'Chrome': 'chrome',
         'Firefox': ['firefox', 'FF'],
+        'IE11': ['ie11'],
         'bundleTest': ['bundletest', 'bundle_test'],
         'nowatch': 'no-watch',
-        'failFast': 'fail-fast'
+        'failFast': 'fail-fast',
     },
     'default': {
         info: false,
         nowatch: isCI,
+        randomize: false,
         failFast: false,
-        verbose: false,
+        doNotFailOnEmptyTestSuite: false,
         width: '1035',
-        height: '617'
+        height: '617',
+        verbose: false,
+        showSkipped: isCI
     }
 });
 
@@ -54,12 +65,19 @@ if(argv.info) {
         '  - `--info`: show this info message',
         '  - `--Chrome` (alias `--chrome`): run test in (our custom) Chrome browser',
         '  - `--Firefox` (alias `--FF`, `--firefox`): run test in (our custom) Firefox browser',
+        '  - `--IE11` (alias -- `ie11`)`: run test in IE11 browser',
         '  - `--nowatch (dflt: `false`, `true` on CI)`: run karma w/o `autoWatch` / multiple run mode',
+        '  - `--randomize` (dflt: `false`): randomize test ordering (useful to detect bad test teardown)',
         '  - `--failFast` (dflt: `false`): exit karma upon first test failure',
-        '  - `--verbose` (dflt: `false`): show test result using verbose reporter',
+        '  - `--doNotFailOnEmptyTestSuite` (dflt: `false`): do not fail run when no spec are ran (either from bundle error OR tag filtering)',
         '  - `--tags`: run only test with given tags (using the `jasmine-spec-tags` framework)',
         '  - `--width`(dflt: 1035): set width of the browser window',
         '  - `--height` (dflt: 617): set height of the browser window',
+        '  - `--verbose` (dflt: `false`): show test result using verbose reporter',
+        '  - `--showSkipped` show tests that are skipped',
+        '  - `--report-progress`: use *progress* reporter',
+        '  - `--report-spec`: use *spec* reporter',
+        '  - `--report-dots`: use *dots* reporter',
         '',
         'For info on the karma CLI options run `npm run test-jasmine -- --help`'
     ].join('\n'));
@@ -88,7 +106,7 @@ var isFullSuite = !isBundleTest && argv._.length === 0;
 var testFileGlob;
 
 if(isFullSuite) {
-    testFileGlob = path.join('tests', '*' + SUFFIX);
+    testFileGlob = path.join(__dirname, 'tests', '*' + SUFFIX);
 } else if(isBundleTest) {
     var _ = merge(argv.bundleTest);
 
@@ -96,9 +114,9 @@ if(isFullSuite) {
         console.warn('Can only run one bundle test suite at a time, ignoring ', _.slice(1));
     }
 
-    testFileGlob = path.join('bundle_tests', glob([basename(_[0])]));
+    testFileGlob = path.join(__dirname, 'bundle_tests', glob([basename(_[0])]));
 } else {
-    testFileGlob = path.join('tests', glob(merge(argv._).map(basename)));
+    testFileGlob = path.join(__dirname, 'tests', glob(merge(argv._).map(basename)));
 }
 
 var pathToShortcutPath = path.join(__dirname, '..', '..', 'tasks', 'util', 'shortcut_paths.js');
@@ -106,9 +124,29 @@ var pathToStrictD3 = path.join(__dirname, '..', '..', 'tasks', 'util', 'strict_d
 var pathToJQuery = path.join(__dirname, 'assets', 'jquery-1.8.3.min.js');
 var pathToIE9mock = path.join(__dirname, 'assets', 'ie9_mock.js');
 var pathToCustomMatchers = path.join(__dirname, 'assets', 'custom_matchers.js');
+var pathToUnpolyfill = path.join(__dirname, 'assets', 'unpolyfill.js');
+var pathToMathJax = path.join(constants.pathToDist, 'extras', 'mathjax');
 
-var reporters = (isFullSuite && !argv.tags) ? ['dots', 'spec'] : ['progress'];
-if(argv.failFast) reporters.push('fail-fast');
+var reporters = [];
+if(argv['report-progress'] || argv['report-spec'] || argv['report-dots']) {
+    if(argv['report-progress']) reporters.push('progress');
+    if(argv['report-spec']) reporters.push('spec');
+    if(argv['report-dots']) reporters.push('dots');
+} else {
+    if(isCI) {
+        reporters.push('spec');
+    } else {
+        if(isFullSuite) {
+            reporters.push('dots');
+        } else {
+            reporters.push('progress');
+        }
+    }
+}
+
+var hasSpecReporter = reporters.indexOf('spec') !== -1;
+
+if(!hasSpecReporter && argv.showSkipped) reporters.push('spec');
 if(argv.verbose) reporters.push('verbose');
 
 function func(config) {
@@ -133,7 +171,7 @@ function func(config) {
 func.defaultConfig = {
 
     // base path that will be used to resolve all patterns (eg. files, exclude)
-    basePath: '.',
+    basePath: constants.pathToRoot,
 
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
@@ -142,7 +180,15 @@ func.defaultConfig = {
     // list of files / patterns to load in the browser
     //
     // N.B. the rest of this field is filled below
-    files: [pathToCustomMatchers],
+    files: [
+        pathToCustomMatchers,
+        pathToUnpolyfill,
+        // available to fetch from /base/path/to/mathjax
+        // more info: http://karma-runner.github.io/3.0/config/files.html
+        {pattern: pathToMathJax + '/**', included: false, watched: false, served: true},
+        // available to fetch local topojson files
+        {pattern: constants.pathToTopojsonDist + '/**', included: false, watched: false, served: true}
+    ],
 
     // list of files / pattern to exclude
     exclude: [],
@@ -211,43 +257,47 @@ func.defaultConfig = {
         debug: true
     },
 
-    // Options for `karma-jasmine-spec-tags`
-    // see https://www.npmjs.com/package/karma-jasmine-spec-tags
-    //
-    // A few tests don't behave well on CI
-    // add @noCI to the spec description to skip a spec on CI
-    //
-    // Although not recommended, some tests "depend" on other
-    // tests to pass (e.g. the Plotly.react tests check that
-    // all available traces and transforms are tested). Tag these
-    // with @noCIdep, so that
-    // - $ npm run test-jasmine -- tags=noCI,noCIdep
-    // can pass.
-    //
-    // Label tests that require a WebGL-context by @gl so that
-    // they can be skipped using:
-    // - $ npm run test-jasmine -- --skip-tags=gl
-    // or run is isolation easily using:
-    // - $ npm run test-jasmine -- --tags=gl
     client: {
+        // Options for `karma-jasmine-spec-tags`
+        // see https://www.npmjs.com/package/karma-jasmine-spec-tags
+        //
+        // A few tests don't behave well on CI
+        // add @noCI to the spec description to skip a spec on CI
+        //
+        // Although not recommended, some tests "depend" on other
+        // tests to pass (e.g. the Plotly.react tests check that
+        // all available traces and transforms are tested). Tag these
+        // with @noCIdep, so that
+        // - $ npm run test-jasmine -- tags=noCI,noCIdep
+        // can pass.
+        //
+        // Label tests that require a WebGL-context by @gl so that
+        // they can be skipped using:
+        // - $ npm run test-jasmine -- --skip-tags=gl
+        // or run is isolation easily using:
+        // - $ npm run test-jasmine -- --tags=gl
         tagPrefix: '@',
-        skipTags: isCI ? 'noCI' : null
+        skipTags: isCI ? 'noCI' : null,
+
+        // See https://jasmine.github.io/api/3.4/Configuration.html
+        jasmine: {
+            random: argv.randomize,
+            failFast: argv.failFast
+        }
     },
 
-    // use 'karma-spec-reporter' to log info about skipped specs
     specReporter: {
-        suppressErrorSummary: true,
-        suppressFailed: true,
-        suppressPassed: true,
-        suppressSkipped: false,
-        showSpecTiming: false,
-        // use 'karma-fail-fast-reporter' to fail fast w/o conflicting
-        // with other karma plugins
-        failFast: false
+        suppressErrorSummary: false,
+        suppressFailed: !hasSpecReporter,
+        suppressPassed: !hasSpecReporter,
+        // use 'karma-spec-reporter' to log info about skipped specs
+        suppressSkipped: !argv.showSkipped,
+        showSpecTiming: true
     },
 
-    // e.g. when a test file does not container a given spec tags
-    failOnEmptyTestSuite: false
+    // set to `true` e.g. for mapbox suites where:
+    //   --tags=gl --skip-tags=noCI result in empty test run
+    failOnEmptyTestSuite: !argv.doNotFailOnEmptyTestSuite
 };
 
 func.defaultConfig.preprocessors[pathToCustomMatchers] = ['browserify'];
@@ -294,6 +344,7 @@ func.defaultConfig.files.push(testFileGlob);
 var browsers = func.defaultConfig.browsers;
 if(argv.Chrome) browsers.push('_Chrome');
 if(argv.Firefox) browsers.push('_Firefox');
+if(argv.IE11) browsers.push('IE');
 if(browsers.length === 0) browsers.push('_Chrome');
 
 module.exports = func;

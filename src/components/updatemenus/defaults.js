@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -28,7 +28,6 @@ module.exports = function updateMenusDefaults(layoutIn, layoutOut) {
 };
 
 function menuDefaults(menuIn, menuOut, layoutOut) {
-
     function coerce(attr, dflt) {
         return Lib.coerce(menuIn, menuOut, attributes, attr, dflt);
     }
@@ -75,6 +74,7 @@ function buttonDefaults(buttonIn, buttonOut) {
     if(visible) {
         coerce('method');
         coerce('args');
+        coerce('args2');
         coerce('label');
         coerce('execute');
     }

@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -12,7 +12,7 @@ module.exports = {
     moduleType: 'trace',
     name: 'cone',
     basePlotModule: require('../../plots/gl3d'),
-    categories: ['gl3d'],
+    categories: ['gl3d', 'showLegend'],
 
     attributes: require('./attributes'),
     supplyDefaults: require('./defaults'),
@@ -22,6 +22,10 @@ module.exports = {
     },
     calc: require('./calc'),
     plot: require('./convert'),
+    eventData: function(out, pt) {
+        out.norm = pt.traceCoordinate[6];
+        return out;
+    },
 
     meta: {
         description: [

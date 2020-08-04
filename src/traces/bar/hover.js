@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -12,15 +12,34 @@
 var Fx = require('../../components/fx');
 var Registry = require('../../registry');
 var Color = require('../../components/color');
-var fillHoverText = require('../scatter/fill_hover_text');
+
+var fillText = require('../../lib').fillText;
+var getLineWidth = require('./helpers').getLineWidth;
+var hoverLabelText = require('../../plots/cartesian/axes').hoverLabelText;
+var BADNUM = require('../../constants/numerical').BADNUM;
 
 function hoverPoints(pointData, xval, yval, hovermode) {
+    var barPointData = hoverOnBars(pointData, xval, yval, hovermode);
+
+    if(barPointData) {
+        var cd = barPointData.cd;
+        var trace = cd[0].trace;
+        var di = cd[barPointData.index];
+
+        barPointData.color = getTraceColor(trace, di);
+        Registry.getComponentMethod('errorbars', 'hoverInfo')(di, trace, barPointData);
+
+        return [barPointData];
+    }
+}
+
+function hoverOnBars(pointData, xval, yval, hovermode) {
     var cd = pointData.cd;
     var trace = cd[0].trace;
     var t = cd[0].t;
     var isClosest = (hovermode === 'closest');
+    var isWaterfall = (trace.type === 'waterfall');
     var maxHoverDistance = pointData.maxHoverDistance;
-    var maxSpikeDistance = pointData.maxSpikeDistance;
 
     var posVal, sizeVal, posLetter, sizeLetter, dx, dy, pRangeCalc;
 
@@ -67,10 +86,22 @@ function hoverPoints(pointData, xval, yval, hovermode) {
     }
 
     function sizeFn(di) {
+        var v = sizeVal;
+        var b = di.b;
+        var s = di[sizeLetter];
+
+        if(isWaterfall) {
+            var rawS = Math.abs(di.rawS) || 0;
+            if(v > 0) {
+                s += rawS;
+            } else if(v < 0) {
+                s -= rawS;
+            }
+        }
+
         // add a gradient so hovering near the end of a
         // bar makes it a little closer match
-        return Fx.inbox(di.b - sizeVal, di[sizeLetter] - sizeVal,
-            maxHoverDistance + (di[sizeLetter] - sizeVal) / (di[sizeLetter] - di.b) - 1);
+        return Fx.inbox(b - v, s - v, maxHoverDistance + (s - v) / (s - b) - 1);
     }
 
     if(trace.orientation === 'h') {
@@ -80,8 +111,7 @@ function hoverPoints(pointData, xval, yval, hovermode) {
         sizeLetter = 'x';
         dx = sizeFn;
         dy = positionFn;
-    }
-    else {
+    } else {
         posVal = xval;
         sizeVal = yval;
         posLetter = 'x';
@@ -101,6 +131,9 @@ function hoverPoints(pointData, xval, yval, hovermode) {
 
     // skip the rest (for this trace) if we didn't find a close point
     if(pointData.index === false) return;
+
+    // skip points inside axis rangebreaks
+    if(cd[pointData.index].p === BADNUM) return;
 
     // if we get here and we're not in 'closest' mode, push min/max pos back
     // onto the group - even though that means occasionally the mouse will be
@@ -127,23 +160,25 @@ function hoverPoints(pointData, xval, yval, hovermode) {
     pointData[posLetter + '1'] = pa.c2p(isClosest ? maxPos(di) : extent[1], true);
     pointData[posLetter + 'LabelVal'] = di.p;
 
+    pointData.labelLabel = hoverLabelText(pa, pointData[posLetter + 'LabelVal']);
+    pointData.valueLabel = hoverLabelText(sa, pointData[sizeLetter + 'LabelVal']);
+
     // spikelines always want "closest" distance regardless of hovermode
-    pointData.spikeDistance = (sizeFn(di) + thisBarPositionFn(di)) / 2 + maxSpikeDistance - maxHoverDistance;
+    pointData.spikeDistance = (sizeFn(di) + thisBarPositionFn(di)) / 2 - maxHoverDistance;
     // they also want to point to the data value, regardless of where the label goes
     // in case of bars shifted within groups
     pointData[posLetter + 'Spike'] = pa.c2p(di.p, true);
 
-    pointData.color = getTraceColor(trace, di);
-    fillHoverText(di, trace, pointData);
-    Registry.getComponentMethod('errorbars', 'hoverInfo')(di, trace, pointData);
+    fillText(di, trace, pointData);
+    pointData.hovertemplate = trace.hovertemplate;
 
-    return [pointData];
+    return pointData;
 }
 
 function getTraceColor(trace, di) {
     var mc = di.mcc || trace.marker.color;
     var mlc = di.mlcc || trace.marker.line.color;
-    var mlw = di.mlw || trace.marker.line.width;
+    var mlw = getLineWidth(trace, di);
 
     if(Color.opacity(mc)) return mc;
     else if(Color.opacity(mlc) && mlw) return mlc;
@@ -151,5 +186,6 @@ function getTraceColor(trace, di) {
 
 module.exports = {
     hoverPoints: hoverPoints,
+    hoverOnBars: hoverOnBars,
     getTraceColor: getTraceColor
 };

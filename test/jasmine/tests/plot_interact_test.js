@@ -2,7 +2,6 @@ var d3 = require('d3');
 
 var Plotly = require('@lib/index');
 var Lib = require('@src/lib');
-var Drawing = require('@src/components/drawing');
 
 var createGraphDiv = require('../assets/create_graph_div');
 var destroyGraphDiv = require('../assets/destroy_graph_div');
@@ -25,7 +24,6 @@ describe('Test plot structure', function() {
     afterEach(destroyGraphDiv);
 
     describe('cartesian plots', function() {
-
         function countSubplots() {
             return d3.selectAll('g.subplot').size();
         }
@@ -53,8 +51,8 @@ describe('Test plot structure', function() {
             beforeEach(function(done) {
                 gd = createGraphDiv();
 
-                var mockData = Lib.extendDeep([], mock.data),
-                    mockLayout = Lib.extendDeep({}, mock.layout);
+                var mockData = Lib.extendDeep([], mock.data);
+                var mockLayout = Lib.extendDeep({}, mock.layout);
 
                 Plotly.plot(gd, mockData, mockLayout).then(done);
             });
@@ -170,8 +168,8 @@ describe('Test plot structure', function() {
             var gd;
 
             function extendMock() {
-                var mockData = Lib.extendDeep([], mock.data),
-                    mockLayout = Lib.extendDeep({}, mock.layout);
+                var mockData = Lib.extendDeep([], mock.data);
+                var mockLayout = Lib.extendDeep({}, mock.layout);
 
                 // add a colorbar for testing
                 mockData[0].showscale = true;
@@ -385,9 +383,7 @@ describe('Test plot structure', function() {
                     .catch(failTest)
                     .then(done);
                 });
-
             });
-
         });
 
         describe('pie traces', function() {
@@ -405,8 +401,8 @@ describe('Test plot structure', function() {
             beforeEach(function(done) {
                 gd = createGraphDiv();
 
-                var mockData = Lib.extendDeep([], mock.data),
-                    mockLayout = Lib.extendDeep({}, mock.layout);
+                var mockData = Lib.extendDeep([], mock.data);
+                var mockLayout = Lib.extendDeep({}, mock.layout);
 
                 Plotly.plot(gd, mockData, mockLayout).then(done);
             });
@@ -464,7 +460,6 @@ describe('Test plot structure', function() {
                 })
                 .catch(failTest)
                 .then(done);
-
             });
         });
     });
@@ -519,7 +514,6 @@ describe('Test plot structure', function() {
 });
 
 describe('plot svg clip paths', function() {
-
     // plot with all features that rely on clip paths
     function plot() {
         return Plotly.plot(createGraphDiv(), [{
@@ -548,13 +542,11 @@ describe('plot svg clip paths', function() {
 
     it('should set clip path url to ids (base case)', function(done) {
         plot().then(function() {
-
             d3.selectAll('[clip-path]').each(function() {
                 var cp = d3.select(this).attr('clip-path');
 
-                expect(Drawing.baseUrl).toBe('');
-                expect(cp.substring(0, 5)).toEqual('url(#');
-                expect(cp.substring(cp.length - 1)).toEqual(')');
+                expect(cp.substring(0, 6)).toEqual('url(\'#');
+                expect(cp.substring(cp.length - 2)).toEqual('\')');
             });
         })
         .catch(failTest)
@@ -568,19 +560,17 @@ describe('plot svg clip paths', function() {
         // append <base> with href
         var base = d3.select('body')
             .append('base')
-            .attr('href', 'https://plot.ly');
+            .attr('href', 'https://chart-studio.plotly.com');
 
         // grab window URL
         var href = window.location.href.split('#')[0];
 
         plot().then(function() {
-
             d3.selectAll('[clip-path]').each(function() {
                 var cp = d3.select(this).attr('clip-path');
 
-                expect(Drawing.baseUrl).toBe(href);
-                expect(cp.substring(0, 5 + href.length)).toEqual('url(' + href + '#');
-                expect(cp.substring(cp.length - 1)).toEqual(')');
+                expect(cp.substring(0, 6 + href.length)).toEqual('url(\'' + href + '#');
+                expect(cp.substring(cp.length - 2)).toEqual('\')');
             });
 
             base.remove();

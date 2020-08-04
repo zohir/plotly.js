@@ -196,21 +196,6 @@
                     20.0538,
                     17.7003,
                     15.4519
-                ],
-                [
-                    31.7202,
-                    28.0013,
-                    25.1881,
-                    24.006999999999998,
-                    23.4612,
-                    23.1983,
-                    22.9418,
-                    22.6914,
-                    22.4469,
-                    21.9752,
-                    21.1062,
-                    18.9972,
-                    16.6826
                 ]
             ],
             "x": [
@@ -294,10 +279,12 @@
         }
     ],
     "layout": {
-        "title": "IBM Volatility",
-        "titlefont": {
-            "size": 24,
-            "color": "#D9D9D9"
+        "title": {
+            "text": "IBM Volatility",
+            "font": {
+                "size": 24,
+                "color": "#D9D9D9"
+            }
         },
         "showlegend": false,
         "autosize": false,
@@ -318,9 +305,11 @@
         "plot_bgcolor": "#151516",
         "scene": {
             "xaxis": {
-                "title": "Term",
-                "titlefont": {
-                    "color": "#D9D9D9"
+                "title": {
+                    "font": {
+                        "color": "#D9D9D9"
+                    },
+                    "text": "Term"
                 },
                 "type": "category",
                 "tickfont": {
@@ -332,9 +321,11 @@
                 "zerolinewidth": 0.7000000000000001
             },
             "yaxis": {
-                "title": "Moneyness",
-                "titlefont": {
-                    "color": "#D9D9D9"
+                "title": {
+                    "font": {
+                        "color": "#D9D9D9"
+                    },
+                    "text": "Moneyness"
                 },
                 "type": "linear",
                 "tickfont": {
@@ -346,9 +337,11 @@
                 "zerolinewidth": 0.7000000000000001
             },
             "zaxis": {
-                "title": "Volatilty",
-                "titlefont": {
-                    "color": "#D9D9D9"
+                "title": {
+                    "font": {
+                        "color": "#D9D9D9"
+                    },
+                    "text": "Volatilty"
                 },
                 "tickfont": {
                     "color": "#C2C2C2"

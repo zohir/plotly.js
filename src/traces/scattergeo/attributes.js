@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -8,17 +8,19 @@
 
 'use strict';
 
+var hovertemplateAttrs = require('../../plots/template_attributes').hovertemplateAttrs;
+var texttemplateAttrs = require('../../plots/template_attributes').texttemplateAttrs;
 var scatterAttrs = require('../scatter/attributes');
-var plotAttrs = require('../../plots/attributes');
+var baseAttrs = require('../../plots/attributes');
 var colorAttributes = require('../../components/colorscale/attributes');
 var dash = require('../../components/drawing/attributes').dash;
 
 var extendFlat = require('../../lib/extend').extendFlat;
 var overrideAll = require('../../plot_api/edit_types').overrideAll;
 
-var scatterMarkerAttrs = scatterAttrs.marker,
-    scatterLineAttrs = scatterAttrs.line,
-    scatterMarkerLineAttrs = scatterMarkerAttrs.line;
+var scatterMarkerAttrs = scatterAttrs.marker;
+var scatterLineAttrs = scatterAttrs.line;
+var scatterMarkerLineAttrs = scatterMarkerAttrs.line;
 
 module.exports = overrideAll({
     lon: {
@@ -40,12 +42,44 @@ module.exports = overrideAll({
     },
     locationmode: {
         valType: 'enumerated',
-        values: ['ISO-3', 'USA-states', 'country names'],
+        values: ['ISO-3', 'USA-states', 'country names', 'geojson-id'],
         role: 'info',
         dflt: 'ISO-3',
         description: [
             'Determines the set of locations used to match entries in `locations`',
-            'to regions on the map.'
+            'to regions on the map.',
+            'Values *ISO-3*, *USA-states*, *country names* correspond to features on',
+            'the base map and value *geojson-id* corresponds to features from a custom',
+            'GeoJSON linked to the `geojson` attribute.'
+        ].join(' ')
+    },
+
+    geojson: {
+        valType: 'any',
+        role: 'info',
+        editType: 'calc',
+        description: [
+            'Sets optional GeoJSON data associated with this trace.',
+            'If not given, the features on the base map are used when `locations` is set.',
+
+            'It can be set as a valid GeoJSON object or as a URL string.',
+            'Note that we only accept GeoJSONs of type *FeatureCollection* or *Feature*',
+            'with geometries of type *Polygon* or *MultiPolygon*.'
+
+            // TODO add topojson support with additional 'topojsonobject' attr?
+            // https://github.com/topojson/topojson-specification/blob/master/README.md
+        ].join(' ')
+    },
+    featureidkey: {
+        valType: 'string',
+        role: 'info',
+        editType: 'calc',
+        dflt: 'id',
+        description: [
+            'Sets the key in GeoJSON features which is used as id to match the items',
+            'included in the `locations` array.',
+            'Only has an effect when `geojson` is set.',
+            'Support nested property, for example *properties.name*.'
         ].join(' ')
     },
 
@@ -62,6 +96,9 @@ module.exports = overrideAll({
             'If trace `hoverinfo` contains a *text* flag and *hovertext* is not set,',
             'these elements will be seen in the hover labels.'
         ].join(' ')
+    }),
+    texttemplate: texttemplateAttrs({editType: 'plot'}, {
+        keys: ['lat', 'lon', 'location', 'text']
     }),
     hovertext: extendFlat({}, scatterAttrs.hovertext, {
         description: [
@@ -120,7 +157,8 @@ module.exports = overrideAll({
     selected: scatterAttrs.selected,
     unselected: scatterAttrs.unselected,
 
-    hoverinfo: extendFlat({}, plotAttrs.hoverinfo, {
+    hoverinfo: extendFlat({}, baseAttrs.hoverinfo, {
         flags: ['lon', 'lat', 'location', 'text', 'name']
-    })
+    }),
+    hovertemplate: hovertemplateAttrs(),
 }, 'calc', 'nested');

@@ -1,5 +1,6 @@
 var Plotly = require('@lib');
 var Lib = require('@src/lib');
+var Fx = require('@src/components/fx');
 
 var constants = require('@src/plots/mapbox/constants');
 var supplyLayoutDefaults = require('@src/plots/mapbox/layout_defaults');
@@ -8,6 +9,8 @@ var d3 = require('d3');
 var createGraphDiv = require('../assets/create_graph_div');
 var destroyGraphDiv = require('../assets/destroy_graph_div');
 var mouseEvent = require('../assets/mouse_event');
+var click = require('../assets/click');
+var delay = require('../assets/delay');
 var failTest = require('../assets/fail_test');
 var supplyAllDefaults = require('../assets/supply_defaults');
 
@@ -27,8 +30,6 @@ Plotly.setPlotConfig({
 });
 
 describe('mapbox defaults', function() {
-    'use strict';
-
     var layoutIn, layoutOut, fullData;
 
     beforeEach(function() {
@@ -182,6 +183,52 @@ describe('mapbox defaults', function() {
         expect(layoutOut.mapbox.layers[3].circle).toBeUndefined();
     });
 
+    it('should not allow to set layer type other than *raster* for sourcetype value *raster* and *image*', function() {
+        spyOn(Lib, 'log');
+
+        layoutIn = {
+            mapbox: {
+                layers: [{
+                    sourcetype: 'raster',
+                    source: 'url',
+                    type: 'circle'
+                }, {
+                    sourcetype: 'image',
+                    source: 'url',
+                    type: 'fill'
+                }]
+            }
+        };
+        supplyLayoutDefaults(layoutIn, layoutOut, fullData);
+
+        expect(Lib.log).toHaveBeenCalledTimes(2);
+        expect(Lib.log).toHaveBeenCalledWith('Source types *raster* and *image* must drawn *raster* layer type.');
+
+        expect(layoutOut.mapbox.layers[0].type).toBe('raster');
+        expect(layoutOut.mapbox.layers[1].type).toBe('raster');
+    });
+
+    it('should default layer with sourcetype *raster* and *image* to type *raster', function() {
+        spyOn(Lib, 'log');
+
+        layoutIn = {
+            mapbox: {
+                layers: [{
+                    sourcetype: 'raster',
+                    source: 'url'
+                }, {
+                    sourcetype: 'image',
+                    source: 'url'
+                }]
+            }
+        };
+        supplyLayoutDefaults(layoutIn, layoutOut, fullData);
+
+        expect(Lib.log).toHaveBeenCalledTimes(0);
+        expect(layoutOut.mapbox.layers[0].type).toBe('raster');
+        expect(layoutOut.mapbox.layers[1].type).toBe('raster');
+    });
+
     it('should set *layout.dragmode* to pan while zoom is not available', function() {
         var gd = {
             data: fullData,
@@ -194,10 +241,31 @@ describe('mapbox defaults', function() {
 });
 
 describe('mapbox credentials', function() {
-    'use strict';
+    var gd;
 
     var dummyToken = 'asfdsa124331wersdsa1321q3';
-    var gd;
+
+    var osmStyle = {
+        id: 'osm',
+        version: 8,
+        sources: {
+            'osm-tiles': {
+                type: 'raster',
+                tiles: [
+                    'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                ],
+                tileSize: 256
+            }
+        },
+        layers: [{
+            id: 'osm-tiles',
+            type: 'raster',
+            source: 'osm-tiles',
+            minzoom: 0,
+            maxzoom: 22
+        }]
+    };
 
     beforeEach(function() {
         gd = createGraphDiv();
@@ -216,17 +284,37 @@ describe('mapbox credentials', function() {
         });
     });
 
-    it('should throw error if token is not registered', function() {
+    it('@gl should throw error when no non-mapbox style is set and missing a mapbox access token token', function() {
+        spyOn(Lib, 'error');
+
         expect(function() {
             Plotly.plot(gd, [{
                 type: 'scattermapbox',
                 lon: [10, 20, 30],
                 lat: [10, 20, 30]
             }]);
-        }).toThrow(new Error(constants.noAccessTokenErrorMsg));
+        }).toThrow(new Error(constants.missingStyleErrorMsg));
+
+        expect(Lib.error).toHaveBeenCalledWith(constants.missingStyleErrorMsg);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should throw error if token is invalid', function(done) {
+    it('@gl should throw error when setting a Mapbox style w/o a registered token', function() {
+        spyOn(Lib, 'error');
+
+        expect(function() {
+            Plotly.plot(gd, [{
+                type: 'scattermapbox',
+                lon: [10, 20, 30],
+                lat: [10, 20, 30]
+            }], {
+                mapbox: {style: 'basic'}
+            });
+        }).toThrow(new Error(constants.noAccessTokenErrorMsg));
+
+        expect(Lib.error).toHaveBeenCalledWith('Uses Mapbox map style, but did not set an access token.');
+    }, LONG_TIMEOUT_INTERVAL);
+
+    it('@gl should throw error if token is invalid', function(done) {
         var cnt = 0;
 
         Plotly.plot(gd, [{
@@ -246,7 +334,7 @@ describe('mapbox credentials', function() {
         });
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should use access token in mapbox layout options if present', function(done) {
+    it('@gl should use access token in mapbox layout options if present', function(done) {
         var cnt = 0;
 
         Plotly.plot(gd, [{
@@ -268,12 +356,108 @@ describe('mapbox credentials', function() {
         });
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should bypass access token in mapbox layout options when config points to an Atlas server', function(done) {
+    it('@gl should warn when multiple tokens in mapbox layout options are present', function(done) {
+        spyOn(Lib, 'warn');
+        var cnt = 0;
+
+        Plotly.plot(gd, [{
+            type: 'scattermapbox',
+            lon: [10, 20, 30],
+            lat: [10, 20, 30]
+        }, {
+            type: 'scattermapbox',
+            lon: [10, 20, 30],
+            lat: [10, 20, 30],
+            subplot: 'mapbox2'
+        }], {
+            mapbox: { accesstoken: MAPBOX_ACCESS_TOKEN },
+            mapbox2: { accesstoken: dummyToken }
+        }).catch(function() {
+            cnt++;
+        }).then(function() {
+            expect(cnt).toEqual(0);
+            expect(gd._fullLayout.mapbox.accesstoken).toEqual(MAPBOX_ACCESS_TOKEN);
+            expect(Lib.warn).toHaveBeenCalledWith(constants.multipleTokensErrorMsg);
+            done();
+        });
+    }, LONG_TIMEOUT_INTERVAL);
+
+    it('@gl should not throw when using a custom non-mapbox style', function(done) {
+        var cnt = 0;
+
+        Plotly.plot(gd, [{
+            type: 'scattermapbox',
+            lon: [10, 20, 30],
+            lat: [10, 20, 30]
+        }], {
+            mapbox: { style: osmStyle }
+        }).catch(function() {
+            cnt++;
+        }).then(function() {
+            expect(cnt).toEqual(0);
+            expect(gd._fullLayout.mapbox.accesstoken).toBe(undefined);
+            done();
+        });
+    }, LONG_TIMEOUT_INTERVAL);
+
+    it('@gl should not throw when using a custom mapbox style URL with an access token in the layout', function(done) {
+        var cnt = 0;
+
+        Plotly.plot(gd, [{
+            type: 'scattermapbox',
+            lon: [10, 20, 30],
+            lat: [10, 20, 30]
+        }], {
+            mapbox: {
+                accesstoken: MAPBOX_ACCESS_TOKEN,
+                style: 'mapbox://styles/plotly-js-tests/ck4og36lx0vnj1cpdl8y0cr8m'
+            }
+        }).catch(function() {
+            cnt++;
+        }).then(function() {
+            expect(cnt).toEqual(0);
+            expect(gd._fullLayout.mapbox.accesstoken).toBe(MAPBOX_ACCESS_TOKEN);
+            done();
+        });
+    }, LONG_TIMEOUT_INTERVAL);
+
+    it('@gl should log when an access token is set while using a custom non-mapbox style', function(done) {
+        spyOn(Lib, 'log');
+        var cnt = 0;
+
+        Plotly.plot(gd, [{
+            type: 'scattermapbox',
+            lon: [10, 20, 30],
+            lat: [10, 20, 30]
+        }], {
+            mapbox: {
+                style: osmStyle,
+                accesstoken: MAPBOX_ACCESS_TOKEN
+            }
+        }).catch(function() {
+            cnt++;
+        }).then(function() {
+            expect(cnt).toEqual(0);
+            expect(Lib.log).toHaveBeenCalledWith([
+                'Listed mapbox access token(s)',
+                MAPBOX_ACCESS_TOKEN,
+                'but did not use a Mapbox map style, ignoring token(s).'
+            ].join(' '));
+            done();
+        });
+    }, LONG_TIMEOUT_INTERVAL);
+
+    it('@gl should bypass access token in mapbox layout options when config points to an Atlas server', function(done) {
         var cnt = 0;
         var msg = [
             'An API access token is required to use Mapbox GL.',
-            'See https://www.mapbox.com/api-documentation/#access-tokens'
+            'See https://www.mapbox.com/api-documentation/#access-tokens-and-token-scopes'
         ].join(' ');
+
+        // TODO potential new way of doing this:
+        // https://github.com/mapbox/mapbox-gl-js/pull/7594
+        //
+        // https://www.mapbox.com/atlas/#developing-with-atlas
 
         Plotly.plot(gd, [{
             type: 'scattermapbox',
@@ -288,6 +472,11 @@ describe('mapbox credentials', function() {
         })
         .catch(function(err) {
             cnt++;
+            // Note that we get an error here on `new mapboxgl.Map`
+            // as we don't have an Atlas server running.
+            //
+            // In essence, we test that the `new mapboxgl.Map` throws
+            // as oppose to `findAccessToken`
             expect(err).toEqual(new Error(msg));
         })
         .then(function() {
@@ -298,13 +487,11 @@ describe('mapbox credentials', function() {
 });
 
 describe('@noCI, mapbox plots', function() {
-    'use strict';
+    var mock = require('@mocks/mapbox_0.json');
+    var gd;
 
-    var mock = require('@mocks/mapbox_0.json'),
-        gd;
-
-    var pointPos = [579, 276],
-        blankPos = [650, 120];
+    var pointPos = [579, 276];
+    var blankPos = [650, 120];
 
     beforeEach(function(done) {
         gd = createGraphDiv();
@@ -319,7 +506,7 @@ describe('@noCI, mapbox plots', function() {
         destroyGraphDiv();
     });
 
-    it('should be able to toggle trace visibility', function(done) {
+    it('@gl should be able to toggle trace visibility', function(done) {
         var modes = ['line', 'circle'];
 
         expect(countVisibleTraces(gd, modes)).toEqual(2);
@@ -351,12 +538,12 @@ describe('@noCI, mapbox plots', function() {
         })
         .then(function() {
             expect(countVisibleTraces(gd, modes)).toEqual(1);
-
-            done();
-        });
+        })
+        .catch(failTest)
+        .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should be able to delete and add traces', function(done) {
+    it('@gl should be able to delete and add traces', function(done) {
         var modes = ['line', 'circle'];
 
         expect(countVisibleTraces(gd, modes)).toEqual(2);
@@ -392,14 +579,61 @@ describe('@noCI, mapbox plots', function() {
         })
         .then(function() {
             expect(gd._fullLayout.mapbox === undefined).toBe(true);
-
-            done();
-        });
+        })
+        .catch(failTest)
+        .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should be able to restyle', function(done) {
-        var restyleCnt = 0,
-            relayoutCnt = 0;
+    it('@gl should not update center while dragging', function(done) {
+        var map = gd._fullLayout.mapbox._subplot.map;
+        spyOn(map, 'setCenter').and.callThrough();
+
+        var p1 = [pointPos[0] + 50, pointPos[1] - 20];
+
+        _mouseEvent('mousemove', pointPos, noop).then(function() {
+            return Plotly.relayout(gd, {'mapbox.center': {lon: 13.5, lat: -19.5}});
+        }).then(function() {
+            // First relayout on mapbox.center results in setCenter call
+            expect(map.setCenter).toHaveBeenCalledWith([13.5, -19.5]);
+            expect(map.setCenter).toHaveBeenCalledTimes(1);
+        }).then(function() {
+            return _mouseEvent('mousedown', pointPos, noop);
+        }).then(function() {
+            return _mouseEvent('mousemove', p1, noop);
+        }).then(function() {
+            return Plotly.relayout(gd, {'mapbox.center': {lat: 0, lon: 0}});
+        }).then(function() {
+            return _mouseEvent('mouseup', p1, noop);
+        }).then(function() {
+            // Second relayout on mapbox.center does not result in a setCenter
+            // call since map drag is underway
+            expect(map.setCenter).toHaveBeenCalledTimes(1);
+        }).then(done);
+    }, LONG_TIMEOUT_INTERVAL);
+
+    it('@gl should not update zoom while scroll wheeling', function(done) {
+        var map = gd._fullLayout.mapbox._subplot.map;
+        spyOn(map, 'setZoom').and.callThrough();
+
+        _mouseEvent('mousemove', pointPos, noop).then(function() {
+            return Plotly.relayout(gd, {'mapbox.zoom': 5});
+        }).then(function() {
+            // First relayout on mapbox.zoom results in setZoom call
+            expect(map.setZoom).toHaveBeenCalledWith(5);
+            expect(map.setZoom).toHaveBeenCalledTimes(1);
+        }).then(function() {
+            mouseEvent('scroll', pointPos[0], pointPos[1], {deltaY: -400});
+            return Plotly.relayout(gd, {'mapbox.zoom': 2}).then(function() {
+                // Second relayout on mapbox.zoom does not result in setZoom
+                // call since a scroll wheel zoom is underway
+                expect(map.setZoom).toHaveBeenCalledTimes(1);
+            });
+        }).then(done);
+    }, LONG_TIMEOUT_INTERVAL);
+
+    it('@gl should be able to restyle', function(done) {
+        var restyleCnt = 0;
+        var relayoutCnt = 0;
 
         gd.on('plotly_restyle', function() {
             restyleCnt++;
@@ -453,12 +687,13 @@ describe('@noCI, mapbox plots', function() {
                 [1, 0, 0, 1]
             ]);
         })
+        .catch(failTest)
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should be able to relayout', function(done) {
-        var restyleCnt = 0,
-            relayoutCnt = 0;
+    it('@gl should be able to relayout', function(done) {
+        var restyleCnt = 0;
+        var relayoutCnt = 0;
 
         gd.on('plotly_restyle', function() {
             restyleCnt++;
@@ -517,11 +752,16 @@ describe('@noCI, mapbox plots', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should be able to relayout the map style', function(done) {
+    it('@gl should be able to relayout the map style', function(done) {
         function assertLayout(style) {
             var mapInfo = getMapInfo(gd);
             expect(mapInfo.style.name).toEqual(style);
         }
+
+        // TODO
+        // this one now logs:
+        // 'Unable to perform style diff: Unimplemented: setSprite..  Rebuilding the style from scratch.'
+        // https://github.com/mapbox/mapbox-gl-js/issues/6933
 
         assertLayout('Mapbox Dark');
 
@@ -537,11 +777,11 @@ describe('@noCI, mapbox plots', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should be able to add, update and remove layers', function(done) {
+    it('@gl should be able to add, update and remove layers', function(done) {
         var mockWithLayers = require('@mocks/mapbox_layers');
 
-        var layer0 = Lib.extendDeep({}, mockWithLayers.layout.mapbox.layers[0]),
-            layer1 = Lib.extendDeep({}, mockWithLayers.layout.mapbox.layers[1]);
+        var layer0 = Lib.extendDeep({}, mockWithLayers.layout.mapbox.layers[0]);
+        var layer1 = Lib.extendDeep({}, mockWithLayers.layout.mapbox.layers[1]);
 
         var mapUpdate = {
             'mapbox.zoom': mockWithLayers.layout.mapbox.zoom,
@@ -564,8 +804,8 @@ describe('@noCI, mapbox plots', function() {
         function countVisibleLayers(gd) {
             var mapInfo = getMapInfo(gd);
 
-            var sourceLen = mapInfo.layoutSources.length,
-                layerLen = mapInfo.layoutLayers.length;
+            var sourceLen = mapInfo.layoutSources.length;
+            var layerLen = mapInfo.layoutLayers.length;
 
             if(sourceLen !== layerLen) return null;
 
@@ -577,9 +817,9 @@ describe('@noCI, mapbox plots', function() {
         }
 
         function assertLayerStyle(gd, expectations, index) {
-            var mapInfo = getMapInfo(gd),
-                layers = mapInfo.layers,
-                layerNames = mapInfo.layoutLayers;
+            var mapInfo = getMapInfo(gd);
+            var layers = mapInfo.layers;
+            var layerNames = mapInfo.layoutLayers;
 
             var layer = layers[layerNames[index]];
             expect(layer).toBeDefined(layerNames[index]);
@@ -695,7 +935,58 @@ describe('@noCI, mapbox plots', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should be able to react to layer changes', function(done) {
+    it('@gl should be able to update layer image', function(done) {
+        var coords = [
+            [-80.425, 46.437],
+            [-71.516, 46.437],
+            [-71.516, 37.936],
+            [-80.425, 37.936]
+        ];
+        function makeFigure(source) {
+            return {
+                data: [{type: 'scattermapbox'}],
+                layout: {
+                    mapbox: {
+                        layers: [{
+                            'sourcetype': 'image',
+                            'coordinates': coords,
+                            'source': source
+                        }]
+                    }
+                }
+            };
+        }
+
+        var map = null;
+        var layerSource = null;
+
+        // Single pixel PNGs generated with http://png-pixel.com/
+        var prefix = 'data:image/png;base64,';
+        var redImage = prefix + 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42m' +
+            'P8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==';
+        var greenImage = prefix + 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42m' +
+            'Nk+M/wHwAEBgIApD5fRAAAAABJRU5ErkJggg==';
+
+        Plotly.react(gd, makeFigure(redImage)).then(function() {
+            var mapbox = gd._fullLayout.mapbox._subplot;
+            map = mapbox.map;
+            layerSource = map.getSource(mapbox.layerList[0].idSource);
+
+            spyOn(layerSource, 'updateImage').and.callThrough();
+            spyOn(map, 'removeSource').and.callThrough();
+            return Plotly.react(gd, makeFigure(greenImage));
+        })
+        .then(function() {
+            expect(layerSource.updateImage).toHaveBeenCalledWith(
+                {url: greenImage, coordinates: coords}
+            );
+            expect(map.removeSource).not.toHaveBeenCalled();
+        })
+        .catch(failTest)
+        .then(done);
+    }, LONG_TIMEOUT_INTERVAL);
+
+    it('@gl should be able to react to layer changes', function(done) {
         function makeFigure(color) {
             return {
                 data: [{type: 'scattermapbox'}],
@@ -734,6 +1025,11 @@ describe('@noCI, mapbox plots', function() {
             expect(String(layer.paint._values['fill-color'].value.value)).toBe(color, 'layer color');
         }
 
+        // TODO
+        // this one now logs:
+        // 'Unable to perform style diff: Unimplemented: setSprite, setLayerProperty..  Rebuilding the style from scratch.'
+        // github.com/mapbox/mapbox-gl-js/issues/6933/
+
         Plotly.react(gd, makeFigure('blue')).then(function() {
             _assert('rgba(0,0,255,1)');
             return Plotly.react(gd, makeFigure('red'));
@@ -745,7 +1041,81 @@ describe('@noCI, mapbox plots', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should be able to update the access token', function(done) {
+    it('@gl should not wedge graph after reacting to invalid layer', function(done) {
+        Plotly.react(gd, [{type: 'scattermapbox'}], {
+            mapbox: {
+                layers: [{ source: 'invalid' }]
+            }
+        })
+        .then(function() {
+            fail('The above Plotly.react promise should be rejected');
+        })
+        .catch(function() {
+            expect(gd._promises.length).toBe(1, 'has 1 rejected promise in queue');
+        })
+        .then(function() {
+            return Plotly.react(gd, [{type: 'scattermapbox'}], {
+                mapbox: {
+                    layers: [{
+                        sourcetype: 'vector',
+                        sourcelayer: 'contour',
+                        source: 'mapbox://mapbox.mapbox-terrain-v2'
+                    }]
+                }
+            });
+        })
+        .then(function() {
+            expect(gd._promises.length).toBe(0, 'rejected promise has been cleared');
+
+            var mapInfo = getMapInfo(gd);
+            expect(mapInfo.layoutLayers.length).toBe(1, 'one layer');
+            expect(mapInfo.layoutSources.length).toBe(1, 'one layer source');
+        })
+        .catch(failTest)
+        .then(done);
+    }, LONG_TIMEOUT_INTERVAL);
+
+    it('@gl should not attempt to remove non-existing layer sources', function(done) {
+        function _assert(msg, exp) {
+            return function() {
+                var layerList = gd._fullLayout.mapbox._subplot.layerList;
+                expect(layerList.length).toBe(exp, msg);
+            };
+        }
+
+        Plotly.react(gd, [{type: 'scattermapbox'}], {
+            mapbox: { layers: [{}] }
+        })
+        .then(_assert('1 visible:false layer', 1))
+        .then(function() {
+            return Plotly.react(gd, [{type: 'scattermapbox'}], {
+                mapbox: { layers: [] }
+            });
+        })
+        .then(_assert('no layers', 0))
+        .catch(failTest)
+        .then(done);
+    }, LONG_TIMEOUT_INTERVAL);
+
+    it('@gl should validate layout layer input', function(done) {
+        Plotly.newPlot(gd, [{type: 'scattermapbox'}], {
+            mapbox: {
+                layers: [{
+                    sourcetype: 'raster',
+                    source: ['']
+                }]
+            }
+        })
+        .then(function() {
+            var mapInfo = getMapInfo(gd);
+            expect(mapInfo.layoutLayers.length).toBe(0, 'no on-map layer');
+            expect(mapInfo.layoutSources.length).toBe(0, 'no map source');
+        })
+        .catch(failTest)
+        .then(done);
+    }, LONG_TIMEOUT_INTERVAL);
+
+    it('@gl should be able to update the access token', function(done) {
         Plotly.relayout(gd, 'mapbox.accesstoken', 'wont-work').catch(function(err) {
             expect(gd._fullLayout.mapbox.accesstoken).toEqual('wont-work');
             expect(err).toEqual(new Error(constants.mapOnErrorMsg));
@@ -760,10 +1130,10 @@ describe('@noCI, mapbox plots', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should be able to update traces', function(done) {
+    it('@gl should be able to update traces', function(done) {
         function assertDataPts(lengths) {
-            var lines = getGeoJsonData(gd, 'lines'),
-                markers = getGeoJsonData(gd, 'markers');
+            var lines = getGeoJsonData(gd, 'lines');
+            var markers = getGeoJsonData(gd, 'markers');
 
             lines.forEach(function(obj, i) {
                 expect(obj.coordinates[0].length).toEqual(lengths[i]);
@@ -798,7 +1168,7 @@ describe('@noCI, mapbox plots', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should display to hover labels on mouse over', function(done) {
+    it('@gl should display to hover labels on mouse over', function(done) {
         function assertMouseMove(pos, len) {
             return _mouseEvent('mousemove', pos, function() {
                 var hoverLabels = d3.select('.hoverlayer').selectAll('g');
@@ -836,9 +1206,9 @@ describe('@noCI, mapbox plots', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should respond to hover interactions by', function(done) {
-        var hoverCnt = 0,
-            unhoverCnt = 0;
+    it('@gl should respond to hover interactions by', function(done) {
+        var hoverCnt = 0;
+        var unhoverCnt = 0;
 
         var hoverData, unhoverData;
 
@@ -884,14 +1254,51 @@ describe('@noCI, mapbox plots', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should respond drag / scroll / double-click interactions', function(done) {
+    it('@gl should not attempt to rehover over exiting subplots', function(done) {
+        spyOn(Fx, 'hover').and.callThrough();
+
+        function countHoverLabels() {
+            return d3.select('.hoverlayer').selectAll('g').size();
+        }
+
+        Promise.resolve()
+        .then(function() {
+            return _mouseEvent('mousemove', pointPos, function() {
+                expect(countHoverLabels()).toEqual(1);
+                expect(Fx.hover).toHaveBeenCalledTimes(1);
+                expect(Fx.hover.calls.argsFor(0)[2]).toBe('mapbox');
+                Fx.hover.calls.reset();
+            });
+        })
+        .then(function() { return Plotly.deleteTraces(gd, [0, 1]); })
+        .then(delay(10))
+        .then(function() {
+            return _mouseEvent('mousemove', pointPos, function() {
+                expect(countHoverLabels()).toEqual(0);
+                // N.B. no additional calls from Plots.rehover()
+                // (as 'mapbox' subplot is gone),
+                // just one on the fallback xy subplot
+                expect(Fx.hover).toHaveBeenCalledTimes(1);
+                expect(Fx.hover.calls.argsFor(0)[2]).toBe('xy');
+            });
+        })
+        .catch(failTest)
+        .then(done);
+    }, LONG_TIMEOUT_INTERVAL);
+
+    it('@gl should respond drag / scroll / double-click interactions', function(done) {
         var relayoutCnt = 0;
         var doubleClickCnt = 0;
+        var relayoutingCnt = 0;
         var evtData;
 
         gd.on('plotly_relayout', function(d) {
             relayoutCnt++;
             evtData = d;
+        });
+
+        gd.on('plotly_relayouting', function() {
+            relayoutingCnt++;
         });
 
         gd.on('plotly_doubleclick', function() {
@@ -917,11 +1324,18 @@ describe('@noCI, mapbox plots', function() {
             expect(layout.zoom).toBeCloseTo(zoom);
         }
 
-        function _assert(center, zoom) {
+        function _assert(center, zoom, lon0, lat0, lon1, lat1) {
             _assertLayout(center, zoom);
 
             expect([evtData['mapbox.center'].lon, evtData['mapbox.center'].lat]).toBeCloseToArray(center);
             expect(evtData['mapbox.zoom']).toBeCloseTo(zoom);
+            expect(Object.keys(evtData['mapbox._derived'])).toEqual(['coordinates']);
+            expect(evtData['mapbox._derived'].coordinates).toBeCloseTo2DArray([
+                [lon0, lat1],
+                [lon1, lat1],
+                [lon1, lat0],
+                [lon0, lat0]
+            ], -0.1);
         }
 
         _assertLayout([-4.710, 19.475], 1.234);
@@ -930,20 +1344,27 @@ describe('@noCI, mapbox plots', function() {
 
         _drag(pointPos, p1, function() {
             expect(relayoutCnt).toBe(1, 'relayout cnt');
+            expect(relayoutingCnt).toBe(1, 'relayouting cnt');
             expect(doubleClickCnt).toBe(0, 'double click cnt');
-            _assert([-19.651, 13.751], 1.234);
+            _assert([-19.651, 13.751], 1.234,
+                -155.15981291032617, -25.560300274373148,
+                115.85734493011842, 47.573988219006424);
 
             return _doubleClick(p1);
         })
         .then(function() {
             expect(relayoutCnt).toBe(2, 'relayout cnt');
+            expect(relayoutingCnt).toBe(1, 'relayouting cnt');
             expect(doubleClickCnt).toBe(1, 'double click cnt');
-            _assert([-4.710, 19.475], 1.234);
+            _assert([-4.710, 19.475], 1.234,
+                -140.21950652441467, -20.054298691163496,
+                130.79765131602989, 51.4513888208798);
 
             return _scroll(pointPos);
         })
         .then(function() {
             expect(relayoutCnt).toBe(3, 'relayout cnt');
+            expect(relayoutingCnt).toBeCloseTo(10, -1, 'relayouting cnt');
             expect(doubleClickCnt).toBe(1, 'double click cnt');
             expect(getMapInfo(gd).zoom).toBeGreaterThan(1.234);
         })
@@ -951,73 +1372,191 @@ describe('@noCI, mapbox plots', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-
-    it('should respond to click interactions by', function(done) {
+    it('@gl should respond to click interactions by', function(done) {
         var ptData;
 
         gd.on('plotly_click', function(eventData) {
             ptData = eventData.points[0];
         });
 
-        _click(blankPos, function() {
+        Promise.resolve()
+        .then(function() { return click(blankPos[0], blankPos[1]); })
+        .then(delay(100))
+        .then(function() {
             expect(ptData).toBe(undefined, 'not firing on blank points');
         })
+        .then(delay(100))
+        .then(function() { return click(pointPos[0], pointPos[1]); })
         .then(function() {
-            return _click(pointPos, function() {
-                expect(ptData).not.toBe(undefined, 'firing on data points');
-                expect(Object.keys(ptData)).toEqual([
-                    'data', 'fullData', 'curveNumber', 'pointNumber', 'pointIndex', 'lon', 'lat'
-                ], 'returning the correct event data keys');
-                expect(ptData.curveNumber).toEqual(0, 'returning the correct curve number');
-                expect(ptData.pointNumber).toEqual(0, 'returning the correct point number');
-            });
+            expect(ptData).not.toBe(undefined, 'firing on data points');
+            expect(Object.keys(ptData)).toEqual([
+                'data', 'fullData', 'curveNumber', 'pointNumber', 'pointIndex', 'lon', 'lat'
+            ], 'returning the correct event data keys');
+            expect(ptData.curveNumber).toEqual(0, 'returning the correct curve number');
+            expect(ptData.pointNumber).toEqual(0, 'returning the correct point number');
         })
         .catch(failTest)
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    function getMapInfo(gd) {
-        var subplot = gd._fullLayout.mapbox._subplot,
-            map = subplot.map;
+    it('@gl should respect scrollZoom config option', function(done) {
+        var mockCopy2 = Lib.extendDeep({}, mock);
+        mockCopy2.config = {scrollZoom: false};
 
-        var sources = map.style.sourceCaches,
-            layers = map.style._layers,
-            uid = subplot.uid;
+        var relayoutCnt = 0;
+        gd.on('plotly_relayout', function() { relayoutCnt++; });
 
-        var traceSources = Object.keys(sources).filter(function(k) {
-            return k.indexOf('-source-') !== -1;
+        function _scroll() {
+            relayoutCnt = 0;
+            return new Promise(function(resolve) {
+                mouseEvent('mousemove', pointPos[0], pointPos[1]);
+                mouseEvent('scroll', pointPos[0], pointPos[1], {deltaY: -400});
+                setTimeout(resolve, 500);
+            });
+        }
+
+        var zoom = getMapInfo(gd).zoom;
+        expect(zoom).toBeCloseTo(1.234);
+        var zoom0 = zoom;
+
+        _scroll().then(function() {
+            expect(relayoutCnt).toBe(1, 'scroll relayout cnt');
+
+            var zoomNew = getMapInfo(gd).zoom;
+            expect(zoomNew).toBeGreaterThan(zoom);
+            zoom = zoomNew;
+        })
+        .then(function() { return Plotly.plot(gd, [], {}, {scrollZoom: false}); })
+        .then(_scroll)
+        .then(function() {
+            expect(relayoutCnt).toBe(0, 'no additional relayout call');
+
+            var zoomNew = getMapInfo(gd).zoom;
+            expect(zoomNew).toBe(zoom);
+            zoom = zoomNew;
+        })
+        .then(function() { return Plotly.plot(gd, [], {}, {scrollZoom: true}); })
+        .then(_scroll)
+        .then(function() {
+            expect(relayoutCnt).toBe(1, 'scroll relayout cnt');
+
+            var zoomNew = getMapInfo(gd).zoom;
+            expect(zoomNew).toBeGreaterThan(zoom);
+        })
+        .then(function() { return Plotly.newPlot(gd, mockCopy2); })
+        .then(_scroll)
+        .then(function() {
+            // see https://github.com/plotly/plotly.js/issues/3738
+            var zoomNew = getMapInfo(gd).zoom;
+            expect(zoomNew).toBe(zoom0);
+        })
+        .catch(failTest)
+        .then(done);
+    }, LONG_TIMEOUT_INTERVAL);
+
+    describe('attributions', function() {
+        it('@gl should be displayed for style "open-street-map"', function(done) {
+            Plotly.newPlot(gd, [{type: 'scattermapbox'}], {mapbox: {style: 'open-street-map'}})
+            .then(function() {
+                var s = Plotly.d3.selectAll('.mapboxgl-ctrl-attrib');
+                expect(s.size()).toBe(1);
+                expect(s.text()).toEqual('© OpenStreetMap');
+            })
+            .catch(failTest)
+            .then(done);
         });
 
-        var traceLayers = Object.keys(layers).filter(function(k) {
-            return k.indexOf('-layer-') !== -1;
+        it('@gl should be displayed for style from Mapbox', function(done) {
+            Plotly.newPlot(gd, [{type: 'scattermapbox'}], {mapbox: {style: 'basic'}})
+            .then(function() {
+                var s = Plotly.d3.selectAll('.mapboxgl-ctrl-attrib');
+                expect(s.size()).toBe(1);
+                expect(s.text()).toEqual('© Mapbox © OpenStreetMap Improve this map');
+            })
+            .catch(failTest)
+            .then(done);
         });
 
-        var layoutSources = Object.keys(sources).filter(function(k) {
-            return k.indexOf(uid) !== -1;
+        function mockLayoutCustomStyle() {
+            return {
+                'mapbox': {
+                    'style': {
+                        'id': 'osm',
+                        'version': 8,
+                        'sources': {
+                            'simple-tiles': {
+                                'type': 'raster',
+                                'tiles': [
+                                    'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                    'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                                ],
+                                'tileSize': 256
+                            }
+                        },
+                        'layers': [
+                            {
+                                'id': 'simple-tiles',
+                                'type': 'raster',
+                                'source': 'simple-tiles',
+                                'minzoom': 0,
+                                'maxzoom': 22
+                            }
+                        ]
+                    }
+                }
+            };
+        }
+
+        it('@gl should not be displayed for custom style without attribution', function(done) {
+            Plotly.newPlot(gd, [{type: 'scattermapbox'}], mockLayoutCustomStyle())
+            .then(function() {
+                var s = Plotly.d3.selectAll('.mapboxgl-ctrl-attrib');
+                expect(s.size()).toBe(1);
+                expect(s.text()).toEqual('');
+            })
+            .catch(failTest)
+            .then(done);
         });
 
-        var layoutLayers = Object.keys(layers).filter(function(k) {
-            return k.indexOf(uid) !== -1;
+        it('@gl should be displayed for custom style with attribution', function(done) {
+            var attr = 'custom attribution';
+            var layout = mockLayoutCustomStyle();
+            layout.mapbox.style.sources['simple-tiles'].attribution = attr;
+            Plotly.newPlot(gd, [{type: 'scattermapbox'}], layout)
+            .then(function() {
+                var s = Plotly.d3.selectAll('.mapboxgl-ctrl-attrib');
+                expect(s.size()).toBe(1);
+                expect(s.text()).toEqual(attr);
+            })
+            .catch(failTest)
+            .then(done);
         });
 
-        return {
-            map: map,
-            div: subplot.div,
-            sources: sources,
-            layers: layers,
-            traceSources: traceSources,
-            traceLayers: traceLayers,
-            layoutSources: layoutSources,
-            layoutLayers: layoutLayers,
-            center: map.getCenter(),
-            zoom: map.getZoom(),
-            style: map.getStyle()
-        };
-    }
+        it('@gl should be displayed for attributions defined in layers\' sourceattribution', function(done) {
+            var mock = require('@mocks/mapbox_layers.json');
+            var customMock = Lib.extendDeep(mock);
+
+            var attr = 'custom attribution';
+            var XSS = '<img src=x onerror=\"alert(XSS);\">';
+            customMock.data.pop();
+            customMock.layout.mapbox.layers[0].sourceattribution = XSS + attr;
+
+            Plotly.newPlot(gd, customMock)
+            .then(function() {
+                var s = Plotly.d3.selectAll('.mapboxgl-ctrl-attrib');
+                expect(s.size()).toBe(1);
+                expect(s.text()).toEqual([XSS + attr, '© Mapbox © OpenStreetMap Improve this map'].join(' | '));
+                expect(s.html().indexOf('<img src=x onerror="alert(XSS);">')).toBe(-1);
+                expect(s.html().indexOf('&lt;img src=x onerror="alert(XSS);"&gt;')).not.toBe(-1);
+            })
+            .catch(failTest)
+            .then(done);
+        });
+    });
 
     function countVisibleTraces(gd, modes) {
-        var mapInfo = getMapInfo(gd),
-            cnts = [];
+        var mapInfo = getMapInfo(gd);
+        var cnts = [];
 
         // 'modes' are the ScatterMapbox layers names
         // e.g. 'fill', 'line', 'circle', 'symbol'
@@ -1046,8 +1585,8 @@ describe('@noCI, mapbox plots', function() {
     }
 
     function getStyle(gd, mode, prop) {
-        var mapInfo = getMapInfo(gd),
-            values = [];
+        var mapInfo = getMapInfo(gd);
+        var values = [];
 
         mapInfo.traceLayers.forEach(function(l) {
             var info = mapInfo.layers[l];
@@ -1061,8 +1600,8 @@ describe('@noCI, mapbox plots', function() {
     }
 
     function getGeoJsonData(gd, mode) {
-        var mapInfo = getMapInfo(gd),
-            out = [];
+        var mapInfo = getMapInfo(gd);
+        var out = [];
 
         mapInfo.traceSources.forEach(function(s) {
             var info = mapInfo.sources[s];
@@ -1084,11 +1623,6 @@ describe('@noCI, mapbox plots', function() {
                 resolve();
             }, MOUSE_DELAY);
         });
-    }
-
-    function _click(pos, cb) {
-        mouseEvent('mousemove', pos[0], pos[1]);
-        return _mouseEvent('click', pos, cb);
     }
 
     function _doubleClick(pos) {
@@ -1113,6 +1647,413 @@ describe('@noCI, mapbox plots', function() {
     }
 });
 
+describe('@noCI, mapbox react', function() {
+    var gd;
+
+    beforeEach(function() {
+        gd = createGraphDiv();
+    });
+
+    afterEach(function() {
+        Plotly.purge(gd);
+        destroyGraphDiv();
+    });
+
+    it('@gl should be able to react to new tiles', function(done) {
+        function assertTile(link) {
+            var mapInfo = getMapInfo(gd);
+            expect(mapInfo.style.sources.REF.tiles[0]).toEqual(link);
+        }
+
+        var firstLink = 'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png';
+        var secondLink = 'https://a.tile.stamen.com/watercolor/{z}/{x}/{y}.jpg';
+
+        var fig = {
+            data: [
+                {
+                    type: 'scattermapbox',
+                    lon: [10, 20],
+                    lat: [20, 10]
+                }
+            ],
+            layout: {
+                mapbox: {
+                    style: {
+                        version: 8,
+                        sources: {
+                            REF: {
+                                type: 'raster',
+                                tileSize: 256,
+                                tiles: [firstLink]
+                            }
+                        },
+                        layers: [{
+                            id: 'REF',
+                            source: 'REF',
+                            type: 'raster'
+                        }],
+                    }
+                }
+            }
+        };
+
+        Plotly.newPlot(gd, fig)
+        .then(function() {
+            assertTile(firstLink);
+
+            // copy figure
+            var newFig = JSON.parse(JSON.stringify(fig));
+
+            // new figure
+            newFig.layout.mapbox.style.sources = {
+                REF: {
+                    type: 'raster',
+                    tileSize: 256,
+                    tiles: [secondLink]
+                }
+            };
+
+            // update
+            Plotly.react(gd, newFig);
+        })
+        .then(function() {
+            assertTile(secondLink);
+        })
+        .catch(failTest)
+        .then(done);
+    }, LONG_TIMEOUT_INTERVAL);
+});
+
+describe('@noCI test mapbox trace/layout *below* interactions', function() {
+    var gd;
+
+    beforeEach(function() {
+        gd = createGraphDiv();
+    });
+
+    afterEach(function(done) {
+        Plotly.purge(gd);
+        destroyGraphDiv();
+        setTimeout(done, 200);
+    });
+
+    function getLayerIds() {
+        var subplot = gd._fullLayout.mapbox._subplot;
+        var layers = subplot.map.getStyle().layers;
+        var layerIds = layers.map(function(l) { return l.id; });
+        return layerIds;
+    }
+
+    it('@gl should be able to update *below* - scattermapbox + layout layer case', function(done) {
+        function _assert(msg, exp) {
+            var layersIds = getLayerIds();
+            var tracePrefix = 'plotly-trace-layer-' + gd._fullData[0].uid;
+
+            expect(layersIds.indexOf(tracePrefix + '-fill')).toBe(exp.trace[0], msg + '| fill');
+            expect(layersIds.indexOf(tracePrefix + '-line')).toBe(exp.trace[1], msg + '| line');
+            expect(layersIds.indexOf(tracePrefix + '-circle')).toBe(exp.trace[2], msg + '| circle');
+            expect(layersIds.indexOf(tracePrefix + '-symbol')).toBe(exp.trace[3], msg + '| symbol');
+
+            var layoutLayerId = ['plotly-layout-layer', gd._fullLayout._uid, 'mapbox-0'].join('-');
+            expect(layersIds.indexOf(layoutLayerId)).toBe(exp.layout, msg + '| layout layer');
+        }
+
+        Plotly.plot(gd, [{
+            type: 'scattermapbox',
+            lon: [10, 20, 30],
+            lat: [15, 25, 35],
+            uid: 'a'
+        }], {
+            mapbox: {
+                style: 'basic',
+                layers: [{
+                    sourcetype: 'vector',
+                    source: 'mapbox://mapbox.mapbox-terrain-v2',
+                    sourcelayer: 'contour',
+                    type: 'line'
+                }]
+            }
+        })
+        .then(function() {
+            _assert('default *below*', {
+                trace: [20, 21, 22, 23],
+                layout: 24
+            });
+        })
+        .then(function() { return Plotly.relayout(gd, 'mapbox.layers[0].below', 'traces'); })
+        .then(function() {
+            _assert('with layout layer *below:traces*', {
+                trace: [21, 22, 23, 24],
+                layout: 20
+            });
+        })
+        .then(function() { return Plotly.relayout(gd, 'mapbox.layers[0].below', null); })
+        .then(function() {
+            _assert('back to default *below* (1)', {
+                trace: [20, 21, 22, 23],
+                layout: 24
+            });
+        })
+        .then(function() { return Plotly.restyle(gd, 'below', ''); })
+        .then(function() {
+            _assert('with trace *below:""*', {
+                trace: [21, 22, 23, 24],
+                layout: 20
+            });
+        })
+        .then(function() { return Plotly.restyle(gd, 'below', null); })
+        .then(function() {
+            _assert('back to default *below* (2)', {
+                trace: [20, 21, 22, 23],
+                layout: 24
+            });
+        })
+        .then(function() { return Plotly.restyle(gd, 'below', 'water'); })
+        .then(function() {
+            _assert('with trace *below:water*', {
+                trace: [4, 5, 6, 7],
+                layout: 24
+            });
+        })
+        .then(function() { return Plotly.relayout(gd, 'mapbox.layers[0].below', 'water'); })
+        .then(function() {
+            _assert('with trace AND layout layer *below:water*', {
+                trace: [4, 5, 6, 7],
+                layout: 8
+            });
+        })
+        .then(function() { return Plotly.relayout(gd, 'mapbox.layers[0].below', ''); })
+        .then(function() {
+            _assert('with trace *below:water* and layout layer *below:""*', {
+                trace: [4, 5, 6, 7],
+                layout: 24
+            });
+        })
+        .then(function() { return Plotly.restyle(gd, 'below', ''); })
+        .then(function() {
+            _assert('with trace AND layout layer *below:water*', {
+                trace: [20, 21, 22, 23],
+                layout: 24
+            });
+        })
+        .then(function() { return Plotly.update(gd, {below: null}, {'mapbox.layers[0].below': null}); })
+        .then(function() {
+            _assert('back to default *below* (3)', {
+                trace: [20, 21, 22, 23],
+                layout: 24
+            });
+        })
+        .catch(failTest)
+        .then(done);
+    }, 8 * jasmine.DEFAULT_TIMEOUT_INTERVAL);
+
+    it('@gl should be able to update *below* - scattermapbox + choroplethmapbox + densitymapbox case', function(done) {
+        function _assert(msg, exp) {
+            var layersIds = getLayerIds();
+            var tracePrefix = 'plotly-trace-layer-';
+
+            var scatterPrefix = tracePrefix + 'scatter';
+            expect(layersIds.indexOf(scatterPrefix + '-fill')).toBe(exp.scatter[0], msg + '| scatter fill');
+            expect(layersIds.indexOf(scatterPrefix + '-line')).toBe(exp.scatter[1], msg + '| scatter line');
+            expect(layersIds.indexOf(scatterPrefix + '-circle')).toBe(exp.scatter[2], msg + '| scatter circle');
+            expect(layersIds.indexOf(scatterPrefix + '-symbol')).toBe(exp.scatter[3], msg + '| scatter symbol');
+
+            var densityPrefix = tracePrefix + 'density';
+            expect(layersIds.indexOf(densityPrefix + '-heatmap')).toBe(exp.density[0], msg + '| density heatmap');
+
+            var choroplethPrefix = tracePrefix + 'choropleth';
+            expect(layersIds.indexOf(choroplethPrefix + '-fill')).toBe(exp.choropleth[0], msg + '| choropleth fill');
+            expect(layersIds.indexOf(choroplethPrefix + '-line')).toBe(exp.choropleth[1], msg + '| choropleth line');
+        }
+
+        Plotly.plot(gd, [{
+            type: 'scattermapbox',
+            lon: [10, 20, 30],
+            lat: [15, 25, 35],
+            uid: 'scatter'
+        }, {
+            type: 'densitymapbox',
+            lon: [10, 20, 30],
+            lat: [15, 25, 35],
+            z: [1, 20, 5],
+            uid: 'density'
+        }, {
+            type: 'choroplethmapbox',
+            geojson: 'https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/us-states.json',
+            locations: ['AL'],
+            z: [10],
+            uid: 'choropleth'
+        }], {
+            mapbox: {style: 'basic'}
+        })
+        .then(function() {
+            _assert('base', {
+                scatter: [23, 24, 25, 26],
+                density: [17],
+                choropleth: [5, 6]
+            });
+        })
+        .then(function() { return Plotly.restyle(gd, 'below', ''); })
+        .then(function() {
+            _assert('all traces *below:""', {
+                scatter: [23, 24, 25, 26],
+                density: [22],
+                choropleth: [20, 21]
+            });
+        })
+        .then(function() { return Plotly.restyle(gd, 'below', null); })
+        .then(function() {
+            _assert('back to base', {
+                scatter: [23, 24, 25, 26],
+                density: [17],
+                choropleth: [5, 6]
+            });
+        })
+        .catch(failTest)
+        .then(done);
+    }, 8 * jasmine.DEFAULT_TIMEOUT_INTERVAL);
+
+    it('@gl should be warn when *below* value does not correspond to a layer on the map', function(done) {
+        spyOn(Lib, 'warn');
+
+        var notGonnaWork = 'not-gonna-work';
+        var arg = [
+            'Trying to add layer with *below* value',
+            notGonnaWork,
+            'referencing a layer that does not exist',
+            'or that does not yet exist.'
+        ].join(' ');
+
+        function _assertFallback(msg, exp) {
+            var allArgs = Lib.warn.calls.allArgs();
+
+            if(allArgs.length === exp.warnCnt) {
+                for(var i = 0; i < exp.warnCnt; i++) {
+                    expect(allArgs[i][0]).toBe(arg, 'Lib.warn call #' + i);
+                }
+            } else {
+                fail('Incorrect number of Lib.warn calls');
+            }
+            Lib.warn.calls.reset();
+
+            getLayerIds().slice(20, -1).forEach(function(id) {
+                expect(id.indexOf('plotly-')).toBe(0, 'layer ' + id + ' fallback to top of map');
+            });
+        }
+
+        Plotly.plot(gd, [{
+            type: 'scattermapbox',
+            lon: [10, 20, 30],
+            lat: [15, 25, 35]
+        }, {
+            type: 'densitymapbox',
+            lon: [10, 20, 30],
+            lat: [15, 25, 35],
+            z: [1, 20, 5]
+        }, {
+            type: 'choroplethmapbox',
+            geojson: 'https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/us-states.json',
+            locations: ['AL'],
+            z: [10]
+        }], {
+            mapbox: {
+                style: 'basic',
+                layers: [{
+                    sourcetype: 'vector',
+                    source: 'mapbox://mapbox.mapbox-terrain-v2',
+                    sourcelayer: 'contour',
+                    type: 'line'
+                }]
+            }
+        })
+        .then(function() {
+            expect(Lib.warn).toHaveBeenCalledTimes(0);
+        })
+        .then(function() { return Plotly.restyle(gd, 'below', notGonnaWork); })
+        .then(function() {
+            // 7 for 4 scattermapbox + 2 choroplethmapbox + 1 densitymapbox layer
+            _assertFallback('not-gonna-work for traces', {warnCnt: 7});
+        })
+        .then(function() { return Plotly.relayout(gd, 'mapbox.layers[0].below', 'not-gonna-work'); })
+        .then(function() {
+            // same as last but + layout layer
+            _assertFallback('not-gonna-work for traces', {warnCnt: 8});
+        })
+        .then(function() { return Plotly.update(gd, {below: null}, {'mapbox.layers[0].below': null}); })
+        .then(function() {
+            expect(Lib.warn).toHaveBeenCalledTimes(0);
+        })
+        .catch(failTest)
+        .then(done);
+    }, 8 * jasmine.DEFAULT_TIMEOUT_INTERVAL);
+});
+
+describe('@noCI Test mapbox GeoJSON fetching:', function() {
+    var gd;
+
+    beforeEach(function() {
+        gd = createGraphDiv();
+    });
+
+    afterEach(function(done) {
+        Plotly.purge(gd);
+        destroyGraphDiv();
+        setTimeout(done, 200);
+    });
+
+    it('@gl should fetch GeoJSON using URLs found in the traces', function(done) {
+        var url = 'https://raw.githubusercontent.com/plotly/datasets/master/florida-red-data.json';
+        var url2 = 'https://raw.githubusercontent.com/plotly/datasets/master/florida-blue-data.json';
+        var cnt = 0;
+
+        Plotly.plot(gd, [{
+            type: 'choroplethmapbox',
+            locations: ['a'],
+            z: [1],
+            geojson: url
+        }, {
+            type: 'choroplethmapbox',
+            locations: ['a'],
+            z: [1],
+            geojson: url2
+        }])
+        .catch(function() {
+            cnt++;
+        })
+        .then(function() {
+            expect(cnt).toBe(0, 'no failures!');
+            expect(Lib.isPlainObject(window.PlotlyGeoAssets[url])).toBe(true, 'is a GeoJSON object');
+            expect(Lib.isPlainObject(window.PlotlyGeoAssets[url2])).toBe(true, 'is a GeoJSON object');
+        })
+        .then(done);
+    });
+
+    it('@gl should fetch GeoJSON using URLs found in the traces', function(done) {
+        var actual = '';
+
+        Plotly.plot(gd, [{
+            type: 'choroplethmapbox',
+            locations: ['a'],
+            z: [1],
+            geojson: 'invalidUrl'
+        }, {
+            type: 'choroplethmapbox',
+            locations: ['a'],
+            z: [1],
+            geojson: 'invalidUrl-two'
+        }])
+        .catch(function(reason) {
+            // bails up after first failure
+            actual = reason;
+        })
+        .then(function() {
+            expect(actual).toEqual(new Error('GeoJSON at URL "invalidUrl" does not exist.'));
+            expect(window.PlotlyGeoAssets.invalidUrl).toBe(undefined);
+        })
+        .then(done);
+    }, LONG_TIMEOUT_INTERVAL);
+});
+
 describe('@noCI, mapbox toImage', function() {
     // decreased from 1e5 - perhaps chrome got better at encoding these
     // because I get 99330 and the image still looks correct
@@ -1130,7 +2071,7 @@ describe('@noCI, mapbox toImage', function() {
         destroyGraphDiv();
     });
 
-    it('should generate image data with global credentials', function(done) {
+    it('@gl should generate image data with global credentials', function(done) {
         Plotly.setPlotConfig({
             mapboxAccessToken: MAPBOX_ACCESS_TOKEN
         });
@@ -1150,7 +2091,7 @@ describe('@noCI, mapbox toImage', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should generate image data with config credentials', function(done) {
+    it('@gl should generate image data with config credentials', function(done) {
         Plotly.newPlot(gd, [{
             type: 'scattermapbox',
             lon: [0, 10, 20],
@@ -1168,7 +2109,7 @@ describe('@noCI, mapbox toImage', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('should generate image data with layout credentials', function(done) {
+    it('@gl should generate image data with layout credentials', function(done) {
         Plotly.newPlot(gd, [{
             type: 'scattermapbox',
             lon: [0, 10, 20],
@@ -1188,3 +2129,42 @@ describe('@noCI, mapbox toImage', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 });
+
+function getMapInfo(gd) {
+    var subplot = gd._fullLayout.mapbox._subplot;
+    var map = subplot.map;
+
+    var sources = map.style.sourceCaches;
+    var layers = map.style._layers;
+    var uid = subplot.uid;
+
+    var traceSources = Object.keys(sources).filter(function(k) {
+        return k.indexOf('source-') === 0;
+    });
+
+    var traceLayers = Object.keys(layers).filter(function(k) {
+        return k.indexOf('plotly-trace-layer-') === 0;
+    });
+
+    var layoutSources = Object.keys(sources).filter(function(k) {
+        return k.indexOf(uid) !== -1;
+    });
+
+    var layoutLayers = Object.keys(layers).filter(function(k) {
+        return k.indexOf(uid) !== -1;
+    });
+
+    return {
+        map: map,
+        div: subplot.div,
+        sources: sources,
+        layers: layers,
+        traceSources: traceSources,
+        traceLayers: traceLayers,
+        layoutSources: layoutSources,
+        layoutLayers: layoutLayers,
+        center: map.getCenter(),
+        zoom: map.getZoom(),
+        style: map.getStyle()
+    };
+}

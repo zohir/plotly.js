@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -8,7 +8,7 @@
 
 'use strict';
 
-var Registry = require('../../registry');
+var traceIs = require('../../registry').traceIs;
 var autoType = require('./axis_autotype');
 
 /*
@@ -40,6 +40,7 @@ function setAutoType(ax, data) {
 
     var id = ax._id;
     var axLetter = id.charAt(0);
+    var i;
 
     // support 3d
     if(id.indexOf('scene') !== -1) id = axLetter;
@@ -50,14 +51,22 @@ function setAutoType(ax, data) {
     // first check for histograms, as the count direction
     // should always default to a linear axis
     if(d0.type === 'histogram' &&
-            axLetter === {v: 'y', h: 'x'}[d0.orientation || 'v']) {
+        axLetter === {v: 'y', h: 'x'}[d0.orientation || 'v']
+    ) {
         ax.type = 'linear';
         return;
     }
 
     var calAttr = axLetter + 'calendar';
     var calendar = d0[calAttr];
-    var i;
+    var opts = {noMultiCategory: !traceIs(d0, 'cartesian') || traceIs(d0, 'noMultiCategory')};
+
+    // To not confuse 2D x/y used for per-box sample points for multicategory coordinates
+    if(d0.type === 'box' && d0._hasPreCompStats &&
+        axLetter === {h: 'x', v: 'y'}[d0.orientation || 'v']
+    ) {
+        opts.noMultiCategory = true;
+    }
 
     // check all boxes on this x axis to see
     // if they're dates, numbers, or categories
@@ -67,8 +76,7 @@ function setAutoType(ax, data) {
 
         for(i = 0; i < data.length; i++) {
             var trace = data[i];
-            if(!Registry.traceIs(trace, 'box-violin') ||
-               (trace[axLetter + 'axis'] || axLetter) !== id) continue;
+            if(!traceIs(trace, 'box-violin') || (trace[axLetter + 'axis'] || axLetter) !== id) continue;
 
             if(trace[posLetter] !== undefined) boxPositions.push(trace[posLetter][0]);
             else if(trace.name !== undefined) boxPositions.push(trace.name);
@@ -77,21 +85,13 @@ function setAutoType(ax, data) {
             if(trace[calAttr] !== calendar) calendar = undefined;
         }
 
-        ax.type = autoType(boxPositions, calendar);
-    }
-    else if(d0.type === 'splom') {
+        ax.type = autoType(boxPositions, calendar, opts);
+    } else if(d0.type === 'splom') {
         var dimensions = d0.dimensions;
-        var diag = d0._diag;
-        for(i = 0; i < dimensions.length; i++) {
-            var dim = dimensions[i];
-            if(dim.visible && (diag[i][0] === id || diag[i][1] === id)) {
-                ax.type = autoType(dim.values, calendar);
-                break;
-            }
-        }
-    }
-    else {
-        ax.type = autoType(d0[axLetter] || [d0[axLetter + '0']], calendar);
+        var dim = dimensions[d0._axesDim[id]];
+        if(dim.visible) ax.type = autoType(dim.values, calendar, opts);
+    } else {
+        ax.type = autoType(d0[axLetter] || [d0[axLetter + '0']], calendar, opts);
     }
 }
 
@@ -109,8 +109,7 @@ function getFirstNonEmptyTrace(data, id, axLetter) {
         if((trace[axLetter + 'axis'] || axLetter) === id) {
             if(isBoxWithoutPositionCoords(trace, axLetter)) {
                 return trace;
-            }
-            else if((trace[axLetter] || []).length || trace[axLetter + '0']) {
+            } else if((trace[axLetter] || []).length || trace[axLetter + '0']) {
                 return trace;
             }
         }
@@ -122,9 +121,9 @@ function getBoxPosLetter(trace) {
 }
 
 function isBoxWithoutPositionCoords(trace, axLetter) {
-    var posLetter = getBoxPosLetter(trace),
-        isBox = Registry.traceIs(trace, 'box-violin'),
-        isCandlestick = Registry.traceIs(trace._fullInput || {}, 'candlestick');
+    var posLetter = getBoxPosLetter(trace);
+    var isBox = traceIs(trace, 'box-violin');
+    var isCandlestick = traceIs(trace._fullInput || {}, 'candlestick');
 
     return (
         isBox &&

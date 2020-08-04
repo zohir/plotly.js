@@ -1,12 +1,13 @@
 var Annotations = require('@src/components/annotations');
 
 var Plotly = require('@lib/index');
+var Queue = require('@src/lib/queue');
 var Plots = require('@src/plots/plots');
 var Lib = require('@src/lib');
 var Loggers = require('@src/lib/loggers');
 var Axes = require('@src/plots/cartesian/axes');
 var HOVERMINTIME = require('@src/components/fx').constants.HOVERMINTIME;
-var DBLCLICKDELAY = require('@src/constants/interactions').DBLCLICKDELAY;
+var DBLCLICKDELAY = require('@src/plot_api/plot_config').dfltConfig.doubleClickDelay;
 
 var d3 = require('d3');
 var createGraphDiv = require('../assets/create_graph_div');
@@ -16,12 +17,10 @@ var drag = require('../assets/drag');
 var mouseEvent = require('../assets/mouse_event');
 var click = require('../assets/click');
 
-
 describe('Test annotations', function() {
     'use strict';
 
     describe('supplyLayoutDefaults', function() {
-
         function _supply(layoutIn, layoutOut) {
             layoutOut = layoutOut || {};
             layoutOut._has = Plots._hasPlotType.bind(layoutOut);
@@ -179,8 +178,8 @@ describe('annotations relayout', function() {
     beforeEach(function(done) {
         gd = createGraphDiv();
 
-        var mockData = Lib.extendDeep([], mock.data),
-            mockLayout = Lib.extendDeep({}, mock.layout);
+        var mockData = Lib.extendDeep([], mock.data);
+        var mockLayout = Lib.extendDeep({}, mock.layout);
 
         // insert some MathJax text - to make sure we fall back correctly
         // when MathJax is not provided (as is the case in our normal
@@ -191,17 +190,26 @@ describe('annotations relayout', function() {
         Plotly.plot(gd, mockData, mockLayout).then(done);
 
         spyOn(Loggers, 'warn');
+
+        Plotly.setPlotConfig({queueLength: 3});
     });
 
-    afterEach(destroyGraphDiv);
+    afterEach(function() {
+        destroyGraphDiv();
+        Plotly.setPlotConfig({queueLength: 0});
+    });
 
     function countAnnotations() {
+        // also check that no annotations are empty objects
+        (gd.layout.annotations || []).forEach(function(ann, i) {
+            expect(JSON.stringify(ann)).not.toBe(JSON.stringify({}), i);
+        });
         return d3.selectAll('g.annotation').size();
     }
 
     function assertText(index, expected) {
-        var query = '.annotation[data-index="' + index + '"]',
-            actual = d3.select(query).select('text').text();
+        var query = '.annotation[data-index="' + index + '"]';
+        var actual = d3.select(query).select('text').text();
 
         expect(actual).toEqual(expected);
     }
@@ -220,10 +228,30 @@ describe('annotations relayout', function() {
         .then(function() {
             expect(countAnnotations()).toEqual(len);
 
+            return Queue.undo(gd);
+        })
+        .then(function() {
+            expect(countAnnotations()).toBe(len + 1);
+
+            return Queue.redo(gd);
+        })
+        .then(function() {
+            expect(countAnnotations()).toBe(len);
+
             return Plotly.relayout(gd, 'annotations[0]', null);
         })
         .then(function() {
             expect(countAnnotations()).toEqual(len - 1);
+
+            return Queue.undo(gd);
+        })
+        .then(function() {
+            expect(countAnnotations()).toBe(len);
+
+            return Queue.redo(gd);
+        })
+        .then(function() {
+            expect(countAnnotations()).toBe(len - 1);
 
             return Plotly.relayout(gd, 'annotations[0].visible', false);
         })
@@ -326,15 +354,14 @@ describe('annotations relayout', function() {
         })
         .catch(failTest)
         .then(done);
-
     });
 
     it('can update several annotations and add and delete in one call', function(done) {
         expect(countAnnotations()).toEqual(len);
-        var annos = gd.layout.annotations,
-            anno0 = Lib.extendFlat(annos[0]),
-            anno1 = Lib.extendFlat(annos[1]),
-            anno3 = Lib.extendFlat(annos[3]);
+        var annos = gd.layout.annotations;
+        var anno0 = Lib.extendFlat(annos[0]);
+        var anno1 = Lib.extendFlat(annos[1]);
+        var anno3 = Lib.extendFlat(annos[3]);
 
         // store some (unused) private keys and make sure they are copied over
         // correctly during relayout
@@ -356,8 +383,8 @@ describe('annotations relayout', function() {
         .then(function() {
             expect(countAnnotations()).toEqual(len);
 
-            var fullAnnosAfter = gd._fullLayout.annotations,
-                fullStr = JSON.stringify(fullAnnosAfter);
+            var fullAnnosAfter = gd._fullLayout.annotations;
+            var fullStr = JSON.stringify(fullAnnosAfter);
 
             assertText(0, 'tortilla');
             anno0.text = 'tortilla';
@@ -384,7 +411,6 @@ describe('annotations relayout', function() {
             expect(fullStr.indexOf('the cat')).toBe(-1);
 
             expect(Loggers.warn).not.toHaveBeenCalled();
-
         })
         .catch(failTest)
         .then(done);
@@ -476,8 +502,8 @@ describe('annotations log/linear axis changes', function() {
     beforeEach(function(done) {
         gd = createGraphDiv();
 
-        var mockData = Lib.extendDeep([], mock.data),
-            mockLayout = Lib.extendDeep({}, mock.layout);
+        var mockData = Lib.extendDeep([], mock.data);
+        var mockLayout = Lib.extendDeep({}, mock.layout);
 
         Plotly.plot(gd, mockData, mockLayout).then(done);
     });
@@ -488,7 +514,7 @@ describe('annotations log/linear axis changes', function() {
         // we don't try to figure out the position on a new axis / canvas
         // automatically when you change xref / yref, we leave it to the caller.
         // previously this logic was part of plotly.js... But it's really only
-        // the plot.ly workspace that wants this and can assign an unambiguous
+        // the Chart Studio Cloud workspace that wants this and can assign an unambiguous
         // meaning to it, so we'll move the logic there, where there are far
         // fewer edge cases to consider because xref never gets edited along
         // with anything else in one `relayout` call.
@@ -575,7 +601,6 @@ describe('annotations log/linear axis changes', function() {
         .catch(failTest)
         .then(done);
     });
-
 });
 
 describe('annotations autorange', function() {
@@ -784,6 +809,28 @@ describe('annotations autorange', function() {
         .catch(failTest)
         .then(done);
     });
+
+    it('should not error out on subplots w/o visible traces', function(done) {
+        Plotly.plot(gd, [{}], {
+            annotations: [{
+                x: 0.1,
+                y: 0.1,
+                text: 't',
+                showarrow: false
+            }, {
+                x: 0.2,
+                y: 0.3,
+                text: 'a'
+            }]
+        })
+        .then(function() {
+            expect(gd._fullLayout.xaxis.range).toBeCloseToArray([0.099, 0.201], 1, 'x rng');
+            expect(gd._fullLayout.yaxis.range).toBeCloseToArray([0.091, 0.335], 1, 'y rng');
+            assertVisible([0, 1]);
+        })
+        .catch(failTest)
+        .then(done);
+    });
 });
 
 describe('annotation clicktoshow', function() {
@@ -859,8 +906,7 @@ describe('annotation clicktoshow', function() {
             var clickResult = Annotations.onClick(gd, hoverData(opts.newPts));
             if(clickResult && clickResult.then) {
                 return clickResult.then(function() { checkVisible(opts); });
-            }
-            else {
+            } else {
                 checkVisible(opts);
             }
         };
@@ -1003,7 +1049,7 @@ describe('annotation effects', function() {
     afterEach(destroyGraphDiv);
 
     function dragAndReplot(node, dx, dy, edge) {
-        return drag(node, dx, dy, edge).then(function() {
+        return drag({node: node, dpos: [dx, dy], edge: edge}).then(function() {
             return Plots.previousPromises(gd);
         });
     }
@@ -1083,11 +1129,11 @@ describe('annotation effects', function() {
     // for annotations with arrows: check that dragging the text moves only
     // ax and ay (and the textbox itself)
     function checkTextDrag() {
-        var ann = gd.layout.annotations[0],
-            x0 = ann.x,
-            y0 = ann.y,
-            ax0 = ann.ax,
-            ay0 = ann.ay;
+        var ann = gd.layout.annotations[0];
+        var x0 = ann.x;
+        var y0 = ann.y;
+        var ax0 = ann.ax;
+        var ay0 = ann.ay;
 
         var bboxInitial = textBox().getBoundingClientRect();
 
@@ -1297,10 +1343,7 @@ describe('annotation effects', function() {
     function _click(pos, opts) {
         return new Promise(function(resolve) {
             click(pos[0], pos[1], opts);
-
-            setTimeout(function() {
-                resolve();
-            }, DBLCLICKDELAY * 1.1);
+            setTimeout(resolve, DBLCLICKDELAY * 1.1);
         });
     }
 
@@ -1323,7 +1366,7 @@ describe('annotation effects', function() {
         clickData = [];
 
         gd.on('plotly_clickannotation', function(evt) {
-            expect(evt.event).toEqual(jasmine.objectContaining({type: 'click'}));
+            evt.eventType = evt.event.type;
             evt.button = evt.event.button;
             if(evt.event.ctrlKey) evt.ctrlKey = true;
             delete evt.event;
@@ -1332,7 +1375,6 @@ describe('annotation effects', function() {
     }
 
     it('should register clicks and show hover effects on the text box only', function(done) {
-
         function assertHoverLabel(pos, text, msg) {
             return new Promise(function(resolve) {
                 mouseEvent('mousemove', pos[0], pos[1]);
@@ -1402,7 +1444,8 @@ describe('annotation effects', function() {
                 index: 1,
                 annotation: gd.layout.annotations[1],
                 fullAnnotation: gd._fullLayout.annotations[1],
-                button: 0
+                button: 0,
+                eventType: 'click'
             }]);
 
             expect(gd._fullLayout.annotations[0].hoverlabel).toBeUndefined();
@@ -1427,7 +1470,8 @@ describe('annotation effects', function() {
                 index: 0,
                 annotation: gd.layout.annotations[0],
                 fullAnnotation: gd._fullLayout.annotations[0],
-                button: 0
+                button: 0,
+                eventType: 'click'
             }]);
 
             return Plotly.relayout(gd, {
@@ -1482,7 +1526,58 @@ describe('annotation effects', function() {
                 index: 1,
                 annotation: gd.layout.annotations[1],
                 fullAnnotation: gd._fullLayout.annotations[1],
-                button: 0
+                button: 0,
+                eventType: 'click'
+            }]);
+        })
+        .catch(failTest)
+        .then(done);
+    });
+
+    it('should register clicks even in editable:true mode', function(done) {
+        function clickForTextEdit(pos) {
+            return new Promise(function(resolve, reject) {
+                gd.once('plotly_relayout', resolve);
+
+                setTimeout(function() {
+                    reject('Did not trigger plotly_relayout');
+                }, DBLCLICKDELAY * 2);
+
+                click(pos[0], pos[1]);
+
+                setTimeout(function() {
+                    var input = d3.select('.plugin-editable.editable');
+                    if(input.node()) {
+                        input.node().dispatchEvent(new KeyboardEvent('blur'));
+                    }
+                }, DBLCLICKDELAY * 1.1);
+            });
+        }
+
+        makePlot([
+            {x: 50, y: 50, text: 'hi', width: 50, height: 40, ax: 0, ay: -40, xshift: -50, yshift: 50},
+            {x: 20, y: 20, text: 'bye', height: 40, showarrow: false},
+            {x: 80, y: 80, text: 'why?', ax: 0, ay: -40}
+        ], {editable: true})
+        .then(initClickTests)
+        .then(function() { return clickForTextEdit(pos0); })
+        .then(function() {
+            assertClickData([]);
+        })
+        .then(function() {
+            return Plotly.relayout(gd, {
+                'annotations[1].captureevents': true,
+                'annotations[2].captureevents': true
+            });
+        })
+        .then(function() { return clickForTextEdit(pos1); })
+        .then(function() {
+            assertClickData([{
+                index: 1,
+                annotation: gd.layout.annotations[1],
+                fullAnnotation: gd._fullLayout.annotations[1],
+                button: 0,
+                eventType: 'mousedown'
             }]);
         })
         .catch(failTest)
@@ -1491,10 +1586,10 @@ describe('annotation effects', function() {
 
     it('makes the whole text box a link if the link is the whole text', function(done) {
         makePlot([
-            {x: 20, y: 20, text: '<a href="https://plot.ly">Plot</a>', showarrow: false},
-            {x: 50, y: 50, text: '<a href="https://plot.ly">or</a> not', showarrow: false},
-            {x: 80, y: 80, text: '<a href="https://plot.ly">arrow</a>'},
-            {x: 20, y: 80, text: 'nor <a href="https://plot.ly">this</a>'}
+            {x: 20, y: 20, text: '<a href="https://plotly.com">Plot</a>', showarrow: false},
+            {x: 50, y: 50, text: '<a href="https://plotly.com">or</a> not', showarrow: false},
+            {x: 80, y: 80, text: '<a href="https://plotly.com">arrow</a>'},
+            {x: 20, y: 80, text: 'nor <a href="https://plotly.com">this</a>'}
         ])
         .then(function() {
             function checkBoxLink(index, isLink) {
@@ -1510,7 +1605,7 @@ describe('annotation effects', function() {
 
             function checkLink(link) {
                 expect(link.node().style.cursor).toBe('pointer');
-                expect(link.attr('xlink:href')).toBe('https://plot.ly');
+                expect(link.attr('xlink:href')).toBe('https://plotly.com');
                 expect(link.attr('xlink:show')).toBe('new');
             }
 
@@ -1518,6 +1613,56 @@ describe('annotation effects', function() {
             checkBoxLink(1, false);
             checkBoxLink(2, true);
             checkBoxLink(3, false);
+        })
+        .catch(failTest)
+        .then(done);
+    });
+
+    it('should remove annotations if offscreen during axis drag', function(done) {
+        gd = createGraphDiv();
+
+        function _assert(msg, exp) {
+            return function() {
+                expect(gd._dragging).toBe(exp.dragging, 'is during drag| ' + msg);
+                expect(Boolean(textDrag())).toBe(exp.onScreen, 'is annotation on screen| ' + msg);
+            };
+        }
+
+        Plotly.plot(gd, [{
+            x: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+            y: [0, 4, 5, 1, 2, 2, 3, 4, 2],
+        }], {
+            dragmode: 'pan',
+            width: 500, height: 500,
+            annotations: [{
+                x: 2, y: 5,
+                xref: 'x', yref: 'y',
+                text: 'Annotation Text',
+                arrowhead: 7,
+                ax: 0, ay: -40
+            }]
+        })
+        .then(_assert('base', {
+            dragging: undefined,
+            onScreen: true
+        }))
+        .then(function() {
+            var fns = drag.makeFns({pos0: [250, 250], posN: [500, 250]});
+            return fns.start()
+                .then(_assert('during drag offscreen', {
+                    dragging: true,
+                    onScreen: false
+                }))
+                .then(fns.end);
+        })
+        .then(function() {
+            var fns = drag.makeFns({pos0: [250, 250], posN: [0, 250]});
+            return fns.start()
+                .then(_assert('during drag back onscreen', {
+                    dragging: true,
+                    onScreen: true
+                }))
+                .then(fns.end);
         })
         .catch(failTest)
         .then(done);
@@ -1538,7 +1683,6 @@ describe('animating annotations', function() {
     afterEach(destroyGraphDiv);
 
     it('updates annotations when no axis update present', function(done) {
-
         function assertAnnotations(expected) {
             var texts = Plotly.d3.select(gd).selectAll('.annotation .annotation-text');
             expect(expected.length).toEqual(texts.size());
@@ -1573,7 +1717,7 @@ describe('animating annotations', function() {
             {
                 annotations: [{text: 'hello'}],
                 shapes: [{fillcolor: 'rgb(170, 170, 170)'}],
-                images: [{source: img1}]
+                images: [{source: img1, xref: 'x', yref: 'y'}]
             }
         ).then(function() {
             assertAnnotations(['hello']);
@@ -1599,7 +1743,6 @@ describe('animating annotations', function() {
                 'rgb(172, 172, 172)'
             ]);
             assertImages([img2]);
-
         }).catch(failTest).then(done);
     });
 });

@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -14,10 +14,29 @@ var Registry = require('../../registry');
 var SHOWISOLATETIP = true;
 
 module.exports = function handleClick(g, gd, numClicks) {
+    var fullLayout = gd._fullLayout;
+
     if(gd._dragged || gd._editing) return;
 
-    var hiddenSlices = gd._fullLayout.hiddenlabels ?
-        gd._fullLayout.hiddenlabels.slice() :
+    var itemClick = fullLayout.legend.itemclick;
+    var itemDoubleClick = fullLayout.legend.itemdoubleclick;
+
+    if(numClicks === 1 && itemClick === 'toggle' && itemDoubleClick === 'toggleothers' &&
+        SHOWISOLATETIP && gd.data && gd._context.showTips
+    ) {
+        Lib.notifier(Lib._(gd, 'Double-click on legend to isolate one trace'), 'long');
+        SHOWISOLATETIP = false;
+    } else {
+        SHOWISOLATETIP = false;
+    }
+
+    var mode;
+    if(numClicks === 1) mode = itemClick;
+    else if(numClicks === 2) mode = itemDoubleClick;
+    if(!mode) return;
+
+    var hiddenSlices = fullLayout.hiddenlabels ?
+        fullLayout.hiddenlabels.slice() :
         [];
 
     var legendItem = g.data()[0][0];
@@ -85,21 +104,14 @@ module.exports = function handleClick(g, gd, numClicks) {
         }
     }
 
-    if(numClicks === 1 && SHOWISOLATETIP && gd.data && gd._context.showTips) {
-        Lib.notifier(Lib._(gd, 'Double-click on legend to isolate one trace'), 'long');
-        SHOWISOLATETIP = false;
-    } else {
-        SHOWISOLATETIP = false;
-    }
+    if(Registry.traceIs(fullTrace, 'pie-like')) {
+        var thisLabel = legendItem.label;
+        var thisLabelIndex = hiddenSlices.indexOf(thisLabel);
 
-    if(Registry.traceIs(fullTrace, 'pie')) {
-        var thisLabel = legendItem.label,
-            thisLabelIndex = hiddenSlices.indexOf(thisLabel);
-
-        if(numClicks === 1) {
+        if(mode === 'toggle') {
             if(thisLabelIndex === -1) hiddenSlices.push(thisLabel);
             else hiddenSlices.splice(thisLabelIndex, 1);
-        } else if(numClicks === 2) {
+        } else if(mode === 'toggleothers') {
             hiddenSlices = [];
             gd.calcdata[0].forEach(function(d) {
                 if(thisLabel !== d.label) {
@@ -111,7 +123,7 @@ module.exports = function handleClick(g, gd, numClicks) {
             }
         }
 
-        Registry.call('relayout', gd, 'hiddenlabels', hiddenSlices);
+        Registry.call('_guiRelayout', gd, 'hiddenlabels', hiddenSlices);
     } else {
         var hasLegendgroup = legendgroup && legendgroup.length;
         var traceIndicesInGroup = [];
@@ -126,7 +138,7 @@ module.exports = function handleClick(g, gd, numClicks) {
             }
         }
 
-        if(numClicks === 1) {
+        if(mode === 'toggle') {
             var nextVisibility;
 
             switch(fullTrace.visible) {
@@ -150,14 +162,15 @@ module.exports = function handleClick(g, gd, numClicks) {
             } else {
                 setVisibility(fullTrace, nextVisibility);
             }
-        } else if(numClicks === 2) {
+        } else if(mode === 'toggleothers') {
             // Compute the clicked index. expandedIndex does what we want for expanded traces
             // but also culls hidden traces. That means we have some work to do.
-            var isClicked, isInGroup, otherState;
+            var isClicked, isInGroup, notInLegend, otherState;
             var isIsolated = true;
             for(i = 0; i < fullData.length; i++) {
                 isClicked = fullData[i] === fullTrace;
-                if(isClicked) continue;
+                notInLegend = fullData[i].showlegend !== true;
+                if(isClicked || notInLegend) continue;
 
                 isInGroup = (hasLegendgroup && fullData[i].legendgroup === legendgroup);
 
@@ -182,8 +195,10 @@ module.exports = function handleClick(g, gd, numClicks) {
                     case true:
                         otherState = isIsolated ? true : 'legendonly';
                         isClicked = fullData[i] === fullTrace;
+                        // N.B. consider traces that have a set legendgroup as toggleable
+                        notInLegend = (fullData[i].showlegend !== true && !fullData[i].legendgroup);
                         isInGroup = isClicked || (hasLegendgroup && fullData[i].legendgroup === legendgroup);
-                        setVisibility(fullData[i], isInGroup ? true : otherState);
+                        setVisibility(fullData[i], (isInGroup || notInLegend) ? true : otherState);
                         break;
                 }
             }
@@ -217,6 +232,6 @@ module.exports = function handleClick(g, gd, numClicks) {
             }
         }
 
-        Registry.call('restyle', gd, attrUpdate, attrIndices);
+        Registry.call('_guiRestyle', gd, attrUpdate, attrIndices);
     }
 };

@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -35,6 +35,7 @@ function supplyDefaults(traceIn, traceOut, defaultColor, layout) {
     coerce('mode', len < PTS_LINESONLY ? 'lines+markers' : 'lines');
     coerce('text');
     coerce('hovertext');
+    if(traceOut.hoveron !== 'fills') coerce('hovertemplate');
 
     if(subTypes.hasLines(traceOut)) {
         handleLineDefaults(traceIn, traceOut, defaultColor, layout, coerce);
@@ -47,6 +48,7 @@ function supplyDefaults(traceIn, traceOut, defaultColor, layout) {
     }
 
     if(subTypes.hasText(traceOut)) {
+        coerce('texttemplate');
         handleTextDefaults(traceIn, traceOut, layout, coerce);
     }
 

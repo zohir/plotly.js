@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -23,11 +23,13 @@ function rad2deg(rad) { return rad / PI * 180; }
  * is sector a full circle?
  * ... this comes up a lot in SVG path-drawing routines
  *
+ * N.B. we consider all sectors that span more that 2pi 'full' circles
+ *
  * @param {2-item array} aBnds : angular bounds in *radians*
  * @return {boolean}
  */
 function isFullCircle(aBnds) {
-    return Math.abs(Math.abs(aBnds[1] - aBnds[0]) - twoPI) < 1e-15;
+    return Math.abs(aBnds[1] - aBnds[0]) > twoPI - 1e-14;
 }
 
 /**

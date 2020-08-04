@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -13,15 +13,15 @@ var d3 = require('d3');
 var Lib = require('../../lib');
 
 module.exports = function plot(gd, plotinfo, cdOHLC, ohlcLayer) {
-    var xa = plotinfo.xaxis;
     var ya = plotinfo.yaxis;
+    var xa = plotinfo.xaxis;
+    var posHasRangeBreaks = !!xa.rangebreaks;
 
     Lib.makeTraceGroups(ohlcLayer, cdOHLC, 'trace ohlc').each(function(cd) {
         var plotGroup = d3.select(this);
         var cd0 = cd[0];
         var t = cd0.t;
         var trace = cd0.trace;
-        if(!plotinfo.isRangePlot) cd0.node3 = plotGroup;
 
         if(trace.visible !== true || t.empty) {
             plotGroup.remove();
@@ -37,9 +37,11 @@ module.exports = function plot(gd, plotinfo, cdOHLC, ohlcLayer) {
         paths.exit().remove();
 
         paths.attr('d', function(d) {
-            var x = xa.c2p(d.pos, true);
+            if(d.empty) return 'M0,0Z';
+
             var xo = xa.c2p(d.pos - tickLen, true);
             var xc = xa.c2p(d.pos + tickLen, true);
+            var x = posHasRangeBreaks ? (xo + xc) / 2 : xa.c2p(d.pos, true);
 
             var yo = ya.c2p(d.o, true);
             var yh = ya.c2p(d.h, true);

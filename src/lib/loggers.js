@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -10,7 +10,9 @@
 
 /* eslint-disable no-console */
 
-var config = require('../plot_api/plot_config');
+var dfltConfig = require('../plot_api/plot_config').dfltConfig;
+
+var notifier = require('./notifier');
 
 var loggers = module.exports = {};
 
@@ -21,38 +23,62 @@ var loggers = module.exports = {};
  */
 
 loggers.log = function() {
-    if(config.logging > 1) {
-        var messages = ['LOG:'];
+    var i;
 
-        for(var i = 0; i < arguments.length; i++) {
+    if(dfltConfig.logging > 1) {
+        var messages = ['LOG:'];
+        for(i = 0; i < arguments.length; i++) {
             messages.push(arguments[i]);
         }
-
         apply(console.trace || console.log, messages);
+    }
+
+    if(dfltConfig.notifyOnLogging > 1) {
+        var lines = [];
+        for(i = 0; i < arguments.length; i++) {
+            lines.push(arguments[i]);
+        }
+        notifier(lines.join('<br>'), 'long');
     }
 };
 
 loggers.warn = function() {
-    if(config.logging > 0) {
-        var messages = ['WARN:'];
+    var i;
 
-        for(var i = 0; i < arguments.length; i++) {
+    if(dfltConfig.logging > 0) {
+        var messages = ['WARN:'];
+        for(i = 0; i < arguments.length; i++) {
             messages.push(arguments[i]);
         }
-
         apply(console.trace || console.log, messages);
+    }
+
+    if(dfltConfig.notifyOnLogging > 0) {
+        var lines = [];
+        for(i = 0; i < arguments.length; i++) {
+            lines.push(arguments[i]);
+        }
+        notifier(lines.join('<br>'), 'stick');
     }
 };
 
 loggers.error = function() {
-    if(config.logging > 0) {
-        var messages = ['ERROR:'];
+    var i;
 
-        for(var i = 0; i < arguments.length; i++) {
+    if(dfltConfig.logging > 0) {
+        var messages = ['ERROR:'];
+        for(i = 0; i < arguments.length; i++) {
             messages.push(arguments[i]);
         }
-
         apply(console.error, messages);
+    }
+
+    if(dfltConfig.notifyOnLogging > 0) {
+        var lines = [];
+        for(i = 0; i < arguments.length; i++) {
+            lines.push(arguments[i]);
+        }
+        notifier(lines.join('<br>'), 'stick');
     }
 };
 
@@ -61,12 +87,22 @@ loggers.error = function() {
  * apply like other functions do
  */
 function apply(f, args) {
-    if(f.apply) {
-        f.apply(f, args);
+    if(f && f.apply) {
+        try {
+            // `this` should always be console, since here we're always
+            // applying a method of the console object.
+            f.apply(console, args);
+            return;
+        } catch(e) { /* in case apply failed, fall back on the code below */ }
     }
-    else {
-        for(var i = 0; i < args.length; i++) {
+
+    // no apply - just try calling the function on each arg independently
+    for(var i = 0; i < args.length; i++) {
+        try {
             f(args[i]);
+        } catch(e) {
+            // still fails - last resort simple console.log
+            console.log(args[i]);
         }
     }
 }

@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -34,18 +34,20 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     }
 
     var coords = readComponents(['x', 'y', 'z']);
-    var indices = readComponents(['i', 'j', 'k']);
-
     if(!coords) {
         traceOut.visible = false;
         return;
     }
 
-    if(indices) {
-        // otherwise, convert all face indices to ints
-        indices.forEach(function(index) {
-            for(var i = 0; i < index.length; ++i) index[i] |= 0;
-        });
+    readComponents(['i', 'j', 'k']);
+    // three indices should be all provided or not
+    if(
+        (traceOut.i && (!traceOut.j || !traceOut.k)) ||
+        (traceOut.j && (!traceOut.k || !traceOut.i)) ||
+        (traceOut.k && (!traceOut.i || !traceOut.j))
+    ) {
+        traceOut.visible = false;
+        return;
     }
 
     var handleCalendarDefaults = Registry.getComponentMethod('calendars', 'handleTraceDefaults');
@@ -63,19 +65,21 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
         'lightposition.x',
         'lightposition.y',
         'lightposition.z',
-        'contour.show',
-        'contour.color',
-        'contour.width',
-        'colorscale',
-        'reversescale',
         'flatshading',
         'alphahull',
         'delaunayaxis',
         'opacity'
     ].forEach(function(x) { coerce(x); });
 
+    var showContour = coerce('contour.show');
+    if(showContour) {
+        coerce('contour.color');
+        coerce('contour.width');
+    }
+
     if('intensity' in traceIn) {
         coerce('intensity');
+        coerce('intensitymode');
         colorscaleDefaults(traceIn, traceOut, layout, coerce, {prefix: '', cLetter: 'c'});
     } else {
         traceOut.showscale = false;
@@ -86,6 +90,8 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     }
 
     coerce('text');
+    coerce('hovertext');
+    coerce('hovertemplate');
 
     // disable 1D transforms
     // x/y/z should match lengths, and i/j/k should match as well, but

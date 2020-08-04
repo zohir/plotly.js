@@ -4,15 +4,12 @@ var sass = require('node-sass');
 var constants = require('./util/constants');
 var common = require('./util/common');
 var pullCSS = require('./util/pull_css');
-var pullFontSVG = require('./util/pull_font_svg');
 var updateVersion = require('./util/update_version');
 
 // main
 makeBuildCSS();
-makeBuildFontSVG();
 copyTopojsonFiles();
-updateVersion(constants.pathToPlotlyCore);
-updateVersion(constants.pathToPlotlyGeoAssetsSrc);
+updateVersion(constants.pathToPlotlyVersion);
 
 // convert scss to css to js
 function makeBuildCSS() {
@@ -24,15 +21,6 @@ function makeBuildCSS() {
 
         // css to js
         pullCSS(String(result.css), constants.pathToCSSBuild);
-    });
-}
-
-// convert font svg into js
-function makeBuildFontSVG() {
-    fs.readFile(constants.pathToFontSVG, function(err, data) {
-        if(err) throw err;
-
-        pullFontSVG(data.toString(), constants.pathToFontSVGBuild);
     });
 }
 

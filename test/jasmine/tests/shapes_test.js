@@ -98,8 +98,8 @@ describe('Test shapes defaults:', function() {
         Axes.setConvert(fullLayout.xaxis2);
         Axes.setConvert(fullLayout.yaxis2);
 
-        var shape1In = {type: 'rect'},
-            shape2In = {type: 'circle', xref: 'x2', yref: 'y2'};
+        var shape1In = {type: 'rect'};
+        var shape2In = {type: 'circle', xref: 'x2', yref: 'y2'};
 
         var layoutIn = {
             shapes: [shape1In, shape2In]
@@ -107,8 +107,8 @@ describe('Test shapes defaults:', function() {
 
         _supply(layoutIn, fullLayout);
 
-        var shape1Out = fullLayout.shapes[0],
-            shape2Out = fullLayout.shapes[1];
+        var shape1Out = fullLayout.shapes[0];
+        var shape2Out = fullLayout.shapes[1];
 
         // default positions are 1/4 and 3/4 of the full range of that axis
         expect(shape1Out.x0).toBe(5);
@@ -125,6 +125,37 @@ describe('Test shapes defaults:', function() {
         // categories must use serial numbers to get continuous values
         expect(shape2Out.y0).toBeWithin(1.5, 0.001);
         expect(shape2Out.y1).toBeWithin(5.5, 0.001);
+    });
+
+    it('should not coerce line.color and line.dash when line.width is zero', function() {
+        var fullLayout = {
+            xaxis: {type: 'linear', range: [0, 1], _shapeIndices: []},
+            yaxis: {type: 'log', range: [0, 1], _shapeIndices: []},
+            _subplots: {xaxis: ['x'], yaxis: ['y']}
+        };
+
+        Axes.setConvert(fullLayout.xaxis);
+        Axes.setConvert(fullLayout.yaxis);
+
+        var layoutIn = {
+            shapes: [{
+                type: 'line',
+                xref: 'xaxis',
+                yref: 'yaxis',
+                x0: 0,
+                x1: 1,
+                y0: 1,
+                y1: 10,
+                line: {
+                    width: 0
+                }
+            }]
+        };
+
+        var shapes = _supply(layoutIn, fullLayout);
+
+        expect(shapes[0].line.color).toEqual(undefined);
+        expect(shapes[0].line.dash).toEqual(undefined);
     });
 });
 
@@ -190,8 +221,8 @@ describe('Test shapes:', function() {
     beforeEach(function(done) {
         gd = createGraphDiv();
 
-        var mockData = Lib.extendDeep([], mock.data),
-            mockLayout = Lib.extendDeep({}, mock.layout);
+        var mockData = Lib.extendDeep([], mock.data);
+        var mockLayout = Lib.extendDeep({}, mock.layout);
 
         Plotly.plot(gd, mockData, mockLayout).then(done);
     });
@@ -275,12 +306,14 @@ describe('Test shapes:', function() {
             null;
     }
 
+    Lib.seedPseudoRandom();
+
     function getRandomShape() {
         return {
-            x0: Math.random(),
-            y0: Math.random(),
-            x1: Math.random(),
-            y1: Math.random()
+            x0: Lib.pseudoRandom(),
+            y0: Lib.pseudoRandom(),
+            x1: Lib.pseudoRandom(),
+            y1: Lib.pseudoRandom()
         };
     }
 
@@ -367,6 +400,8 @@ describe('Test shapes:', function() {
         });
 
         it('can replace the shapes array', function(done) {
+            spyOn(Lib, 'warn');
+
             Plotly.relayout(gd, { shapes: [
                 getRandomShape(),
                 getRandomShape()
@@ -375,17 +410,18 @@ describe('Test shapes:', function() {
                 expect(countShapePathsInLowerLayer()).toEqual(0);
                 expect(countShapePathsInSubplots()).toEqual(0);
                 expect(gd.layout.shapes.length).toBe(2);
+                expect(Lib.warn).not.toHaveBeenCalled();
             })
             .catch(failTest)
             .then(done);
         });
 
         it('should be able to update a shape layer', function(done) {
-            var index = countShapes(gd),
-                astr = 'shapes[' + index + ']',
-                shape = getRandomShape(),
-                shapesInLowerLayer = countShapePathsInLowerLayer(),
-                shapesInUpperLayer = countShapePathsInUpperLayer();
+            var index = countShapes(gd);
+            var astr = 'shapes[' + index + ']';
+            var shape = getRandomShape();
+            var shapesInLowerLayer = countShapePathsInLowerLayer();
+            var shapesInUpperLayer = countShapePathsInUpperLayer();
 
             shape.xref = 'paper';
             shape.yref = 'paper';
@@ -455,8 +491,7 @@ describe('shapes axis reference changes', function() {
     }
 
     it('draws the right number of objects and updates clip-path correctly', function(done) {
-
-        expect(getShape(0).attr('clip-path') || '').toMatch(/x\)$/);
+        expect(getShape(0).attr('clip-path') || '').toMatch(/x\'\)$/);
 
         Plotly.relayout(gd, {
             'shapes[0].xref': 'paper',
@@ -473,7 +508,7 @@ describe('shapes axis reference changes', function() {
             });
         })
         .then(function() {
-            expect(getShape(0).attr('clip-path') || '').toMatch(/^[^x]+y2\)$/);
+            expect(getShape(0).attr('clip-path') || '').toMatch(/^[^x]+y2\'\)$/);
 
             return Plotly.relayout(gd, {
                 'shapes[0].xref': 'x',
@@ -482,7 +517,7 @@ describe('shapes axis reference changes', function() {
             });
         })
         .then(function() {
-            expect(getShape(0).attr('clip-path') || '').toMatch(/xy2\)$/);
+            expect(getShape(0).attr('clip-path') || '').toMatch(/xy2\'\)$/);
         })
         .catch(failTest)
         .then(done);
@@ -832,7 +867,7 @@ describe('A fixed size path shape', function() {
     it('is draggable', function(done) {
         Plotly.plot(gd, data, layout, {editable: true})
           .then(function() {
-              drag(getFirstShapeNode(), 50, 50).then(function() {
+              drag({node: getFirstShapeNode(), dpos: [50, 50]}).then(function() {
                   assertShapeSize(getFirstShapeNode(), 30, 20);
                   done();
               });
@@ -850,7 +885,7 @@ describe('A fixed size path shape', function() {
                 var shapeNodeBeforeDrag = getFirstShapeNode();
                 var widthBeforeDrag = shapeNodeBeforeDrag.getBoundingClientRect().width;
 
-                drag(shapeNodeBeforeDrag, 300, 50).then(function() {
+                drag({node: shapeNodeBeforeDrag, dpos: [300, 50]}).then(function() {
                     var shapeNodeAfterDrag = getFirstShapeNode();
                     var bbox = shapeNodeAfterDrag.getBoundingClientRect();
                     expect(bbox.height).toBe(20);
@@ -872,7 +907,7 @@ describe('A fixed size path shape', function() {
                 var shapeNodeBeforeDrag = getFirstShapeNode();
                 var heightBeforeDrag = shapeNodeBeforeDrag.getBoundingClientRect().height;
 
-                drag(shapeNodeBeforeDrag, 50, 300).then(function() {
+                drag({node: shapeNodeBeforeDrag, dpos: [50, 300]}).then(function() {
                     var shapeNodeAfterDrag = getFirstShapeNode();
                     var bbox = shapeNodeAfterDrag.getBoundingClientRect();
                     expect(bbox.width).toBe(30);
@@ -1004,7 +1039,7 @@ describe('A fixed size shape', function() {
     it('is draggable', function(done) {
         Plotly.plot(gd, data, layout, {editable: true})
           .then(function() {
-              drag(getFirstShapeNode(), 50, 50).then(function() {
+              drag({node: getFirstShapeNode(), dpos: [50, 50]}).then(function() {
                   assertShapeSize(getFirstShapeNode(), 25, 25);
                   done();
               });
@@ -1023,7 +1058,7 @@ describe('A fixed size shape', function() {
                 var shapeNodeBeforeDrag = getFirstShapeNode();
                 var widthBeforeDrag = shapeNodeBeforeDrag.getBoundingClientRect().width;
 
-                drag(shapeNodeBeforeDrag, 300, 50).then(function() {
+                drag({node: shapeNodeBeforeDrag, dpos: [300, 50]}).then(function() {
                     var shapeNodeAfterDrag = getFirstShapeNode();
                     var bbox = shapeNodeAfterDrag.getBoundingClientRect();
                     expect(bbox.height).toBe(25);
@@ -1034,7 +1069,7 @@ describe('A fixed size shape', function() {
             });
       });
 
-    it('being sized relative to data vertically is getting lower ' +
+    it('@flaky being sized relative to data vertically is getting lower ' +
       'when being dragged to expand the y-axis',
       function(done) {
           layout.shapes[0].ysizemode = 'data';
@@ -1046,7 +1081,7 @@ describe('A fixed size shape', function() {
                 var shapeNodeBeforeDrag = getFirstShapeNode();
                 var heightBeforeDrag = shapeNodeBeforeDrag.getBoundingClientRect().height;
 
-                drag(shapeNodeBeforeDrag, 50, 300).then(function() {
+                drag({node: shapeNodeBeforeDrag, dpos: [50, 300]}).then(function() {
                     var shapeNodeAfterDrag = getFirstShapeNode();
                     var bbox = shapeNodeAfterDrag.getBoundingClientRect();
                     expect(bbox.width).toBe(25);
@@ -1086,7 +1121,7 @@ describe('A fixed size shape', function() {
                           var dx = shallShrink ? dxToShrinkWidth[direction] : dxToEnlargeWidth[direction];
                           var dy = shallShrink ? dyToShrinkHeight[direction] : dyToEnlargeHeight[direction];
 
-                          drag(shapeNodeBeforeDrag, dx, dy, direction)
+                          drag({node: shapeNodeBeforeDrag, dpos: [dx, dy], edge: direction})
                             .then(function() {
                                 var shapeNodeAfterDrag = getFirstShapeNode();
                                 var bBoxAfterDrag = shapeNodeAfterDrag.getBoundingClientRect();
@@ -1106,7 +1141,6 @@ describe('A fixed size shape', function() {
         beforeEach(function() {
             layout.shapes[0].type = 'line';
             layout.shapes[0].yanchor = 3;
-
         });
 
         it('@flaky can be moved by dragging the middle', function(done) {
@@ -1116,7 +1150,7 @@ describe('A fixed size shape', function() {
                   var bBoxBeforeDrag = shapeNodeBeforeDrag.getBoundingClientRect();
 
                   var dragSensitiveElement = getMoveLineDragElement(0);
-                  drag(dragSensitiveElement, 10, -10)
+                  drag({node: dragSensitiveElement, dpos: [10, -10]})
                     .then(function() {
                         var shapeNodeAfterDrag = getFirstShapeNode();
                         var bBoxAfterDrag = shapeNodeAfterDrag.getBoundingClientRect();
@@ -1137,7 +1171,7 @@ describe('A fixed size shape', function() {
                   var bBoxBeforeDrag = shapeNodeBeforeDrag.getBoundingClientRect();
 
                   var dragSensitiveElement = getResizeLineOverStartPointElement();
-                  drag(dragSensitiveElement, 50, -10)
+                  drag({node: dragSensitiveElement, dpos: [50, -10]})
                     .then(function() {
                         var shapeNodeAfterDrag = getFirstShapeNode();
                         var bBoxAfterDrag = shapeNodeAfterDrag.getBoundingClientRect();
@@ -1160,7 +1194,7 @@ describe('A fixed size shape', function() {
                   var bBoxBeforeDrag = shapeNodeBeforeDrag.getBoundingClientRect();
 
                   var dragSensitiveElement = getResizeLineOverEndPointElement();
-                  drag(dragSensitiveElement, 50, -10)
+                  drag({node: dragSensitiveElement, dpos: [50, -10]})
                     .then(function() {
                         var shapeNodeAfterDrag = getFirstShapeNode();
                         var bBoxAfterDrag = shapeNodeAfterDrag.getBoundingClientRect();
@@ -1341,14 +1375,14 @@ describe('Test shapes', function() {
     function setupLayout(testCase, layoutShapes) {
         Lib.extendDeep(layout, testCase);
 
-        var xrange = testCase.xaxis ? testCase.xaxis.range : [0.25, 0.75],
-            yrange = testCase.yaxis ? testCase.yaxis.range : [0.25, 0.75],
-            xref = testCase.xaxis ? 'x' : 'paper',
-            yref = testCase.yaxis ? 'y' : 'paper',
-            x0 = xrange[0],
-            x1 = xrange[1],
-            y0 = yrange[0],
-            y1 = yrange[1];
+        var xrange = testCase.xaxis ? testCase.xaxis.range : [0.25, 0.75];
+        var yrange = testCase.yaxis ? testCase.yaxis.range : [0.25, 0.75];
+        var xref = testCase.xaxis ? 'x' : 'paper';
+        var yref = testCase.yaxis ? 'y' : 'paper';
+        var x0 = xrange[0];
+        var x1 = xrange[1];
+        var y0 = yrange[0];
+        var y1 = yrange[1];
 
         if(testCase.xaxis && testCase.xaxis.type === 'log') {
             x0 = Math.pow(10, x0);
@@ -1370,9 +1404,9 @@ describe('Test shapes', function() {
             y1 = 1;
         }
 
-        var x0y0 = x0 + ',' + y0,
-            x1y1 = x1 + ',' + y1,
-            x1y0 = x1 + ',' + y0;
+        var x0y0 = x0 + ',' + y0;
+        var x1y1 = x1 + ',' + y1;
+        var x1y0 = x1 + ',' + y0;
 
         layoutShapes.forEach(function(s) {
             s.xref = xref;
@@ -1380,8 +1414,7 @@ describe('Test shapes', function() {
 
             if(s.type === 'path') {
                 s.path = 'M' + x0y0 + 'L' + x1y1 + 'L' + x1y0 + 'Z';
-            }
-            else {
+            } else {
                 s.x0 = x0;
                 s.x1 = x1;
                 s.y0 = y0;
@@ -1400,8 +1433,8 @@ describe('Test shapes', function() {
         expect(layoutShapes.length).toBe(4);  // line, rect, circle and path
 
         layoutShapes.forEach(function(layoutShape, index) {
-            var dx = 100,
-                dy = 100;
+            var dx = 100;
+            var dy = 100;
             promise = promise.then(function() {
                 var node = layoutShape.type === 'line' ?
                   getMoveLineDragElement(index) :
@@ -1429,8 +1462,8 @@ describe('Test shapes', function() {
         layoutShapes.forEach(function(layoutShape, index) {
             if(layoutShape.path) return;
 
-            var dx = dxToShrinkWidth[direction],
-                dy = dyToShrinkHeight[direction];
+            var dx = dxToShrinkWidth[direction];
+            var dy = dyToShrinkHeight[direction];
 
             promise = promise.then(function() {
                 var node = getShapeNode(index);
@@ -1457,14 +1490,14 @@ describe('Test shapes', function() {
     }
 
     function testShapeDrag(dx, dy, layoutShape, node) {
-        var xa = Axes.getFromId(gd, layoutShape.xref),
-            ya = Axes.getFromId(gd, layoutShape.yref),
-            x2p = helpers.getDataToPixel(gd, xa),
-            y2p = helpers.getDataToPixel(gd, ya, true);
+        var xa = Axes.getFromId(gd, layoutShape.xref);
+        var ya = Axes.getFromId(gd, layoutShape.yref);
+        var x2p = helpers.getDataToPixel(gd, xa);
+        var y2p = helpers.getDataToPixel(gd, ya, true);
 
         var initialCoordinates = getShapeCoordinates(layoutShape, x2p, y2p);
 
-        return drag(node, dx, dy).then(function() {
+        return drag({node: node, dpos: [dx, dy]}).then(function() {
             var finalCoordinates = getShapeCoordinates(layoutShape, x2p, y2p);
 
             expect(finalCoordinates.x0 - initialCoordinates.x0).toBeCloseTo(dx);
@@ -1484,31 +1517,30 @@ describe('Test shapes', function() {
     }
 
     function testPathDrag(dx, dy, layoutShape, node) {
-        var xa = Axes.getFromId(gd, layoutShape.xref),
-            ya = Axes.getFromId(gd, layoutShape.yref),
-            x2p = helpers.getDataToPixel(gd, xa),
-            y2p = helpers.getDataToPixel(gd, ya, true);
+        var xa = Axes.getFromId(gd, layoutShape.xref);
+        var ya = Axes.getFromId(gd, layoutShape.yref);
+        var x2p = helpers.getDataToPixel(gd, xa);
+        var y2p = helpers.getDataToPixel(gd, ya, true);
 
-        var initialPath = layoutShape.path,
-            initialCoordinates = getPathCoordinates(initialPath, x2p, y2p);
+        var initialPath = layoutShape.path;
+        var initialCoordinates = getPathCoordinates(initialPath, x2p, y2p);
 
         expect(initialCoordinates.length).toBe(6);
 
-        return drag(node, dx, dy).then(function() {
-            var finalPath = layoutShape.path,
-                finalCoordinates = getPathCoordinates(finalPath, x2p, y2p);
+        return drag({node: node, dpos: [dx, dy]}).then(function() {
+            var finalPath = layoutShape.path;
+            var finalCoordinates = getPathCoordinates(finalPath, x2p, y2p);
 
             expect(finalCoordinates.length).toBe(initialCoordinates.length);
 
             for(var i = 0; i < initialCoordinates.length; i++) {
-                var initialCoordinate = initialCoordinates[i],
-                    finalCoordinate = finalCoordinates[i];
+                var initialCoordinate = initialCoordinates[i];
+                var finalCoordinate = finalCoordinates[i];
 
                 if(initialCoordinate.x) {
                     expect(finalCoordinate.x - initialCoordinate.x)
                         .toBeCloseTo(dx);
-                }
-                else {
+                } else {
                     expect(finalCoordinate.y - initialCoordinate.y)
                         .toBeCloseTo(dy);
                 }
@@ -1517,35 +1549,32 @@ describe('Test shapes', function() {
     }
 
     function testShapeResize(direction, dx, dy, layoutShape, node) {
-        var xa = Axes.getFromId(gd, layoutShape.xref),
-            ya = Axes.getFromId(gd, layoutShape.yref),
-            x2p = helpers.getDataToPixel(gd, xa),
-            y2p = helpers.getDataToPixel(gd, ya, true);
+        var xa = Axes.getFromId(gd, layoutShape.xref);
+        var ya = Axes.getFromId(gd, layoutShape.yref);
+        var x2p = helpers.getDataToPixel(gd, xa);
+        var y2p = helpers.getDataToPixel(gd, ya, true);
 
         var initialCoordinates = getShapeCoordinates(layoutShape, x2p, y2p);
 
-        return drag(node, dx, dy, direction).then(function() {
+        return drag({node: node, dpos: [dx, dy], edge: direction}).then(function() {
             var finalCoordinates = getShapeCoordinates(layoutShape, x2p, y2p);
 
             var keyN, keyS, keyW, keyE;
             if(initialCoordinates.y0 < initialCoordinates.y1) {
                 keyN = 'y0'; keyS = 'y1';
-            }
-            else {
+            } else {
                 keyN = 'y1'; keyS = 'y0';
             }
             if(initialCoordinates.x0 < initialCoordinates.x1) {
                 keyW = 'x0'; keyE = 'x1';
-            }
-            else {
+            } else {
                 keyW = 'x1'; keyE = 'x0';
             }
 
             if(~direction.indexOf('n')) {
                 expect(finalCoordinates[keyN] - initialCoordinates[keyN])
                     .toBeCloseTo(dy);
-            }
-            else if(~direction.indexOf('s')) {
+            } else if(~direction.indexOf('s')) {
                 expect(finalCoordinates[keyS] - initialCoordinates[keyS])
                     .toBeCloseTo(dy);
             }
@@ -1553,8 +1582,7 @@ describe('Test shapes', function() {
             if(~direction.indexOf('w')) {
                 expect(finalCoordinates[keyW] - initialCoordinates[keyW])
                     .toBeCloseTo(dx);
-            }
-            else if(~direction.indexOf('e')) {
+            } else if(~direction.indexOf('e')) {
                 expect(finalCoordinates[keyE] - initialCoordinates[keyE])
                     .toBeCloseTo(dx);
             }
@@ -1565,10 +1593,10 @@ describe('Test shapes', function() {
         var promise = Plotly.plot(gd, data, layout, config);
         var layoutShape = gd.layout.shapes[0];
 
-        var xa = Axes.getFromId(gd, layoutShape.xref),
-            ya = Axes.getFromId(gd, layoutShape.yref),
-            x2p = helpers.getDataToPixel(gd, xa),
-            y2p = helpers.getDataToPixel(gd, ya, true);
+        var xa = Axes.getFromId(gd, layoutShape.xref);
+        var ya = Axes.getFromId(gd, layoutShape.yref);
+        var x2p = helpers.getDataToPixel(gd, xa);
+        var y2p = helpers.getDataToPixel(gd, ya, true);
 
 
         promise = promise.then(function() {
@@ -1577,7 +1605,7 @@ describe('Test shapes', function() {
               getResizeLineOverEndPointElement();
 
             var initialCoordinates = getShapeCoordinates(layoutShape, x2p, y2p);
-            return drag(dragHandle, 10, 10).then(function() {
+            return drag({node: dragHandle, dpos: [10, 10]}).then(function() {
                 var finalCoordinates = getShapeCoordinates(layoutShape, x2p, y2p);
 
                 if(pointToMove === 'start') {
@@ -1597,12 +1625,12 @@ describe('Test shapes', function() {
         var coordinates = [];
 
         pathString.match(constants.segmentRE).forEach(function(segment) {
-            var paramNumber = 0,
-                segmentType = segment.charAt(0),
-                xParams = constants.paramIsX[segmentType],
-                yParams = constants.paramIsY[segmentType],
-                nParams = constants.numParams[segmentType],
-                params = segment.substr(1).match(constants.paramRE);
+            var paramNumber = 0;
+            var segmentType = segment.charAt(0);
+            var xParams = constants.paramIsX[segmentType];
+            var yParams = constants.paramIsY[segmentType];
+            var nParams = constants.numParams[segmentType];
+            var params = segment.substr(1).match(constants.paramRE);
 
             if(params) {
                 params.forEach(function(param) {
@@ -1610,8 +1638,7 @@ describe('Test shapes', function() {
 
                     if(xParams[paramNumber]) {
                         coordinates.push({ x: x2p(param) });
-                    }
-                    else if(yParams[paramNumber]) {
+                    } else if(yParams[paramNumber]) {
                         coordinates.push({ y: y2p(param) });
                     }
 

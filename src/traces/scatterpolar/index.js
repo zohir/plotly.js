@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -17,9 +17,11 @@ module.exports = {
     attributes: require('./attributes'),
     supplyDefaults: require('./defaults').supplyDefaults,
     colorbar: require('../scatter/marker_colorbar'),
+    formatLabels: require('./format_labels'),
     calc: require('./calc'),
     plot: require('./plot'),
     style: require('../scatter/style').style,
+    styleOnSelect: require('../scatter/style').styleOnSelect,
     hoverPoints: require('./hover').hoverPoints,
     selectPoints: require('../scatter/select'),
 

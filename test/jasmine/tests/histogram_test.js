@@ -1,11 +1,13 @@
 var Plotly = require('@lib/index');
+var Plots = require('@src/plots/plots');
 var Lib = require('@src/lib');
+var Registry = require('@src/registry');
 var setConvert = require('@src/plots/cartesian/set_convert');
 
 var supplyDefaults = require('@src/traces/histogram/defaults');
 var supplyDefaults2D = require('@src/traces/histogram2d/defaults');
 var supplyDefaults2DC = require('@src/traces/histogram2dcontour/defaults');
-var calc = require('@src/traces/histogram/calc');
+var calc = require('@src/traces/histogram/calc').calc;
 var getBinSpanLabelRound = require('@src/traces/histogram/bin_label_vals');
 
 var createGraphDiv = require('../assets/create_graph_div');
@@ -13,6 +15,8 @@ var destroyGraphDiv = require('../assets/destroy_graph_div');
 var supplyAllDefaults = require('../assets/supply_defaults');
 var failTest = require('../assets/fail_test');
 
+var checkEventData = require('../assets/check_event_data');
+var constants = require('@src/traces/histogram/constants');
 
 describe('Test histogram', function() {
     'use strict';
@@ -112,7 +116,6 @@ describe('Test histogram', function() {
             };
             supplyDefaults(traceIn, traceOut, '', {});
             expect(traceOut.orientation).toBe('h');
-
         });
 
         // coercing bin attributes got moved to calc because it needs
@@ -185,12 +188,376 @@ describe('Test histogram', function() {
         });
     });
 
+    describe('cross-trace bingroup logic:', function() {
+        var gd;
+
+        beforeEach(function() {
+            spyOn(Lib, 'warn');
+        });
+
+        function _assert(msg, exp, warnMsg) {
+            var allBinOpts = gd._fullLayout._histogramBinOpts;
+            var groups = Object.keys(allBinOpts);
+
+            expect(groups.length).toBe(exp.length, 'same # of bin groups| ' + msg);
+
+            var eGroups = exp.map(function(expi) { return expi[0]; });
+            expect(groups).toEqual(eGroups, 'same bin groups| ' + msg);
+
+            exp.forEach(function(expi) {
+                var k = expi[0];
+                var binOpts = allBinOpts[k];
+
+                if(!binOpts) {
+                    return fail('bingroup ' + k + ' does NOT exist| ' + msg);
+                }
+
+                var traces = binOpts.traces || [];
+
+                if(!traces.length) {
+                    return fail('traces list for bingroup ' + k + ' is empty| ' + msg);
+                }
+
+                expect(traces.length).toBe(expi[1].length, 'same # of tracked traces|' + msg);
+
+                traces.forEach(function(t, i) {
+                    expect(t.index)
+                        .toBe(expi[1][i], 'tracks same traces[' + i + ']|' + msg);
+                    expect(t['_' + binOpts.dirs[i] + 'bingroup'])
+                        .toBe(k, '_(x|y)bingroup key in trace' + i + '| ' + msg);
+                });
+            });
+
+            if(warnMsg) {
+                expect(Lib.warn).toHaveBeenCalledWith(warnMsg);
+            } else {
+                expect(Lib.warn).toHaveBeenCalledTimes(0);
+            }
+        }
+
+        it('should group traces w/ same axes and w/ same orientation', function() {
+            var barModes = ['group', 'stack'];
+
+            barModes.forEach(function(mode) {
+                gd = {
+                    data: [
+                        {type: 'histogram', y: [1, 2]},
+                        {type: 'histogram', y: [2, 3]},
+
+                        {type: 'histogram', y: [1, 2], xaxis: 'x2'},
+                        {type: 'histogram', y: [3, 4], xaxis: 'x2'},
+
+                        {type: 'histogram', y: [3, 4]},
+                        {type: 'histogram', y: [2, 4], xaxis: 'x2'},
+
+                        {type: 'histogram', x: [1, 3]},
+                        {uid: 'solo', type: 'histogram', x: [2, 2], yaxis: 'y2'},
+                        {type: 'histogram', x: [2, 3]}
+                    ],
+                    layout: {barmode: mode}
+                };
+                supplyAllDefaults(gd);
+                _assert('under barmode:' + mode, [
+                    ['xyy', [0, 1, 4]],
+                    ['x2yy', [2, 3, 5]],
+                    ['xyx', [6, 8]],
+                    ['solo__x', [7]]
+                ]);
+            });
+        });
+
+        it('should group traces on matching axes and w/ same orientation', function() {
+            var barModes = ['group', 'stack'];
+
+            barModes.forEach(function(mode) {
+                gd = {
+                    data: [
+                        {type: 'histogram', y: [1, 2]},
+                        {type: 'histogram', y: [2, 3], xaxis: 'x2'},
+                        {type: 'histogram', x: [1, 2], yaxis: 'y2'},
+                        {type: 'histogram', x: [2, 3], yaxis: 'y2'},
+                    ],
+                    layout: {
+                        barmode: mode,
+                        xaxis2: {matches: 'x'},
+                        yaxis2: {matches: 'x'}
+                    }
+                };
+                supplyAllDefaults(gd);
+                _assert('under barmode:' + mode, [
+                    ['g0yy', [0, 1]],
+                    ['g0g0x', [2, 3]]
+                ]);
+            });
+        });
+
+        it('should not group traces by default under barmode:overlay ', function() {
+            gd = {
+                data: [
+                    {uid: 'a', type: 'histogram', y: [1, 2]},
+                    {uid: 'b', type: 'histogram', y: [2, 3]},
+
+                    {uid: 'c', type: 'histogram', y: [1, 2], xaxis: 'x2'},
+                    {uid: 'd', type: 'histogram', y: [3, 4], xaxis: 'x2'},
+
+                    {uid: 'e', type: 'histogram', y: [3, 1]},
+                    {uid: 'f', type: 'histogram', y: [2, 1], xaxis: 'x2'},
+
+                    {uid: 'g', type: 'histogram', x: [1, 2]},
+                    {uid: 'h', type: 'histogram', x: [2, 3], yaxis: 'y2'},
+                    {uid: 'i', type: 'histogram', x: [2, 4]}
+                ],
+                layout: {barmode: 'overlay'}
+            };
+            supplyAllDefaults(gd);
+            _assert('', [
+                ['a__y', [0]], ['b__y', [1]], ['c__y', [2]],
+                ['d__y', [3]], ['e__y', [4]], ['f__y', [5]],
+                ['g__x', [6]], ['h__x', [7]], ['i__x', [8]]
+            ]);
+        });
+
+        it('should not group histogram2d* traces by default', function() {
+            gd = {
+                data: [
+                    {uid: 'a', type: 'histogram2d', x: [1, 2], y: [1, 3]},
+                    {uid: 'b', type: 'histogram2d', x: [2, 3], y: [2, 3]},
+                    {uid: 'c', type: 'histogram2dcontour', x: [1, 3], y: [1, 2], xaxis: 'x2', yaxis: 'y2'},
+                    {uid: 'd', type: 'histogram2dcontour', x: [2, 3], y: [2, 4], xaxis: 'x2', yaxis: 'y2'},
+                ],
+                layout: {}
+            };
+            supplyAllDefaults(gd);
+            _assert('N.B. one bingroup for x, one bingroup for y for each trace', [
+                ['a__x', [0]], ['a__y', [0]],
+                ['b__x', [1]], ['b__y', [1]],
+                ['c__x', [2]], ['c__y', [2]],
+                ['d__x', [3]], ['d__y', [3]]
+            ]);
+        });
+
+        it('should be able to group traces by *bingroup* under barmode:overlay ', function() {
+            gd = {
+                data: [
+                    {bingroup: '1', type: 'histogram', y: [1, 2]},
+                    {uid: 'b', type: 'histogram', y: [2, 3]},
+                    {bingroup: '2', type: 'histogram', y: [1, 4], xaxis: 'x2'},
+                    {bingroup: '1', type: 'histogram', y: [3, 4], xaxis: 'x2'},
+                    {bingroup: '2', type: 'histogram', y: [3, 4]},
+                    {uid: 'f', type: 'histogram', y: [2, 4], xaxis: 'x2'},
+                    {bingroup: '3', type: 'histogram', x: [1, 5]},
+                    {bingroup: '1', type: 'histogram', x: [2, 5], yaxis: 'y2'},
+                    {bingroup: '3', type: 'histogram', x: [2, 5]}
+                ],
+                layout: {barmode: 'overlay'}
+            };
+            supplyAllDefaults(gd);
+            _assert('', [
+                ['1', [0, 3, 7]],
+                ['2', [2, 4]],
+                ['3', [6, 8]],
+                ['b__y', [1]],
+                ['f__y', [5]]
+            ]);
+        });
+
+        it('should be able to group histogram2d traces by *bingroup*', function() {
+            gd = {
+                data: [
+                    {uid: 'a', type: 'histogram2d', x: [1, 2], y: [1, 2]},
+                    {uid: 'b', type: 'histogram2d', x: [1, 3], y: [1, 1]},
+                    {bingroup: '1', type: 'histogram2d', x: [1, 2], y: [1, 2]},
+                    {bingroup: '1', type: 'histogram2d', x: [1, 2], y: [1, 2]},
+                    {uid: 'e', type: 'histogram2d', x: [1, 3], y: [1, 3]},
+                ]
+            };
+            supplyAllDefaults(gd);
+            _assert('', [
+                ['a__x', [0]], ['a__y', [0]],
+                ['b__x', [1]], ['b__y', [1]],
+                ['1__x', [2, 3]], ['1__y', [2, 3]],
+                ['e__x', [4]], ['e__y', [4]]
+            ]);
+        });
+
+        it('should be able to group histogram and histogram2d* traces together', function() {
+            gd = {
+                data: [
+                    {bingroup: '1', type: 'histogram', y: [1, 3]},
+                    {bingroup: '1', type: 'histogram', y: [3, 3], xaxis: 'x2'},
+                    {bingroup: '1', type: 'histogram2d', x: [1, 3], y: [3, 2]},
+                    {bingroup: '1', type: 'histogram2dcontour', x: [1, 2], y: [3, 4]}
+                ],
+                layout: {barmode: 'overlay'}
+            };
+            supplyAllDefaults(gd);
+            _assert('N.B. histogram2d* indices show up twice, once for x-bins, once for y-bins', [
+                ['1', [0, 1]],
+                ['1__x', [2, 3]],
+                ['1__y', [2, 3]]
+            ]);
+        });
+
+        it('should not group traces across axes of different types', function() {
+            gd = {
+                data: [
+                    {uid: 'a', bingroup: '1', type: 'histogram', y: [1, 2]},
+                    {uid: 'b', bingroup: '1', type: 'histogram', y: ['cats', 'dogs'], yaxis: 'y2'},
+                ],
+                layout: {barmode: 'overlay'}
+            };
+            supplyAllDefaults(gd);
+
+            _assert('', [
+                ['1', [0]],
+                ['b__y', [1]]
+            ],
+                'Attempted to group the bins of trace 1 set on a type:category axis ' +
+                'with bins on type:linear axis.'
+            );
+        });
+
+        it('should force traces that "have to match" to have same bingroup (stack case)', function() {
+            gd = {
+                data: [
+                    // these 3 traces "have to match"
+                    {bingroup: '1', type: 'histogram', y: [1, 2]},
+                    {type: 'histogram', y: [1, 3]},
+                    {bingroup: '2', type: 'histogram', y: [2, 3]}
+                ],
+                layout: {barmode: 'stack'}
+            };
+            supplyAllDefaults(gd);
+
+            _assert('used first valid bingroup to identify bin opts', [
+                ['1', [0, 1, 2]]
+            ],
+                'Trace 2 must match within bingroup 1.' +
+                ' Ignoring its bingroup: 2 setting.'
+            );
+        });
+
+        it('traces that "have to match" can be grouped with traces that do not have to match using *bingroup*', function() {
+            gd = {
+                data: [
+                    // these 2 traces "have to match"
+                    {bingroup: '1', type: 'histogram', y: [1, 3]},
+                    {type: 'histogram', y: [1, 3]},
+                    // this one does not have to match with the above two,
+                    // (it's on another subplot), but it can be grouped
+                    {bingroup: '1', type: 'histogram', y: [2, 3], xaxis: 'x2', yaxis: 'y2'},
+                    // this one does not have to match either
+                    // (it's a histogram2d* traces), but it can be grouped
+                    {xbingroup: '1', ybingroup: '1', type: 'histogram2d', x: [3, 4], y: [3, 4]}
+                ],
+                layout: {}
+            };
+            supplyAllDefaults(gd);
+
+            _assert('', [
+                // N.B ordering in *binOpts.traces* does not matter
+                ['1', [0, 1, 3, 3, 2]]
+            ]);
+        });
+
+        it('should not group traces across different calendars', function() {
+            gd = {
+                data: [
+                    {uid: 'a', bingroup: '1', type: 'histogram', x: ['2000-01-01']},
+                    {uid: 'b', bingroup: '1', type: 'histogram', x: ['2000-01-01'], xcalendar: 'julian'},
+                ],
+                layout: {barmode: 'overlay'}
+            };
+            supplyAllDefaults(gd);
+
+            _assert('', [
+                ['1', [0]],
+                ['b__x', [1]]
+            ],
+                'Attempted to group the bins of trace 1 set with a julian calendar ' +
+                'with bins on a gregorian calendar'
+            );
+        });
+
+        it('should attempt to group traces when the *calendars* module is not registered', function() {
+            var original = Registry.getComponentMethod;
+            var cnt = 0;
+
+            spyOn(Registry, 'getComponentMethod').and.callFake(function() {
+                if(arguments[0] === 'calendars') {
+                    cnt++;
+                    return Lib.noop;
+                } else {
+                    return original.call(arguments);
+                }
+            });
+
+            gd = {
+                data: [
+                    {uid: 'a', type: 'histogram', x: [1, 3]},
+                    {uid: 'b', type: 'histogram', x: [1, 20]}
+                ],
+                layout: {barmode: 'stack'}
+            };
+            supplyAllDefaults(gd);
+
+            _assert('', [
+                ['xyx', [0, 1]]
+            ]);
+
+            expect(cnt).toBe(3, '# of Registry.getComponentMethod calls for *calendars* methods');
+        });
+
+        it('should force traces that "have to match" to have same bingroup (alignmentgroup case)', function() {
+            var traces;
+
+            function initTraces() {
+                traces = [{}, {}, {yaxis: 'y2'}, {yaxis: 'y2'}];
+                traces.forEach(function(t) {
+                    t.type = 'histogram';
+                    t.x = [1, 2];
+                });
+            }
+
+            function _supply() {
+                gd = {
+                    data: traces,
+                    layout: {
+                        barmode: 'group',
+                        grid: {rows: 2, columns: 1}
+                    }
+                };
+                supplyAllDefaults(gd);
+            }
+
+            initTraces();
+            _supply(gd);
+            _assert('base (separate subplot w/o alignmentgroup)', [
+                ['xyx', [0, 1]],
+                ['xy2x', [2, 3]]
+            ]);
+
+            initTraces();
+            [
+                {alignmentgroup: 'a', offsetgroup: '-'},
+                {alignmentgroup: 'a', offsetgroup: '--'},
+                {alignmentgroup: 'a', offsetgroup: '-'},
+                {alignmentgroup: 'a', offsetgroup: '--'}
+            ].forEach(function(patch, i) {
+                Lib.extendFlat(traces[i], patch);
+            });
+            _supply(gd);
+            _assert('all in same alignmentgroup, must match', [
+                ['xv', [0, 1, 2, 3]]
+            ]);
+        });
+    });
 
     describe('calc', function() {
-        function _calc(opts, extraTraces, layout) {
+        function _calc(opts, extraTraces, layout, prependExtras) {
             var base = { type: 'histogram' };
             var trace = Lib.extendFlat({}, base, opts);
-            var gd = { data: [trace] };
+            var gd = { data: prependExtras ? [] : [trace] };
 
             if(layout) gd.layout = layout;
 
@@ -200,8 +567,16 @@ describe('Test histogram', function() {
                 });
             }
 
+            if(prependExtras) gd.data.push(trace);
+
             supplyAllDefaults(gd);
-            var fullTrace = gd._fullData[0];
+            var fullTrace = gd._fullData[prependExtras ? gd._fullData.length - 1 : 0];
+
+            if(prependExtras) {
+                for(var i = 0; i < gd._fullData.length - 1; i++) {
+                    calc(gd, gd._fullData[i]);
+                }
+            }
 
             var out = calc(gd, fullTrace);
             delete out[0].trace;
@@ -210,6 +585,7 @@ describe('Test histogram', function() {
             // even though -0 === 0
             out.forEach(function(cdi) {
                 for(var key in cdi) {
+                    if(typeof cdi[key] === 'function') cdi[key] = cdi[key]();
                     if(cdi[key] === 0) cdi[key] = 0;
                 }
             });
@@ -286,10 +662,10 @@ describe('Test histogram', function() {
                 nbinsx: 4
             });
 
-            var x0 = 0,
-                x1 = x0 + oneDay,
-                x2 = x1 + oneDay,
-                x3 = x2 + oneDay;
+            var x0 = 0;
+            var x1 = x0 + oneDay;
+            var x2 = x1 + oneDay;
+            var x3 = x2 + oneDay;
 
             expect(out).toEqual([
                 {i: 0, b: 0, p: x0, s: 2, pts: [0, 1], ph0: x0, ph1: x0},
@@ -346,6 +722,14 @@ describe('Test histogram', function() {
 
             expect(out).toEqual([
                 {i: 0, b: 0, p: 17, s: 2, width1: 2, pts: [2, 4], ph0: 17, ph1: 17}
+            ]);
+        });
+
+        it('handles multiple single-valued overlaid autobinned traces', function() {
+            var out = _calc({x: [1]}, [{x: [1]}], {barmode: 'overlay'}, true);
+
+            expect(out).toEqual([
+                {p: 1, s: 1, b: 0, pts: [0], ph1: 1, ph0: 1, width1: 1, i: 0}
             ]);
         });
 
@@ -408,8 +792,62 @@ describe('Test histogram', function() {
             ]);
         });
 
-        function calcPositions(opts, extraTraces) {
-            return _calc(opts, extraTraces).map(function(v) { return v.p; });
+        // from issue #3881
+        it('handle single-value edge case 1', function() {
+            var gd = {
+                data: [
+                    {uid: 'a', type: 'histogram', y: [1]},
+                    {uid: 'b', type: 'histogram', y: [2]},
+
+                    {uid: 'c', type: 'histogram', y: [1], xaxis: 'x2'},
+                    {uid: 'd', type: 'histogram', y: [3], xaxis: 'x2'},
+
+                    {uid: 'e', type: 'histogram', y: [3]},
+                    {uid: 'f', type: 'histogram', y: [2], xaxis: 'x2'},
+
+                    {uid: 'g', type: 'histogram', x: [1]},
+                    {uid: 'h', type: 'histogram', x: [2], yaxis: 'y2'},
+                    {uid: 'i', type: 'histogram', x: [2]}
+                ],
+                layout: {barmode: 'overlay'}
+            };
+            supplyAllDefaults(gd);
+            Plots.doCalcdata(gd);
+
+            var allBinOpts = gd._fullLayout._histogramBinOpts;
+            var groups = Object.keys(allBinOpts);
+            expect(groups).toEqual(
+                ['a__y', 'b__y', 'c__y', 'd__y', 'e__y', 'f__y', 'g__x', 'h__x', 'i__x'],
+                'bin groups'
+            );
+        });
+
+        // from issue #3881
+        it('handle single-value edge case 2', function() {
+            var gd = {
+                data: [
+                    {bingroup: '1', type: 'histogram', y: [1]},
+                    {uid: 'b', type: 'histogram', y: [2]},
+                    {bingroup: '2', type: 'histogram', y: [1], xaxis: 'x2'},
+                    {bingroup: '1', type: 'histogram', y: [3], xaxis: 'x2'},
+                    {bingroup: '2', type: 'histogram', y: [3]},
+                    {uid: 'f', type: 'histogram', y: [2], xaxis: 'x2'},
+                    {bingroup: '3', type: 'histogram', x: [1]},
+                    {bingroup: '1', type: 'histogram', x: [2], yaxis: 'y2'},
+                    {bingroup: '3', type: 'histogram', x: [2]}
+                ],
+                layout: {barmode: 'overlay'}
+            };
+            supplyAllDefaults(gd);
+            Plots.doCalcdata(gd);
+
+            var allBinOpts = gd._fullLayout._histogramBinOpts;
+            var groups = Object.keys(allBinOpts);
+            expect(groups).toEqual(['1', '2', '3', 'b__y', 'f__y'], 'bin groups');
+        });
+
+        function calcPositions(opts, extraTraces, prepend) {
+            return _calc(opts, extraTraces, {}, prepend).map(function(v) { return v.p; });
         }
 
         it('harmonizes autobins when all traces are autobinned', function() {
@@ -420,25 +858,28 @@ describe('Test histogram', function() {
 
             expect(calcPositions(trace2)).toBeCloseToArray([5.5, 6.5], 5);
 
-            expect(calcPositions(trace1, [trace2])).toEqual([1, 2, 3, 4]);
-            // huh, turns out even this one is an example of "unexpected bin positions"
-            // (see another example below) - in this case it's because trace1 gets
-            // autoshifted to keep integers off the bin edges, whereas trace2 doesn't
-            // because there are as many integers as half-integers.
-            // In this case though, it's unexpected but arguably better than the
-            // "expected" result.
-            expect(calcPositions(trace2, [trace1])).toEqual([5, 6, 7]);
+            expect(calcPositions(trace1, [trace2])).toEqual([1, 3, 5]);
+            expect(calcPositions(trace2, [trace1])).toEqual([5, 7]);
         });
 
-        it('can sometimes give unexpected bin positions', function() {
-            // documenting an edge case that might not be desirable but for now
-            // we've decided to ignore: a larger bin sets the bin start, but then it
-            // doesn't quite make sense with the smaller bin we end up with
-            // we *could* fix this by ensuring that the bin start is based on the
-            // same bin spec that gave the minimum bin size, but incremented down to
-            // include the minimum start... but that would have awkward edge cases
-            // involving month bins so for now we're ignoring it.
+        it('harmonizes start/end value of bins when all traces are autobinned', function(done) {
+            var mock = require('@mocks/histogram_overlay-bingroup');
+            var gd = createGraphDiv();
+            Plotly.newPlot(gd, mock)
+                .then(function(gd) {
+                    destroyGraphDiv();
+                    var cd0 = gd.calcdata[0];
+                    var cd1 = gd.calcdata[1];
+                    for(var i = 0; i < cd0.length && i < cd1.length; i++) {
+                        expect(cd0[i].ph0).toBe(cd1[i].ph0);
+                        expect(cd0[i].ph1).toBe(cd1[i].ph1);
+                    }
+                })
+                .catch(failTest)
+                .then(done);
+        });
 
+        it('autobins all data as one', function() {
             // all integers, so all autobins should get shifted to start 0.5 lower
             // than they otherwise would.
             var trace1 = {x: [1, 2, 3, 4]};
@@ -450,19 +891,21 @@ describe('Test histogram', function() {
             // {size: 5, start: -5.5}: -5..-1, 0..4, 5..9
             expect(calcPositions(trace2)).toEqual([-3, 2, 7]);
 
-            // unexpected behavior when we put these together,
-            // because 2 and 5 are mutually prime. Normally you could never get
-            // groupings 1&2, 3&4... you'd always get 0&1, 2&3...
-            expect(calcPositions(trace1, [trace2])).toBeCloseToArray([1.5, 3.5], 5);
-            expect(calcPositions(trace2, [trace1])).toBeCloseToArray([
-                -2.5, -0.5, 1.5, 3.5, 5.5, 7.5
-            ], 5);
+            // together bins match the wider trace
+            expect(calcPositions(trace1, [trace2])).toBeCloseToArray([2], 5);
+            expect(calcPositions(trace2, [trace1])).toEqual([-3, 2, 7]);
+
+            // unless we add enough points to shrink the bins
+            expect(calcPositions(trace2, [trace1, trace1, trace1, trace1]))
+                .toBeCloseToArray([-1.5, 0.5, 2.5, 4.5, 6.5], 5);
         });
 
         it('harmonizes autobins with smaller manual bins', function() {
             var trace1 = {x: [1, 2, 3, 4]};
             var trace2 = {x: [5, 6, 7, 8], xbins: {start: 4.3, end: 7.1, size: 0.4}};
 
+            // size is preserved, and start is shifted to be compatible with trace2
+            // (but we can't just use start from trace2 or it would cut off all our data!)
             expect(calcPositions(trace1, [trace2])).toBeCloseToArray([
                 0.9, 1.3, 1.7, 2.1, 2.5, 2.9, 3.3, 3.7, 4.1
             ], 5);
@@ -470,11 +913,64 @@ describe('Test histogram', function() {
 
         it('harmonizes autobins with larger manual bins', function() {
             var trace1 = {x: [1, 2, 3, 4]};
-            var trace2 = {x: [5, 6, 7, 8], xbins: {start: 4.3, end: 15, size: 7}};
+            var trace2 = {x: [5, 6, 7, 8], xbins: {start: 3.7, end: 15, size: 7}};
 
             expect(calcPositions(trace1, [trace2])).toBeCloseToArray([
-                0.8, 2.55, 4.3
+                0.2, 7.2
             ], 5);
+        });
+
+        it('ignores incompatible sizes, and harmonizes start values', function() {
+            var trace1 = {x: [1, 2, 3, 4], xbins: {start: 1.7, end: 3.5, size: 0.6}};
+            var trace2 = {x: [5, 6, 7, 8], xbins: {start: 4.3, end: 7.1, size: 0.4}};
+
+            // trace1 is first: all its settings are used directly,
+            // and trace2 uses its size and shifts start to harmonize with it.
+            expect(calcPositions(trace1, [trace2])).toBeCloseToArray([
+                2.0, 2.6, 3.2
+            ], 5);
+            expect(calcPositions(trace2, [trace1], true)).toBeCloseToArray([
+                5.0, 5.6, 6.2, 6.8
+            ], 5);
+
+            // switch the order: trace2 values win
+            expect(calcPositions(trace2, [trace1])).toBeCloseToArray([
+                4.9, 5.3, 5.7, 6.1, 6.5, 6.9
+            ], 5);
+            expect(calcPositions(trace1, [trace2], true)).toBeCloseToArray([
+                2.1, 2.5, 2.9
+            ], 5);
+        });
+
+        it('can take size and start from different traces in any order', function() {
+            var trace1 = {x: [1, 2, 3, 4], xbins: {size: 0.6}};
+            var trace2 = {x: [5, 6, 7, 8], xbins: {start: 4.8}};
+
+            [true, false].forEach(function(prepend) {
+                expect(calcPositions(trace1, [trace2], prepend)).toBeCloseToArray([
+                    0.9, 1.5, 2.1, 2.7, 3.3, 3.9
+                ], 5);
+
+                expect(calcPositions(trace2, [trace1], prepend)).toBeCloseToArray([
+                    5.1, 5.7, 6.3, 6.9, 7.5, 8.1
+                ], 5);
+            });
+        });
+
+        it('works with only a size specified', function() {
+            // this used to not just lose the size, but actually errored out.
+            var trace1 = {x: [1, 2, 3, 4], xbins: {size: 0.8}};
+            var trace2 = {x: [5, 6, 7, 8]};
+
+            [true, false].forEach(function(prepend) {
+                expect(calcPositions(trace1, [trace2], prepend)).toBeCloseToArray([
+                    1, 1.8, 2.6, 3.4, 4.2
+                ], 5);
+
+                expect(calcPositions(trace2, [trace1], prepend)).toBeCloseToArray([
+                    5, 5.8, 6.6, 7.4, 8.2
+                ], 5);
+            });
         });
 
         it('ignores traces on other axes', function() {
@@ -483,7 +979,17 @@ describe('Test histogram', function() {
             var trace3 = {x: [1, 1.1, 1.2, 1.3], xaxis: 'x2'};
             var trace4 = {x: [1, 1.2, 1.4, 1.6], yaxis: 'y2'};
 
-            expect(calcPositions(trace1, [trace2, trace3, trace4])).toEqual([1, 2, 3, 4]);
+            expect(calcPositions(trace1, [trace2, trace3, trace4])).toEqual([1, 3, 5]);
+            expect(calcPositions(trace3)).toBeCloseToArray([1.1, 1.3], 5);
+        });
+
+        it('can handle TypedArrays', function() {
+            var trace1 = {x: new Float32Array([1, 2, 3, 4])};
+            var trace2 = {x: new Float32Array([5, 5.5, 6, 6.5])};
+            var trace3 = {x: new Float64Array([1, 1.1, 1.2, 1.3]), xaxis: 'x2'};
+            var trace4 = {x: new Float64Array([1, 1.2, 1.4, 1.6]), yaxis: 'y2'};
+
+            expect(calcPositions(trace1, [trace2, trace3, trace4])).toEqual([1, 3, 5]);
             expect(calcPositions(trace3)).toBeCloseToArray([1.1, 1.3], 5);
         });
 
@@ -567,8 +1073,8 @@ describe('Test histogram', function() {
             ];
 
             CDFs.forEach(function(CDF) {
-                var p = CDF.p,
-                    s = CDF.s;
+                var p = CDF.p;
+                var s = CDF.s;
 
                 it('handles direction=' + CDF.direction + ', currentbin=' + CDF.currentbin +
                         ', histnorm=' + CDF.histnorm + ', histfunc=' + CDF.histfunc, function() {
@@ -592,7 +1098,6 @@ describe('Test histogram', function() {
                 });
             });
         });
-
     });
 
     describe('plot / restyle', function() {
@@ -610,43 +1115,59 @@ describe('Test histogram', function() {
             var data1 = [1.5, 2, 2, 3, 3, 3, 4, 4, 5];
             Plotly.plot(gd, [{x: data1, type: 'histogram' }]);
             expect(gd._fullData[0].xbins).toEqual({start: 1, end: 6, size: 1});
-            expect(gd._fullData[0].autobinx).toBe(true);
+            expect(gd._fullData[0].nbinsx).toBe(0);
 
             // same range but fewer samples changes autobin size
             var data2 = [1.5, 5];
             Plotly.restyle(gd, 'x', [data2]);
             expect(gd._fullData[0].xbins).toEqual({start: -2.5, end: 7.5, size: 5});
-            expect(gd._fullData[0].autobinx).toBe(true);
+            expect(gd._fullData[0].nbinsx).toBe(0);
 
             // different range
             var data3 = [10, 20.2, 20, 30, 30, 30, 40, 40, 50];
             Plotly.restyle(gd, 'x', [data3]);
             expect(gd._fullData[0].xbins).toEqual({start: 5, end: 55, size: 10});
-            expect(gd._fullData[0].autobinx).toBe(true);
+            expect(gd._fullData[0].nbinsx).toBe(0);
 
-            // explicit change to a bin attribute clears autobin
+            // explicit change to start does not update anything else
             Plotly.restyle(gd, 'xbins.start', 3);
             expect(gd._fullData[0].xbins).toEqual({start: 3, end: 55, size: 10});
-            expect(gd._fullData[0].autobinx).toBe(false);
+            expect(gd._fullData[0].nbinsx).toBe(0);
 
             // restart autobin
             Plotly.restyle(gd, 'autobinx', true);
             expect(gd._fullData[0].xbins).toEqual({start: 5, end: 55, size: 10});
-            expect(gd._fullData[0].autobinx).toBe(true);
+            expect(gd._fullData[0].nbinsx).toBe(0);
+
+            // explicit end does not update anything else
+            Plotly.restyle(gd, 'xbins.end', 43);
+            expect(gd._fullData[0].xbins).toEqual({start: 5, end: 43, size: 10});
+            expect(gd._fullData[0].nbinsx).toBe(0);
+
+            // nbins would update all three, but explicit end is honored
+            Plotly.restyle(gd, 'nbinsx', 3);
+            expect(gd._fullData[0].xbins).toEqual({start: 0, end: 43, size: 20});
+            expect(gd._fullData[0].nbinsx).toBe(3);
+
+            // explicit size updates auto start *and* end, and moots nbins
+            Plotly.restyle(gd, {'xbins.end': null, 'xbins.size': 2});
+            expect(gd._fullData[0].xbins).toEqual({start: 9, end: 51, size: 2});
+            expect(gd._fullData[0].nbinsx).toBeUndefined();
         });
 
         it('respects explicit autobin: false as a one-time autobin', function() {
             var data1 = [1.5, 2, 2, 3, 3, 3, 4, 4, 5];
             Plotly.plot(gd, [{x: data1, type: 'histogram', autobinx: false }]);
             // we have no bins, so even though autobin is false we have to autobin once
+            // but for backward compat. calc pushes these bins back into gd.data
+            // even though there's no `autobinx` attribute anymore.
             expect(gd._fullData[0].xbins).toEqual({start: 1, end: 6, size: 1});
-            expect(gd._fullData[0].autobinx).toBe(false);
+            expect(gd.data[0].xbins).toEqual({start: 1, end: 6, size: 1});
 
             // since autobin is false, this will not change the bins
             var data2 = [1.5, 5];
             Plotly.restyle(gd, 'x', [data2]);
             expect(gd._fullData[0].xbins).toEqual({start: 1, end: 6, size: 1});
-            expect(gd._fullData[0].autobinx).toBe(false);
         });
 
         it('allows changing axis type with new x data', function() {
@@ -678,7 +1199,7 @@ describe('Test histogram', function() {
                 expect(gd._fullLayout.height).toBe(400);
 
                 gd._fullData.forEach(function(trace, i) {
-                    expect(trace._autoBinFinished).toBeUndefined(i);
+                    expect(trace._xautoBinFinished).toBeUndefined(i);
                 });
 
                 return Plotly.relayout(gd, {width: 500, height: 500});
@@ -688,7 +1209,7 @@ describe('Test histogram', function() {
                 expect(gd._fullLayout.height).toBe(500);
 
                 gd._fullData.forEach(function(trace, i) {
-                    expect(trace._autoBinFinished).toBeUndefined(i);
+                    expect(trace._xautoBinFinished).toBeUndefined(i);
                 });
             })
             .catch(failTest)
@@ -719,6 +1240,8 @@ describe('Test histogram', function() {
                 x: [1, 2, 3], type: 'histogram'
             }, {
                 x: [1, 2, 3], type: 'histogram'
+            }, {
+                type: 'histogram'
             }])
             .then(function() {
                 assertTraceCount(3);
@@ -738,6 +1261,54 @@ describe('Test histogram', function() {
             })
             .then(function() {
                 assertTraceCount(3);
+            })
+            .catch(failTest)
+            .then(done);
+        });
+
+        it('autobins all histograms (on the same subplot) together except `visible: false`', function(done) {
+            function _assertBinCenters(expectedCenters) {
+                var centers = gd.calcdata.map(function(cd) {
+                    return cd.map(function(cdi) { return cdi.p; });
+                });
+
+                expect(centers).toBeCloseTo2DArray(expectedCenters);
+            }
+
+            var hidden = [undefined];
+
+            Plotly.newPlot(gd, [
+                {type: 'histogram', x: [1]},
+                {type: 'histogram', x: [10, 10.1, 10.2, 10.3]},
+                {type: 'histogram', x: [20, 20, 20, 20, 20, 20, 20, 20, 20, 21]},
+                {type: 'histogram'}
+            ])
+            .then(function() {
+                _assertBinCenters([[0], [10], [20], hidden]);
+                return Plotly.restyle(gd, 'visible', 'legendonly', [1, 2]);
+            })
+            .then(function() {
+                _assertBinCenters([[0], hidden, hidden, hidden]);
+                return Plotly.restyle(gd, 'visible', false, [1, 2]);
+            })
+            .then(function() {
+                _assertBinCenters([[1], hidden, hidden, hidden]);
+                return Plotly.restyle(gd, 'visible', [false, false, true]);
+            })
+            .then(function() {
+                _assertBinCenters([hidden, hidden, [20, 21], hidden]);
+                return Plotly.restyle(gd, 'visible', [false, true, false]);
+            })
+            .then(function() {
+                _assertBinCenters([hidden, [10.1, 10.3], hidden, hidden]);
+                // only one trace is visible, despite traces being grouped
+                expect(gd._fullLayout.bargap).toBe(0);
+                return Plotly.restyle(gd, 'visible', ['legendonly', true, 'legendonly']);
+            })
+            .then(function() {
+                _assertBinCenters([hidden, [10], hidden, hidden]);
+                // legendonly traces still flip us back to gapped
+                expect(gd._fullLayout.bargap).toBe(0.2);
             })
             .catch(failTest)
             .then(done);
@@ -916,11 +1487,11 @@ describe('getBinSpanLabelRound', function() {
         var cn8i = Lib.dateTime2ms('1995-08i-01', cn);
         var cn9 = Lib.dateTime2ms('1995-09-01', cn);
 
-        var cn1_00 = Lib.dateTime2ms('2000-01-01', cn);
-        var cn1_01 = Lib.dateTime2ms('2001-01-01', cn);
-        var cn1_02 = Lib.dateTime2ms('2002-01-01', cn);
-        var cn1_10 = Lib.dateTime2ms('2010-01-01', cn);
-        var cn1_20 = Lib.dateTime2ms('2020-01-01', cn);
+        var cn1x00 = Lib.dateTime2ms('2000-01-01', cn);
+        var cn1x01 = Lib.dateTime2ms('2001-01-01', cn);
+        var cn1x02 = Lib.dateTime2ms('2002-01-01', cn);
+        var cn1x10 = Lib.dateTime2ms('2010-01-01', cn);
+        var cn1x20 = Lib.dateTime2ms('2020-01-01', cn);
 
         _test(100, 2000, [cn8i, cn8i + 10000, cn8i + 20000], cn,
             [cn8i, cn8i + 9000, cn8i + 10000, cn8i + 19000]);
@@ -932,19 +1503,24 @@ describe('getBinSpanLabelRound', function() {
         _test(12 * hr, 12 * hr, [cn8 - 12 * hr, cn8i - 12 * hr, cn9 - 12 * hr], cn,
             [cn8, cn8i - day, cn8i, cn9 - day]);
 
-        _test(0, 28 * day, [cn1_00, cn1_01, cn1_02], cn,
-            [cn1_00, Lib.dateTime2ms('2000-12-01', cn), cn1_01, Lib.dateTime2ms('2001-12-01', cn)]);
-        _test(14 * day, 14 * day, [cn1_00 - 14 * day, cn1_01 - 14 * day, cn1_02 - 14 * day], cn,
-            [cn1_00, Lib.dateTime2ms('2000-12-01', cn), cn1_01, Lib.dateTime2ms('2001-12-01', cn)]);
+        _test(0, 28 * day, [cn1x00, cn1x01, cn1x02], cn,
+            [cn1x00, Lib.dateTime2ms('2000-12-01', cn), cn1x01, Lib.dateTime2ms('2001-12-01', cn)]);
+        _test(14 * day, 14 * day, [cn1x00 - 14 * day, cn1x01 - 14 * day, cn1x02 - 14 * day], cn,
+            [cn1x00, Lib.dateTime2ms('2000-12-01', cn), cn1x01, Lib.dateTime2ms('2001-12-01', cn)]);
 
-        _test(0, 353 * day, [cn1_00, cn1_10, cn1_20], cn,
-            [cn1_00, Lib.dateTime2ms('2009-01-01', cn), cn1_10, Lib.dateTime2ms('2019-01-01', cn)]);
+        _test(0, 353 * day, [cn1x00, cn1x10, cn1x20], cn,
+            [cn1x00, Lib.dateTime2ms('2009-01-01', cn), cn1x10, Lib.dateTime2ms('2019-01-01', cn)]);
         // occasionally we give extra precision for world dates (month when it should be year
         // or day when it should be month). That's better than doing the opposite... not going
         // to fix now, too many edge cases, better not to complicate the logic for them all.
-        _test(176 * day, 177 * day, [cn1_00 - 176 * day, cn1_10 - 176 * day, cn1_20 - 176 * day], cn, [
+        _test(176 * day, 177 * day, [cn1x00 - 176 * day, cn1x10 - 176 * day, cn1x20 - 176 * day], cn, [
             Lib.dateTime2ms('1999-08-01', cn), Lib.dateTime2ms('2009-07-01', cn),
             Lib.dateTime2ms('2009-08-01', cn), Lib.dateTime2ms('2019-07-01', cn)
         ]);
     });
+});
+
+describe('event data', function() {
+    var mock = require('@mocks/hist_category');
+    checkEventData(mock, 100, 200, constants.eventDataKeys);
 });

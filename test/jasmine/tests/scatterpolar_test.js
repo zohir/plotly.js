@@ -9,6 +9,7 @@ var mouseEvent = require('../assets/mouse_event');
 
 var customAssertions = require('../assets/custom_assertions');
 var assertHoverLabelContent = customAssertions.assertHoverLabelContent;
+var checkTextTemplate = require('../assets/check_texttemplate');
 
 describe('Test scatterpolar trace defaults:', function() {
     var traceOut;
@@ -110,6 +111,23 @@ describe('Test scatterpolar hover:', function() {
         nums: 'r: 4.022892\nθ: 128.342°',
         name: 'Trial 3'
     }, {
+        desc: 'with hovertemplate',
+        patch: function(fig) {
+            fig.data[2].hovertemplate = 'template %{r} %{theta}';
+            return fig;
+        },
+        nums: 'template 4.022892 128.342°',
+        name: 'Trial 3'
+    }, {
+        desc: 'with hovertemplate and empty trace name',
+        patch: function(fig) {
+            fig.data[2].hovertemplate = 'template %{r} %{theta}';
+            fig.data[2].name = '';
+            return fig;
+        },
+        nums: 'template 4.022892 128.342°',
+        name: ''
+    }, {
         desc: '(no labels - out of sector)',
         patch: function(fig) {
             fig.layout.polar.sector = [15, 75];
@@ -158,10 +176,57 @@ describe('Test scatterpolar hover:', function() {
         },
         nums: 'r: 1.108937\nθ: 115.4969°',
         name: 'Trial 3'
+    }, {
+        desc: 'with custom text scalar',
+        patch: function(fig) {
+            fig.data.forEach(function(t) { t.text = 'a'; });
+            return fig;
+        },
+        nums: 'r: 4.022892\nθ: 128.342°\na',
+        name: 'Trial 3'
+    }, {
+        desc: 'with custom text array',
+        patch: function(fig) {
+            fig.data.forEach(function(t) { t.text = t.r.map(String); });
+            return fig;
+        },
+        nums: 'r: 4.022892\nθ: 128.342°\n4.02289202968',
+        name: 'Trial 3'
     }]
     .forEach(function(specs) {
         it('should generate correct hover labels ' + specs.desc, function(done) {
             run(specs).catch(failTest).then(done);
         });
     });
+});
+
+describe('Test scatterpolar texttemplate:', function() {
+    checkTextTemplate([{
+        'type': 'scatterpolar',
+        'mode': 'markers+text',
+        'text': ['A', 'B', 'C'],
+        'textposition': 'top center',
+        'r': [1, 0.5, 1],
+        'theta': [0, 90, 180],
+    }], 'g.textpoint', [
+        ['%{text}: (%{r:0.2f}, %{theta:0.1f})', ['A: (1.00, 0.0)', 'B: (0.50, 90.0)', 'C: (1.00, 180.0)']],
+        [['', 'b%{theta:0.2f}', '%{theta:0.2f}'], ['', 'b90.00', '180.00']]
+    ]);
+
+    checkTextTemplate({
+        data: [{
+            type: 'scatterpolar',
+            mode: 'text',
+            theta: ['a', 'b'],
+            r: ['1000', '1200']
+        }],
+        layout: {
+            polar: {
+                radialaxis: { tickprefix: '$', ticksuffix: ' !', tickformat: '.2f'},
+                angularaxis: { tickprefix: '*', ticksuffix: '*' }
+            }
+        }
+    }, '.textpoint', [
+        ['%{theta} is %{r}', ['*a* is $1000.00 !', '*b* is $1200.00 !']]
+    ]);
 });

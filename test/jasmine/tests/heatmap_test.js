@@ -12,19 +12,18 @@ var destroyGraphDiv = require('../assets/destroy_graph_div');
 var supplyAllDefaults = require('../assets/supply_defaults');
 var failTest = require('../assets/fail_test');
 
-
 describe('heatmap supplyDefaults', function() {
     'use strict';
 
-    var traceIn,
-        traceOut;
+    var traceIn;
+    var traceOut;
 
-    var defaultColor = '#444',
-        layout = {
-            font: Plots.layoutAttributes.font,
-            _dfltTitle: {colorbar: 'cb'},
-            _subplots: {cartesian: ['xy'], xaxis: ['x'], yaxis: ['y']}
-        };
+    var defaultColor = '#444';
+    var layout = {
+        font: Plots.layoutAttributes.font,
+        _dfltTitle: {colorbar: 'cb'},
+        _subplots: {cartesian: ['xy'], xaxis: ['x'], yaxis: ['y']}
+    };
 
     var supplyDefaults = Heatmap.supplyDefaults;
 
@@ -129,6 +128,42 @@ describe('heatmap supplyDefaults', function() {
         expect(traceOut.ygap).toBe(undefined);
     });
 
+    it('should default connectgaps to false if `z` is not a one dimensional array', function() {
+        traceIn = {
+            type: 'heatmap',
+            z: [[0, null], [1, 2]]
+        };
+
+        supplyDefaults(traceIn, traceOut, defaultColor, layout);
+        expect(traceOut.connectgaps).toBe(false);
+    });
+
+    it('should default connectgaps to true if `z` is a one dimensional array and `zsmooth` is not false', function() {
+        traceIn = {
+            zsmooth: 'fast',
+            type: 'heatmap',
+            x: [1, 1, 2, 2, 2],
+            y: [1, 2, 1, 2, 3],
+            z: [1, null, 4, 5, 6]
+        };
+
+        supplyDefaults(traceIn, traceOut, defaultColor, layout);
+        expect(traceOut.connectgaps).toBe(true);
+    });
+
+    it('should default connectgaps to false if `zsmooth` is false', function() {
+        traceIn = {
+            zsmooth: false,
+            type: 'heatmap',
+            x: [1, 1, 2, 2, 2],
+            y: [1, 2, 1, 2, 3],
+            z: [1, null, 4, 5, 6]
+        };
+
+        supplyDefaults(traceIn, traceOut, defaultColor, layout);
+        expect(traceOut.connectgaps).toBe(false);
+    });
+
     it('should inherit layout.calendar', function() {
         traceIn = {
             x: [1, 2],
@@ -164,15 +199,10 @@ describe('heatmap convertColumnXYZ', function() {
     'use strict';
 
     var trace;
-
-    function makeMockAxis() {
-        return {
-            d2c: function(v) { return v; }
-        };
-    }
-
-    var xa = makeMockAxis();
-    var ya = makeMockAxis();
+    var xa = {type: 'linear'};
+    var ya = {type: 'linear'};
+    setConvert(xa);
+    setConvert(ya);
 
     function checkConverted(trace, x, y, z) {
         trace._length = Math.min(trace.x.length, trace.y.length, trace.z.length);
@@ -292,16 +322,24 @@ describe('heatmap convertColumnXYZ', function() {
 describe('heatmap calc', function() {
     'use strict';
 
-    function _calc(opts) {
-        var base = { type: 'heatmap' },
-            trace = Lib.extendFlat({}, base, opts),
-            gd = { data: [trace] };
+    function _calc(opts, layout) {
+        var base = { type: 'heatmap' };
+        var trace = Lib.extendFlat({}, base, opts);
+        var gd = { data: [trace] };
+        if(layout) gd.layout = layout;
 
         supplyAllDefaults(gd);
         var fullTrace = gd._fullData[0];
         var fullLayout = gd._fullLayout;
 
         fullTrace._extremes = {};
+
+        // we used to call ax.setScale during supplyDefaults, and this had a
+        // fallback to provide _categories and _categoriesMap. Now neither of
+        // those is true... anyway the right way to do this though is
+        // ax.clearCalc.
+        fullLayout.xaxis.clearCalc();
+        fullLayout.yaxis.clearCalc();
 
         var out = Heatmap.calc(gd, fullTrace)[0];
         out._xcategories = fullLayout.xaxis._categories;
@@ -406,6 +444,20 @@ describe('heatmap calc', function() {
         expect(out.z).toBeCloseTo2DArray([[17, 18, 19]]);
     });
 
+    it('should handle the category case (edge case with a *0* category)', function() {
+        var out = _calc({
+            x: ['a', 'b', 0],
+            y: ['z', 0, 'y'],
+            z: [[17, 18, 19], [10, 20, 30], [40, 30, 20]]
+        }, {
+            xaxis: {type: 'category'},
+            yaxis: {type: 'category'}
+        });
+
+        expect(out.x).toBeCloseToArray([-0.5, 0.5, 1.5, 2.5]);
+        expect(out.y).toBeCloseToArray([-0.5, 0.5, 1.5, 2.5]);
+    });
+
     it('should handle the category x/y/z/ column case', function() {
         var out = _calc({
             x: ['a', 'a', 'a', 'b', 'b', 'b', 'c', 'c', 'c'],
@@ -473,6 +525,134 @@ describe('heatmap calc', function() {
         expect(out.x).toBeCloseToArray([0.5, 1.5, 2.5, 3.5]);
         expect(out.y).toBeCloseToArray([0, 4, 8]);
         expect(out.z).toBeCloseTo2DArray([[1, 2, 3], [3, 1, 2]]);
+    });
+
+    ['heatmap', 'heatmapgl'].forEach(function(traceType) {
+        it('should sort z data based on axis categoryorder for ' + traceType, function() {
+            var mock = require('@mocks/heatmap_categoryorder');
+            var mockCopy = Lib.extendDeep({}, mock);
+            var data = mockCopy.data[0];
+            data.type = traceType;
+            var layout = mockCopy.layout;
+
+            // sort x axis categories
+            var mockLayout = Lib.extendDeep({}, layout);
+            var out = _calc(data, mockLayout);
+            mockLayout.xaxis.categoryorder = 'category ascending';
+            var out1 = _calc(data, mockLayout);
+
+            expect(out._xcategories).toEqual(out1._xcategories.slice().reverse());
+            // Check z data is also sorted
+            for(var i = 0; i < out.z.length; i++) {
+                expect(out1.z[i]).toEqual(out.z[i].slice().reverse());
+            }
+
+            // sort y axis categories
+            mockLayout = Lib.extendDeep({}, layout);
+            out = _calc(data, mockLayout);
+            mockLayout.yaxis.categoryorder = 'category ascending';
+            out1 = _calc(data, mockLayout);
+
+            expect(out._ycategories).toEqual(out1._ycategories.slice().reverse());
+            // Check z data is also sorted
+            expect(out1.z).toEqual(out.z.slice().reverse());
+        });
+
+        it('should sort z data based on axis categoryarray ' + traceType, function() {
+            var mock = require('@mocks/heatmap_categoryorder');
+            var mockCopy = Lib.extendDeep({}, mock);
+            var data = mockCopy.data[0];
+            data.type = traceType;
+            var layout = mockCopy.layout;
+
+            layout.xaxis.categoryorder = 'array';
+            layout.xaxis.categoryarray = ['x', 'z', 'y', 'w'];
+            layout.yaxis.categoryorder = 'array';
+            layout.yaxis.categoryarray = ['a', 'd', 'b', 'c'];
+
+            var out = _calc(data, layout);
+
+            expect(out._xcategories).toEqual(layout.xaxis.categoryarray, 'xaxis should reorder');
+            expect(out._ycategories).toEqual(layout.yaxis.categoryarray, 'yaxis should reorder');
+            expect(out.z[0][0]).toEqual(0);
+        });
+    });
+
+    describe('should clean z array linked to category x/y coordinates', function() {
+        var z = [
+            [1, 20, 30, 50, 1],
+            [20, 1, 60, 80, 30],
+            [30, 60, 1, -10, 20]
+        ];
+
+        it('- base case', function() {
+            var out = _calc({
+                z: z,
+                x: ['a', 'b', 'c', 'd', 'f'],
+                y: ['A', 'B', 'C']
+            });
+            expect(out.z).toBeCloseTo2DArray([
+                [1, 20, 30, 50, 1],
+                [20, 1, 60, 80, 30],
+                [30, 60, 1, -10, 20]
+            ]);
+        });
+
+        it('- with extra x items', function() {
+            var out = _calc({
+                z: z,
+                x: ['a', 'b', 'c', 'd', 'f', ''],
+                y: ['A', 'B', 'C']
+            });
+            expect(out.z).toBeCloseTo2DArray([
+                [1, 20, 30, 50, 1, undefined],
+                [20, 1, 60, 80, 30, undefined],
+                [30, 60, 1, -10, 20, undefined]
+            ]);
+        });
+
+        it('- with extra y items', function() {
+            var out = _calc({
+                z: z,
+                x: ['a', 'b', 'c', 'd', 'f'],
+                y: ['A', 'B', 'C', '']
+            });
+            expect(out.z).toBeCloseTo2DArray([
+                [1, 20, 30, 50, 1],
+                [20, 1, 60, 80, 30],
+                [30, 60, 1, -10, 20],
+                new Array(5)
+            ]);
+        });
+
+        it('- with extra x and y items', function() {
+            var out = _calc({
+                z: z,
+                x: ['a', 'b', 'c', 'd', 'f', ''],
+                y: ['A', 'B', 'C', '']
+            });
+            expect(out.z).toBeCloseTo2DArray([
+                [1, 20, 30, 50, 1, undefined],
+                [20, 1, 60, 80, 30, undefined],
+                [30, 60, 1, -10, 20, undefined],
+                new Array(6)
+            ]);
+        });
+
+        it('- transposed, with extra x and y items', function() {
+            var out = _calc({
+                transpose: true,
+                z: z,
+                x: ['a', 'b', 'c', 'd', 'f', ''],
+                y: ['A', 'B', 'C', '']
+            });
+            expect(out.z).toBeCloseTo2DArray([
+                [1, 20, 30, undefined, undefined, undefined],
+                [20, 1, 60, undefined, undefined, undefined],
+                [30, 60, 1, undefined, undefined, undefined],
+                [50, 80, -10, undefined, undefined, undefined]
+            ]);
+        });
     });
 });
 
@@ -596,8 +776,8 @@ describe('heatmap plot', function() {
             return element;
         });
 
-        var argumentsWithoutPadding = [],
-            argumentsWithPadding = [];
+        var argumentsWithoutPadding = [];
+        var argumentsWithPadding = [];
         Plotly.plot(gd, mockWithoutPadding.data, mockWithoutPadding.layout).then(function() {
             argumentsWithoutPadding = getContextStub.fillRect.calls.allArgs().slice(0);
             return Plotly.plot(gd, mockWithPadding.data, mockWithPadding.layout);
@@ -658,9 +838,9 @@ describe('heatmap hover', function() {
     var gd;
 
     function _hover(gd, xval, yval) {
-        var fullLayout = gd._fullLayout,
-            calcData = gd.calcdata,
-            hoverData = [];
+        var fullLayout = gd._fullLayout;
+        var calcData = gd.calcdata;
+        var hoverData = [];
 
         for(var i = 0; i < calcData.length; i++) {
             var pointData = {
@@ -687,12 +867,11 @@ describe('heatmap hover', function() {
     }
 
     describe('for `heatmap_multi-trace`', function() {
-
         beforeAll(function(done) {
             gd = createGraphDiv();
 
-            var mock = require('@mocks/heatmap_multi-trace.json'),
-                mockCopy = Lib.extendDeep({}, mock);
+            var mock = require('@mocks/heatmap_multi-trace.json');
+            var mockCopy = Lib.extendDeep({}, mock);
 
             Plotly.plot(gd, mockCopy.data, mockCopy.layout).then(done);
         });
@@ -702,20 +881,37 @@ describe('heatmap hover', function() {
         it('should find closest point (case 1) and should', function() {
             var pt = _hover(gd, 0.5, 0.5)[0];
 
-            expect(pt.index).toEqual([1, 0], 'have correct index');
+            expect(pt.index).toBe(1, 'have correct index');
             assertLabels(pt, 1, 1, 4);
         });
 
         it('should find closest point (case 2) and should', function() {
             var pt = _hover(gd, 1.5, 0.5)[0];
 
-            expect(pt.index).toEqual([0, 0], 'have correct index');
+            expect(pt.index).toBe(0, 'have correct index');
             assertLabels(pt, 2, 0.2, 6);
         });
     });
 
-    describe('for xyz-column traces', function() {
+    describe('with sorted categories', function() {
+        beforeAll(function(done) {
+            gd = createGraphDiv();
 
+            var mock = require('@mocks/heatmap_categoryorder.json');
+            var mockCopy = Lib.extendDeep({}, mock);
+
+            Plotly.plot(gd, mockCopy.data, mockCopy.layout).then(done);
+        });
+        afterAll(destroyGraphDiv);
+
+        it('should find closest point (case 1) and should', function() {
+            var pt = _hover(gd, 3, 1)[0];
+            expect(pt.index).toEqual([1, 3], 'have correct index');
+            assertLabels(pt, 2.5, 0.5, 0);
+        });
+    });
+
+    describe('for xyz-column traces', function() {
         beforeAll(function(done) {
             gd = createGraphDiv();
 
@@ -735,22 +931,20 @@ describe('heatmap hover', function() {
         it('should find closest point and should', function(done) {
             var pt = _hover(gd, 0.5, 0.5)[0];
 
-            expect(pt.index).toEqual([0, 0], 'have correct index');
+            expect(pt.index).toBe(0, 'have correct index');
             assertLabels(pt, 1, 1, 10, 'a');
 
             Plotly.relayout(gd, 'xaxis.range', [1, 2]).then(function() {
                 var pt2 = _hover(gd, 1.5, 0.5)[0];
 
-                expect(pt2.index).toEqual([0, 1], 'have correct index');
+                expect(pt2.index).toBe(1, 'have correct index');
                 assertLabels(pt2, 2, 1, 4, 'b');
             })
             .then(done);
         });
-
     });
 
     describe('nonuniform bricks', function() {
-
         beforeAll(function(done) {
             gd = createGraphDiv();
 
@@ -781,6 +975,35 @@ describe('heatmap hover', function() {
             .catch(failTest)
             .then(done);
         });
+    });
 
+    describe('missing data', function() {
+        beforeAll(function(done) {
+            gd = createGraphDiv();
+
+            Plotly.plot(gd, {
+                data: [{
+                    type: 'heatmap',
+                    x: [10, 11, 10, 11],
+                    y: [100, 100, 101, 101],
+                    z: [null, 1, 2, 3],
+                    connectgaps: false,
+                    hoverongaps: false
+                }]
+            }).then(done);
+        });
+        afterAll(destroyGraphDiv);
+
+        it('should not display hover on missing data and hoverongaps is disabled', function() {
+            var pt = _hover(gd, 10, 100)[0];
+
+            var hoverData;
+            gd.on('plotly_hover', function(data) {
+                hoverData = data;
+            });
+
+            expect(hoverData).toEqual(undefined);
+            expect(pt).toEqual(undefined);
+        });
     });
 });

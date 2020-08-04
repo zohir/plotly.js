@@ -16,13 +16,14 @@ var PORT = process.argv[2] || 3000;
 var server = http.createServer(ecstatic({
     root: constants.pathToRoot,
     cache: 0,
-    gzip: true
+    gzip: true,
+    cors: true
 }));
 
 // Make watchified bundle for plotly.js
 var bundlePlotly = makeWatchifiedBundle(function() {
     // open up browser window on first bundle callback
-    open('http://localhost:' + PORT + '/devtools/test_dashboard');
+    open('http://localhost:' + PORT + '/devtools/test_dashboard/index.html');
 });
 
 // Bundle devtools code
@@ -65,7 +66,6 @@ function readFiles(files) {
 }
 
 function createMocksList(files) {
-
     // eliminate pollutants (e.g .DS_Store) that can accumulate in the mock directory
     var jsonFiles = files.filter(function(file) {
         return file.name.substr(-5) === '.json';

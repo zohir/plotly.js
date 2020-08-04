@@ -3,6 +3,7 @@ var _ = Lib._;
 var Registry = require('@src/registry');
 
 var d3 = require('d3');
+var utcFormat = require('d3-time-format').utcFormat;
 
 var Plotly = require('@lib');
 var createGraphDiv = require('../assets/create_graph_div');
@@ -202,7 +203,7 @@ describe('localization', function() {
         // four locales, highest to lowest priority
         // hopefully nobody will supply this many conflicting locales, but
         // if they do, this is what should happen!
-        var ctx_fr_QC = {
+        var ctxFrQC = {
             dictionary: {a: 'a-ctx-QC'},
             format: {decimal: '~'}
         };
@@ -212,7 +213,7 @@ describe('localization', function() {
             dictionary: {a: 'a-reg-QC', b: 'b-reg-QC'},
             format: {decimal: 'X', thousands: '@'}
         });
-        var ctx_fr = {
+        var ctxFr = {
             dictionary: {a: 'a-ctx', b: 'b-ctx', c: 'c-ctx'},
             format: {decimal: 'X', thousands: 'X', shortMonths: monthNums}
         };
@@ -223,7 +224,7 @@ describe('localization', function() {
             format: {decimal: 'X', thousands: 'X', shortMonths: monthLetters, shortDays: dayLetters}
         });
 
-        plot('fr-QC', {fr: ctx_fr, 'fr-QC': ctx_fr_QC})
+        plot('fr-QC', {fr: ctxFr, 'fr-QC': ctxFrQC})
         .then(function() {
             expect(_(gd, 'a')).toBe('a-ctx-QC');
             expect(_(gd, 'b')).toBe('b-reg-QC');
@@ -236,7 +237,7 @@ describe('localization', function() {
             expect(firstYLabel()).toBe('0~5');
             var d0 = new Date(0); // thursday, Jan 1 1970 (UTC)
             // sanity check that d0 is what we think...
-            expect(d3.time.format.utc('%a %b %A %B')(d0)).toBe('Thu Jan Thursday January');
+            expect(utcFormat('%a %b %A %B')(d0)).toBe('Thu Jan Thursday January');
             // full names were not overridden, so fall back on english
             expect(gd._fullLayout.xaxis._dateFormat('%a %b %A %B')(d0)).toBe('t !1 Thursday January');
         })

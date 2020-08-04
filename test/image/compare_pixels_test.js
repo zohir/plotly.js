@@ -1,4 +1,5 @@
 var fs = require('fs');
+var minimist = require('minimist');
 
 var common = require('../../tasks/util/common');
 var getMockList = require('./assets/get_mock_list');
@@ -46,63 +47,78 @@ var QUEUE_WAIT = 10;
  *  Run all gl3d image test in queue:
  *
  *      npm run test-image -- gl3d_* --queue
+ *
+ *
  */
 
-var pattern = process.argv[2];
-var mockList = getMockList(pattern);
-var isInQueue = (process.argv[3] === '--queue');
+var argv = minimist(process.argv.slice(2), {
+    boolean: ['queue', 'filter', 'skip-flaky', 'just-flaky']
+});
 
-if(mockList.length === 0) {
-    throw new Error('No mocks found with pattern ' + pattern);
+var allMock = false;
+// If no pattern is provided, all mocks are compared
+if(argv._.length === 0) {
+    allMock = true;
+    argv._.push('');
 }
 
-// filter out untestable mocks if no pattern is specified
-if(!pattern) {
-    console.log('Filtering out untestable mocks:');
-    mockList = mockList.filter(untestableFilter);
-    console.log('\n');
-}
+// Build list of mocks to compare
+var allMockList = [];
+argv._.forEach(function(pattern) {
+    var mockList = getMockList(pattern);
 
-// gl2d have limited image-test support
-if(pattern === 'gl2d_*') {
-    if(!isInQueue) {
-        console.log('WARN: Running gl2d image tests in batch may lead to unwanted results\n');
+    if(mockList.length === 0) {
+        throw new Error('No mocks found with pattern ' + pattern);
     }
-    console.log('\nSorting gl2d mocks to avoid gl-shader conflicts');
-    sortGl2dMockList(mockList);
-    console.log('');
+
+    allMockList = allMockList.concat(mockList);
+});
+
+// To get rid of duplicates
+function unique(value, index, self) {
+    return self.indexOf(value) === index;
+}
+allMockList = allMockList.filter(unique);
+
+// filter out untestable mocks if no pattern is specified (ie. we're testing all mocks)
+// or if flag '--filter' is provided
+console.log('');
+if(allMock || argv.filter) {
+    console.log('Filtering out untestable mocks:');
+    // Test cases:
+    // - font-wishlist
+    // - all mapbox
+    // don't behave consistently from run-to-run and/or
+    // machine-to-machine; skip over them for now.
+    allMockList = allMockList.filter(function(mockName) {
+        var cond = !(
+            mockName === 'font-wishlist' ||
+            mockName.indexOf('mapbox_') !== -1
+        );
+        if(!cond) console.log(' -', mockName);
+        return cond;
+    });
 }
 
-// main
-if(isInQueue) {
-    runInQueue(mockList);
-}
-else {
-    runInBatch(mockList);
-}
+var FLAKY_LIST = [
+    'treemap_coffee',
+    'treemap_textposition',
+    'treemap_with-without_values',
+    'trace_metatext',
+    'gl3d_directions-streamtube1'
+];
 
-/* Test cases:
- *
- * - font-wishlist
- * - all gl2d
- * - all mapbox
- * - gl3d_cone-*
- *
- * don't behave consistently from run-to-run and/or
- * machine-to-machine; skip over them for now.
- *
- */
-function untestableFilter(mockName) {
-    var cond = !(
-        mockName === 'font-wishlist' ||
-        mockName.indexOf('gl2d_') !== -1 ||
-        mockName.indexOf('mapbox_') !== -1 ||
-        mockName.indexOf('gl3d_cone-') !== -1
-    );
-
-    if(!cond) console.log(' -', mockName);
-
-    return cond;
+console.log('');
+if(argv['skip-flaky']) {
+    allMockList = allMockList.filter(function(mockName) {
+        var cond = FLAKY_LIST.indexOf(mockName) === -1;
+        if(!cond) console.log('Skipping flaky mock', mockName);
+        return cond;
+    });
+} else if(argv['just-flaky']) {
+    allMockList = allMockList.filter(function(mockName) {
+        return FLAKY_LIST.indexOf(mockName) !== -1;
+    });
 }
 
 /* gl2d pointcloud and other non-regl gl2d mock(s)
@@ -126,6 +142,7 @@ function sortGl2dMockList(mockList) {
 
     mockNames.forEach(function(m) {
         var ind = mockList.indexOf(m);
+        if(ind === -1) return;
         var tmp = mockList[pos];
         mockList[pos] = m;
         mockList[ind] = tmp;
@@ -186,16 +203,15 @@ function runInQueue(mockList) {
 }
 
 function comparePixels(mockName, cb) {
-    var requestOpts = getRequestOpts({ mockName: mockName }),
-        imagePaths = getImagePaths(mockName),
-        saveImageStream = fs.createWriteStream(imagePaths.test);
+    var requestOpts = getRequestOpts({ mockName: mockName });
+    var imagePaths = getImagePaths(mockName);
+    var saveImageStream = fs.createWriteStream(imagePaths.test);
 
     function log(msg) {
         process.stdout.write('Error for', mockName + ':', msg);
     }
 
     function checkImage() {
-
         // baseline image must be generated first
         if(!common.doesFileExist(imagePaths.baseline)) {
             var err = new Error('baseline image not found');
@@ -265,4 +281,14 @@ function comparePixels(mockName, cb) {
         .on('response', onResponse)
         .pipe(saveImageStream)
         .on('close', checkImage);
+}
+
+sortGl2dMockList(allMockList);
+console.log('');
+
+// main
+if(argv.queue) {
+    runInQueue(allMockList);
+} else {
+    runInBatch(allMockList);
 }

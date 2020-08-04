@@ -202,7 +202,6 @@ describe('general transforms:', function() {
         expect(dataOut[0]._expandedIndex).toEqual(0, msg);
         expect(dataOut[1]._expandedIndex).toEqual(1, msg);
     });
-
 });
 
 describe('user-defined transforms:', function() {
@@ -230,8 +229,7 @@ describe('user-defined transforms:', function() {
         function assertSupplyDefaultsArgs(_transformIn, traceOut, _layout) {
             if(!calledSupplyDefaults) {
                 expect(_transformIn).toBe(transformIn);
-            }
-            else {
+            } else {
                 // second supplyDefaults call has _module attached
                 expect(_transformIn).toEqual(jasmine.objectContaining({
                     type: 'fake',
@@ -365,7 +363,6 @@ describe('user-defined transforms:', function() {
         })
         .then(done);
     });
-
 });
 
 describe('multiple transforms:', function() {
@@ -662,7 +659,6 @@ describe('multiple transforms:', function() {
             var trace2Out = gd._fullData[1];
             expect(trace2Out.x).toEqual([4, -5]);
             expect(trace2Out.y).toEqual([5, 4]);
-
         })
         .catch(failTest)
         .then(done);
@@ -930,7 +926,6 @@ describe('multiple traces with transforms:', function() {
         })
         .catch(failTest)
         .then(done);
-
     });
 });
 
@@ -999,7 +994,6 @@ describe('restyle applied on transforms:', function() {
         .catch(failTest)
         .then(done);
     });
-
 });
 
 describe('supplyDefaults with groupby + filter', function() {

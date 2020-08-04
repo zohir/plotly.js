@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -9,7 +9,7 @@
 
 'use strict';
 
-var d3 = require('d3');
+var timeFormat = require('d3-time-format').timeFormat;
 var isNumeric = require('fast-isnumeric');
 
 var Loggers = require('./loggers');
@@ -25,11 +25,11 @@ var EPOCHJD = constants.EPOCHJD;
 
 var Registry = require('../registry');
 
-var utcFormat = d3.time.format.utc;
+var utcFormat = require('d3-time-format').utcFormat;
 
-var DATETIME_REGEXP = /^\s*(-?\d\d\d\d|\d\d)(-(\d?\d)(-(\d?\d)([ Tt]([01]?\d|2[0-3])(:([0-5]\d)(:([0-5]\d(\.\d+)?))?(Z|z|[+\-]\d\d:?\d\d)?)?)?)?)?\s*$/m;
+var DATETIME_REGEXP = /^\s*(-?\d\d\d\d|\d\d)(-(\d?\d)(-(\d?\d)([ Tt]([01]?\d|2[0-3])(:([0-5]\d)(:([0-5]\d(\.\d+)?))?(Z|z|[+\-]\d\d(:?\d\d)?)?)?)?)?)?\s*$/m;
 // special regex for chinese calendars to support yyyy-mmi-dd etc for intercalary months
-var DATETIME_REGEXP_CN = /^\s*(-?\d\d\d\d|\d\d)(-(\d?\di?)(-(\d?\d)([ Tt]([01]?\d|2[0-3])(:([0-5]\d)(:([0-5]\d(\.\d+)?))?(Z|z|[+\-]\d\d:?\d\d)?)?)?)?)?\s*$/m;
+var DATETIME_REGEXP_CN = /^\s*(-?\d\d\d\d|\d\d)(-(\d?\di?)(-(\d?\d)([ Tt]([01]?\d|2[0-3])(:([0-5]\d)(:([0-5]\d(\.\d+)?))?(Z|z|[+\-]\d\d(:?\d\d)?)?)?)?)?)?\s*$/m;
 
 // for 2-digit years, the first year we map them onto
 var YFIRST = new Date().getFullYear() - 70;
@@ -52,8 +52,7 @@ exports.dateTick0 = function(calendar, sunday) {
         return sunday ?
             Registry.getComponentMethod('calendars', 'CANONICAL_SUNDAY')[calendar] :
             Registry.getComponentMethod('calendars', 'CANONICAL_TICK')[calendar];
-    }
-    else {
+    } else {
         return sunday ? '2000-01-02' : '2000-01-01';
     }
 };
@@ -64,8 +63,7 @@ exports.dateTick0 = function(calendar, sunday) {
 exports.dfltRange = function(calendar) {
     if(isWorldCalendar(calendar)) {
         return Registry.getComponentMethod('calendars', 'DFLTRANGE')[calendar];
-    }
-    else {
+    } else {
         return ['2000-01-01', '2001-01-01'];
     }
 };
@@ -92,8 +90,9 @@ var MIN_MS, MAX_MS;
  *    -?YYYY-mm-dd<sep>HH:MM:SS.sss<tzInfo>?
  *
  * <sep>: space (our normal standard) or T or t (ISO-8601)
- * <tzInfo>: Z, z, or [+\-]HH:?MM and we THROW IT AWAY
+ * <tzInfo>: Z, z, [+\-]HH:?MM or [+\-]HH and we THROW IT AWAY
  * this format comes from https://tools.ietf.org/html/rfc3339#section-5.6
+ * and 4.2.5.1 Difference between local time and UTC of day (ISO-8601)
  * but we allow it even with a space as the separator
  *
  * May truncate after any full field, and sss can be any length
@@ -113,14 +112,14 @@ var MIN_MS, MAX_MS;
  * you can use a gregorian date string prefixed with 'G' or 'g'.
  *
  * Where to cut off 2-digit years between 1900s and 2000s?
- * from http://support.microsoft.com/kb/244664:
+ * from https://docs.microsoft.com/en-us/office/troubleshoot/excel/two-digit-year-numbers#the-2029-rule:
  *   1930-2029 (the most retro of all...)
  * but in my mac chrome from eg. d=new Date(Date.parse('8/19/50')):
  *   1950-2049
  * by Java, from http://stackoverflow.com/questions/2024273/:
  *   now-80 - now+19
  * or FileMaker Pro, from
- *      http://www.filemaker.com/12help/html/add_view_data.4.21.html:
+ *      https://fmhelp.filemaker.com/help/18/fmp/en/index.html#page/FMP_Help/dates-with-two-digit-years.html:
  *   now-70 - now+29
  * but python strptime etc, via
  *      http://docs.python.org/py3k/library/time.html:
@@ -170,12 +169,12 @@ exports.dateTime2ms = function(s, calendar) {
 
     var match = s.match(isChinese ? DATETIME_REGEXP_CN : DATETIME_REGEXP);
     if(!match) return BADNUM;
-    var y = match[1],
-        m = match[3] || '1',
-        d = Number(match[5] || 1),
-        H = Number(match[7] || 0),
-        M = Number(match[9] || 0),
-        S = Number(match[11] || 0);
+    var y = match[1];
+    var m = match[3] || '1';
+    var d = Number(match[5] || 1);
+    var H = Number(match[7] || 0);
+    var M = Number(match[9] || 0);
+    var S = Number(match[11] || 0);
 
     if(isWorld) {
         // disallow 2-digit years for world calendars
@@ -189,12 +188,10 @@ exports.dateTime2ms = function(s, calendar) {
                 var isIntercalary = m.charAt(m.length - 1) === 'i';
                 m = parseInt(m, 10);
                 cDate = calInstance.newDate(y, calInstance.toMonthIndex(y, m, isIntercalary), d);
-            }
-            else {
+            } else {
                 cDate = calInstance.newDate(y, Number(m), d);
             }
-        }
-        catch(e) { return BADNUM; } // Invalid ... date
+        } catch(e) { return BADNUM; } // Invalid ... date
 
         if(!cDate) return BADNUM;
 
@@ -204,8 +201,7 @@ exports.dateTime2ms = function(s, calendar) {
 
     if(y.length === 2) {
         y = (Number(y) + 2000 - YFIRST) % 100 + YFIRST;
-    }
-    else y = Number(y);
+    } else y = Number(y);
 
     // new Date uses months from 0; subtract 1 here just so we
     // don't have to do it again during the validity test below
@@ -252,18 +248,17 @@ exports.ms2DateTime = function(ms, r, calendar) {
 
     if(!r) r = 0;
 
-    var msecTenths = Math.floor(mod(ms + 0.05, 1) * 10),
-        msRounded = Math.round(ms - msecTenths / 10),
-        dateStr, h, m, s, msec10, d;
+    var msecTenths = Math.floor(mod(ms + 0.05, 1) * 10);
+    var msRounded = Math.round(ms - msecTenths / 10);
+    var dateStr, h, m, s, msec10, d;
 
     if(isWorldCalendar(calendar)) {
-        var dateJD = Math.floor(msRounded / ONEDAY) + EPOCHJD,
-            timeMs = Math.floor(mod(ms, ONEDAY));
+        var dateJD = Math.floor(msRounded / ONEDAY) + EPOCHJD;
+        var timeMs = Math.floor(mod(ms, ONEDAY));
         try {
             dateStr = Registry.getComponentMethod('calendars', 'getCal')(calendar)
                 .fromJD(dateJD).formatDate('yyyy-mm-dd');
-        }
-        catch(e) {
+        } catch(e) {
             // invalid date in this calendar - fall back to Gyyyy-mm-dd
             dateStr = utcFormat('G%Y-%m-%d')(new Date(msRounded));
         }
@@ -273,8 +268,7 @@ exports.ms2DateTime = function(ms, r, calendar) {
         // it manually (after the '-' if there is one)
         if(dateStr.charAt(0) === '-') {
             while(dateStr.length < 11) dateStr = '-0' + dateStr.substr(1);
-        }
-        else {
+        } else {
             while(dateStr.length < 10) dateStr = '0' + dateStr;
         }
 
@@ -284,8 +278,7 @@ exports.ms2DateTime = function(ms, r, calendar) {
         m = (r < NINETYDAYS) ? Math.floor((timeMs % ONEHOUR) / ONEMIN) : 0;
         s = (r < THREEHOURS) ? Math.floor((timeMs % ONEMIN) / ONESEC) : 0;
         msec10 = (r < FIVEMIN) ? (timeMs % ONESEC) * 10 + msecTenths : 0;
-    }
-    else {
+    } else {
         d = new Date(msRounded);
 
         dateStr = utcFormat('%Y-%m-%d')(d);
@@ -311,13 +304,13 @@ exports.ms2DateTime = function(ms, r, calendar) {
 exports.ms2DateTimeLocal = function(ms) {
     if(!(ms >= MIN_MS + ONEDAY && ms <= MAX_MS - ONEDAY)) return BADNUM;
 
-    var msecTenths = Math.floor(mod(ms + 0.05, 1) * 10),
-        d = new Date(Math.round(ms - msecTenths / 10)),
-        dateStr = d3.time.format('%Y-%m-%d')(d),
-        h = d.getHours(),
-        m = d.getMinutes(),
-        s = d.getSeconds(),
-        msec10 = d.getUTCMilliseconds() * 10 + msecTenths;
+    var msecTenths = Math.floor(mod(ms + 0.05, 1) * 10);
+    var d = new Date(Math.round(ms - msecTenths / 10));
+    var dateStr = timeFormat('%Y-%m-%d')(d);
+    var h = d.getHours();
+    var m = d.getMinutes();
+    var s = d.getSeconds();
+    var msec10 = d.getUTCMilliseconds() * 10 + msecTenths;
 
     return includeTime(dateStr, h, m, s, msec10);
 };
@@ -345,7 +338,9 @@ function includeTime(dateStr, h, m, s, msec10) {
 // a Date object or milliseconds
 // optional dflt is the return value if cleaning fails
 exports.cleanDate = function(v, dflt, calendar) {
-    if(exports.isJSDate(v) || typeof v === 'number') {
+    // let us use cleanDate to provide a missing default without an error
+    if(v === BADNUM) return dflt;
+    if(exports.isJSDate(v) || (typeof v === 'number' && isFinite(v))) {
         // do not allow milliseconds (old) or jsdate objects (inherently
         // described as gregorian dates) with world calendars
         if(isWorldCalendar(calendar)) {
@@ -358,8 +353,7 @@ exports.cleanDate = function(v, dflt, calendar) {
         // that is: '2012' -> Jan. 1, 2012, but 2012 -> 2012 epoch milliseconds
         v = exports.ms2DateTimeLocal(+v);
         if(!v && dflt !== undefined) return dflt;
-    }
-    else if(!exports.isDateTime(v, calendar)) {
+    } else if(!exports.isDateTime(v, calendar)) {
         Loggers.error('unrecognized date', v);
         return dflt;
     }
@@ -377,12 +371,11 @@ exports.cleanDate = function(v, dflt, calendar) {
  */
 var fracMatch = /%\d?f/g;
 function modDateFormat(fmt, x, formatter, calendar) {
-
     fmt = fmt.replace(fracMatch, function(match) {
-        var digits = Math.min(+(match.charAt(1)) || 6, 6),
-            fracSecs = ((x / 1000 % 1) + 2)
-                .toFixed(digits)
-                .substr(2).replace(/0+$/, '') || '0';
+        var digits = Math.min(+(match.charAt(1)) || 6, 6);
+        var fracSecs = ((x / 1000 % 1) + 2)
+            .toFixed(digits)
+            .substr(2).replace(/0+$/, '') || '0';
         return fracSecs;
     });
 
@@ -391,8 +384,7 @@ function modDateFormat(fmt, x, formatter, calendar) {
     if(isWorldCalendar(calendar)) {
         try {
             fmt = Registry.getComponentMethod('calendars', 'worldCalFmt')(fmt, x, calendar);
-        }
-        catch(e) {
+        } catch(e) {
             return 'Invalid';
         }
     }
@@ -467,8 +459,7 @@ exports.formatDate = function(x, fmt, tr, formatter, calendar, extraFormat) {
         else if(tr === 'm') fmt = extraFormat.month;
         else if(tr === 'd') {
             fmt = extraFormat.dayMonth + '\n' + extraFormat.year;
-        }
-        else {
+        } else {
             return formatTime(x, tr) + '\n' + modDateFormat(extraFormat.dayMonthYear, x, formatter, calendar);
         }
     }
@@ -514,16 +505,15 @@ exports.incrementMonth = function(ms, dMonth, calendar) {
 
     if(calendar) {
         try {
-            var dateJD = Math.round(ms / ONEDAY) + EPOCHJD,
-                calInstance = Registry.getComponentMethod('calendars', 'getCal')(calendar),
-                cDate = calInstance.fromJD(dateJD);
+            var dateJD = Math.round(ms / ONEDAY) + EPOCHJD;
+            var calInstance = Registry.getComponentMethod('calendars', 'getCal')(calendar);
+            var cDate = calInstance.fromJD(dateJD);
 
             if(dMonth % 12) calInstance.add(cDate, dMonth, 'm');
             else calInstance.add(cDate, dMonth / 12, 'y');
 
             return (cDate.toJD() - EPOCHJD) * ONEDAY + timeMs;
-        }
-        catch(e) {
+        } catch(e) {
             Loggers.error('invalid ms ' + ms + ' in calendar ' + calendar);
             // then keep going in gregorian even though the result will be 'Invalid'
         }
@@ -540,12 +530,12 @@ exports.incrementMonth = function(ms, dMonth, calendar) {
  * calendar (string) the calendar to test against
  */
 exports.findExactDates = function(data, calendar) {
-    var exactYears = 0,
-        exactMonths = 0,
-        exactDays = 0,
-        blankCount = 0,
-        d,
-        di;
+    var exactYears = 0;
+    var exactMonths = 0;
+    var exactDays = 0;
+    var blankCount = 0;
+    var d;
+    var di;
 
     var calInstance = (
         isWorldCalendar(calendar) &&
@@ -570,20 +560,16 @@ exports.findExactDates = function(data, calendar) {
                 if(d.day() === 1) {
                     if(d.month() === 1) exactYears++;
                     else exactMonths++;
-                }
-                else exactDays++;
-            }
-            catch(e) {
+                } else exactDays++;
+            } catch(e) {
                 // invalid date in this calendar - ignore it here.
             }
-        }
-        else {
+        } else {
             d = new Date(di);
             if(d.getUTCDate() === 1) {
                 if(d.getUTCMonth() === 0) exactYears++;
                 else exactMonths++;
-            }
-            else exactDays++;
+            } else exactDays++;
         }
     }
     exactMonths += exactYears;

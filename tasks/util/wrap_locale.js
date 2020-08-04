@@ -6,8 +6,8 @@ var intoStream = require('into-stream');
 
 var constants = require('./constants');
 
-var prefix = 'Plotly.register(';
-var suffix = ');';
+var prefix = 'var locale=';
+var suffix = ';if(typeof Plotly === \'undefined\') {window.PlotlyLocales = window.PlotlyLocales || []; window.PlotlyLocales.push(locale);} else {Plotly.register(locale);}';
 
 var moduleMarker = 'module.exports = ';
 
@@ -18,7 +18,7 @@ var moduleMarker = 'module.exports = ';
  *
  * Logs basename of bundle when completed.
  */
-module.exports = function wrap_locale(pathToInput, pathToOutput) {
+module.exports = function wrapLocale(pathToInput, pathToOutput) {
     fs.readFile(pathToInput, 'utf8', function(err, data) {
         var moduleStart = data.indexOf(moduleMarker) + moduleMarker.length;
         var moduleEnd = data.indexOf(';', moduleStart);

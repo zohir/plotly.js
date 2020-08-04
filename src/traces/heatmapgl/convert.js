@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -31,6 +31,7 @@ function Heatmap(scene, uid) {
     this.bounds = [0, 0, 0, 0];
 
     this.options = {
+        zsmooth: 'fast',
         z: [],
         x: [],
         y: [],
@@ -46,12 +47,12 @@ function Heatmap(scene, uid) {
 var proto = Heatmap.prototype;
 
 proto.handlePick = function(pickResult) {
-    var options = this.options,
-        shape = options.shape,
-        index = pickResult.pointId,
-        xIndex = index % shape[0],
-        yIndex = Math.floor(index / shape[0]),
-        zIndex = index;
+    var options = this.options;
+    var shape = options.shape;
+    var index = pickResult.pointId;
+    var xIndex = index % shape[0];
+    var yIndex = Math.floor(index / shape[0]);
+    var zIndex = index;
 
     return {
         trace: this,
@@ -79,12 +80,13 @@ proto.update = function(fullTrace, calcTrace) {
     var z = calcPt.z;
     this.options.z = [].concat.apply([], z);
 
-    var rowLen = z[0].length,
-        colLen = z.length;
+    var rowLen = z[0].length;
+    var colLen = z.length;
     this.options.shape = [rowLen, colLen];
 
     this.options.x = calcPt.x;
     this.options.y = calcPt.y;
+    this.options.zsmooth = fullTrace.zsmooth;
 
     var colorOptions = convertColorscale(fullTrace);
     this.options.colorLevels = colorOptions.colorLevels;
@@ -97,8 +99,16 @@ proto.update = function(fullTrace, calcTrace) {
 
     var xa = this.scene.xaxis;
     var ya = this.scene.yaxis;
-    fullTrace._extremes[xa._id] = Axes.findExtremes(xa, calcPt.x);
-    fullTrace._extremes[ya._id] = Axes.findExtremes(ya, calcPt.y);
+
+    var xOpts, yOpts;
+    if(fullTrace.zsmooth === false) {
+        // increase padding for discretised heatmap as suggested by Louise Ord
+        xOpts = { ppad: calcPt.x[1] - calcPt.x[0] };
+        yOpts = { ppad: calcPt.y[1] - calcPt.y[0] };
+    }
+
+    fullTrace._extremes[xa._id] = Axes.findExtremes(xa, calcPt.x, xOpts);
+    fullTrace._extremes[ya._id] = Axes.findExtremes(ya, calcPt.y, yOpts);
 };
 
 proto.dispose = function() {
@@ -106,13 +116,13 @@ proto.dispose = function() {
 };
 
 function convertColorscale(fullTrace) {
-    var scl = fullTrace.colorscale,
-        zmin = fullTrace.zmin,
-        zmax = fullTrace.zmax;
+    var scl = fullTrace.colorscale;
+    var zmin = fullTrace.zmin;
+    var zmax = fullTrace.zmax;
 
-    var N = scl.length,
-        domain = new Array(N),
-        range = new Array(4 * N);
+    var N = scl.length;
+    var domain = new Array(N);
+    var range = new Array(4 * N);
 
     for(var i = 0; i < N; i++) {
         var si = scl[i];

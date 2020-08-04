@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -12,7 +12,7 @@
 var Fx = require('../../components/fx');
 var Lib = require('../../lib');
 var getTraceColor = require('../scatter/get_trace_color');
-var fillHoverText = require('../scatter/fill_hover_text');
+var fillText = Lib.fillText;
 var BADNUM = require('../../constants/numerical').BADNUM;
 
 module.exports = function hoverPoints(pointData, xval, yval) {
@@ -64,13 +64,22 @@ module.exports = function hoverPoints(pointData, xval, yval) {
     pointData.y0 = yc - rad;
     pointData.y1 = yc + rad;
 
+    var fullLayout = {};
+    fullLayout[trace.subplot] = {_subplot: subplot};
+    var labels = trace._module.formatLabels(di, trace, fullLayout);
+    pointData.lonLabel = labels.lonLabel;
+    pointData.latLabel = labels.latLabel;
+
     pointData.color = getTraceColor(trace, di);
     pointData.extraText = getExtraText(trace, di, cd[0].t.labels);
+    pointData.hovertemplate = trace.hovertemplate;
 
     return [pointData];
 };
 
 function getExtraText(trace, di, labels) {
+    if(trace.hovertemplate) return;
+
     var hoverinfo = di.hi || trace.hoverinfo;
     var parts = hoverinfo.split('+');
     var isAll = parts.indexOf('all') !== -1;
@@ -94,7 +103,7 @@ function getExtraText(trace, di, labels) {
     }
 
     if(isAll || parts.indexOf('text') !== -1) {
-        fillHoverText(di, trace, text);
+        fillText(di, trace, text);
     }
 
     return text.join('<br>');

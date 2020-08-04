@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -19,13 +19,16 @@ var Drawing = require('../../components/drawing');
 var Fx = require('../../components/fx');
 var Plots = require('../plots');
 var Axes = require('../cartesian/axes');
+var getAutoRange = require('../cartesian/autorange').getAutoRange;
 var dragElement = require('../../components/dragelement');
 var prepSelect = require('../cartesian/select').prepSelect;
+var clearSelect = require('../cartesian/select').clearSelect;
 var selectOnClick = require('../cartesian/select').selectOnClick;
 
 var createGeoZoom = require('./zoom');
 var constants = require('./constants');
 
+var geoUtils = require('../../lib/geo_location_utils');
 var topojsonUtils = require('../../lib/topojson_utils');
 var topojsonFeature = require('topojson-client').feature;
 
@@ -42,6 +45,7 @@ function Geo(opts) {
     this.topojson = null;
 
     this.projection = null;
+    this.scope = null;
     this.viewInitial = null;
     this.fitScale = null;
     this.bounds = null;
@@ -71,31 +75,49 @@ module.exports = function createGeo(opts) {
 proto.plot = function(geoCalcData, fullLayout, promises) {
     var _this = this;
     var geoLayout = fullLayout[this.id];
-    var topojsonNameNew = topojsonUtils.getTopojsonName(geoLayout);
+    var geoPromises = [];
 
-    if(_this.topojson === null || topojsonNameNew !== _this.topojsonName) {
-        _this.topojsonName = topojsonNameNew;
+    var needsTopojson = false;
+    for(var k in constants.layerNameToAdjective) {
+        if(k !== 'frame' && geoLayout['show' + k]) {
+            needsTopojson = true;
+            break;
+        }
+    }
+    for(var i = 0; i < geoCalcData.length; i++) {
+        if(geoCalcData[0][0].trace.locationmode) {
+            needsTopojson = true;
+            break;
+        }
+    }
 
-        if(PlotlyGeoAssets.topojson[_this.topojsonName] === undefined) {
-            promises.push(_this.fetchTopojson().then(function(topojson) {
-                PlotlyGeoAssets.topojson[_this.topojsonName] = topojson;
-                _this.topojson = topojson;
-                _this.update(geoCalcData, fullLayout);
-            }));
-        } else {
+    if(needsTopojson) {
+        var topojsonNameNew = topojsonUtils.getTopojsonName(geoLayout);
+        if(_this.topojson === null || topojsonNameNew !== _this.topojsonName) {
+            _this.topojsonName = topojsonNameNew;
+
+            if(PlotlyGeoAssets.topojson[_this.topojsonName] === undefined) {
+                geoPromises.push(_this.fetchTopojson());
+            }
+        }
+    }
+
+    geoPromises = geoPromises.concat(geoUtils.fetchTraceGeoData(geoCalcData));
+
+    promises.push(new Promise(function(resolve, reject) {
+        Promise.all(geoPromises).then(function() {
             _this.topojson = PlotlyGeoAssets.topojson[_this.topojsonName];
             _this.update(geoCalcData, fullLayout);
-        }
-    } else {
-        _this.update(geoCalcData, fullLayout);
-    }
+            resolve();
+        })
+        .catch(reject);
+    }));
 };
 
 proto.fetchTopojson = function() {
-    var topojsonPath = topojsonUtils.getTopojsonPath(
-        this.topojsonURL,
-        this.topojsonName
-    );
+    var _this = this;
+    var topojsonPath = topojsonUtils.getTopojsonPath(_this.topojsonURL, _this.topojsonName);
+
     return new Promise(function(resolve, reject) {
         d3.json(topojsonPath, function(err, topojson) {
             if(err) {
@@ -113,7 +135,9 @@ proto.fetchTopojson = function() {
                     ].join(' ')));
                 }
             }
-            resolve(topojson);
+
+            PlotlyGeoAssets.topojson[_this.topojsonName] = topojson;
+            resolve();
         });
     });
 };
@@ -121,21 +145,28 @@ proto.fetchTopojson = function() {
 proto.update = function(geoCalcData, fullLayout) {
     var geoLayout = fullLayout[this.id];
 
-    var hasInvalidBounds = this.updateProjection(fullLayout, geoLayout);
-    if(hasInvalidBounds) return;
-
     // important: maps with choropleth traces have a different layer order
     this.hasChoropleth = false;
+
     for(var i = 0; i < geoCalcData.length; i++) {
-        if(geoCalcData[i][0].trace.type === 'choropleth') {
+        var calcTrace = geoCalcData[i];
+        var trace = calcTrace[0].trace;
+
+        if(trace.type === 'choropleth') {
             this.hasChoropleth = true;
-            break;
+        }
+        if(trace.visible === true && trace._length > 0) {
+            trace._module.calcGeoJSON(calcTrace, fullLayout);
         }
     }
 
-    if(!this.viewInitial) {
+    var hasInvalidBounds = this.updateProjection(geoCalcData, fullLayout);
+    if(hasInvalidBounds) return;
+
+    if(!this.viewInitial || this.scope !== geoLayout.scope) {
         this.saveViewInitial(geoLayout);
     }
+    this.scope = geoLayout.scope;
 
     this.updateBaseLayers(fullLayout, geoLayout);
     this.updateDims(fullLayout, geoLayout);
@@ -154,20 +185,19 @@ proto.update = function(geoCalcData, fullLayout) {
     this.render();
 };
 
-proto.updateProjection = function(fullLayout, geoLayout) {
+proto.updateProjection = function(geoCalcData, fullLayout) {
+    var gd = this.graphDiv;
+    var geoLayout = fullLayout[this.id];
     var gs = fullLayout._size;
     var domain = geoLayout.domain;
     var projLayout = geoLayout.projection;
-    var rotation = projLayout.rotation || {};
-    var center = geoLayout.center || {};
+
+    var lonaxis = geoLayout.lonaxis;
+    var lataxis = geoLayout.lataxis;
+    var axLon = lonaxis._ax;
+    var axLat = lataxis._ax;
 
     var projection = this.projection = getProjection(geoLayout);
-
-    // set 'pre-fit' projection
-    projection
-        .center([center.lon - rotation.lon, center.lat - rotation.lat])
-        .rotate([-rotation.lon, -rotation.lat, rotation.roll])
-        .parallels(projLayout.parallels);
 
     // setup subplot extent [[x0,y0], [x1,y1]]
     var extent = [[
@@ -178,11 +208,46 @@ proto.updateProjection = function(fullLayout, geoLayout) {
         gs.t + gs.h * (1 - domain.y[0])
     ]];
 
-    var lonaxis = geoLayout.lonaxis;
-    var lataxis = geoLayout.lataxis;
-    var rangeBox = makeRangeBox(lonaxis.range, lataxis.range);
+    var center = geoLayout.center || {};
+    var rotation = projLayout.rotation || {};
+    var lonaxisRange = lonaxis.range || [];
+    var lataxisRange = lataxis.range || [];
+
+    if(geoLayout.fitbounds) {
+        axLon._length = extent[1][0] - extent[0][0];
+        axLat._length = extent[1][1] - extent[0][1];
+        axLon.range = getAutoRange(gd, axLon);
+        axLat.range = getAutoRange(gd, axLat);
+
+        var midLon = (axLon.range[0] + axLon.range[1]) / 2;
+        var midLat = (axLat.range[0] + axLat.range[1]) / 2;
+
+        if(geoLayout._isScoped) {
+            center = {lon: midLon, lat: midLat};
+        } else if(geoLayout._isClipped) {
+            center = {lon: midLon, lat: midLat};
+            rotation = {lon: midLon, lat: midLat, roll: rotation.roll};
+
+            var projType = projLayout.type;
+            var lonHalfSpan = (constants.lonaxisSpan[projType] / 2) || 180;
+            var latHalfSpan = (constants.lataxisSpan[projType] / 2) || 90;
+
+            lonaxisRange = [midLon - lonHalfSpan, midLon + lonHalfSpan];
+            lataxisRange = [midLat - latHalfSpan, midLat + latHalfSpan];
+        } else {
+            center = {lon: midLon, lat: midLat};
+            rotation = {lon: midLon, lat: rotation.lat, roll: rotation.roll};
+        }
+    }
+
+    // set 'pre-fit' projection
+    projection
+        .center([center.lon - rotation.lon, center.lat - rotation.lat])
+        .rotate([-rotation.lon, -rotation.lat, rotation.roll])
+        .parallels(projLayout.parallels);
 
     // fit projection 'scale' and 'translate' to set lon/lat ranges
+    var rangeBox = makeRangeBox(lonaxisRange, lataxisRange);
     projection.fitExtent(extent, rangeBox);
 
     var b = this.bounds = projection.getBounds(rangeBox);
@@ -194,12 +259,11 @@ proto.updateProjection = function(fullLayout, geoLayout) {
         !isFinite(b[1][0]) || !isFinite(b[1][1]) ||
         isNaN(t[0]) || isNaN(t[0])
     ) {
-        var gd = this.graphDiv;
-        var attrToUnset = ['projection.rotation', 'center', 'lonaxis.range', 'lataxis.range'];
+        var attrToUnset = ['fitbounds', 'projection.rotation', 'center', 'lonaxis.range', 'lataxis.range'];
         var msg = 'Invalid geo settings, relayout\'ing to default view.';
         var updateObj = {};
 
-        // clear all attribute that could cause invalid bounds,
+        // clear all attributes that could cause invalid bounds,
         // clear viewInitial to update reset-view behavior
 
         for(var i = 0; i < attrToUnset.length; i++) {
@@ -213,6 +277,23 @@ proto.updateProjection = function(fullLayout, geoLayout) {
         return msg;
     }
 
+    if(geoLayout.fitbounds) {
+        var b2 = projection.getBounds(makeRangeBox(axLon.range, axLat.range));
+        var k2 = Math.min(
+            (b[1][0] - b[0][0]) / (b2[1][0] - b2[0][0]),
+            (b[1][1] - b[0][1]) / (b2[1][1] - b2[0][1])
+        );
+
+        if(isFinite(k2)) {
+            projection.scale(k2 * s);
+        } else {
+            Lib.warn('Something went wrong during' + this.id + 'fitbounds computations.');
+        }
+    } else {
+        // adjust projection to user setting
+        projection.scale(projLayout.scale * s);
+    }
+
     // px coordinates of view mid-point,
     // useful to update `geo.center` after interactions
     var midPt = this.midPt = [
@@ -220,9 +301,7 @@ proto.updateProjection = function(fullLayout, geoLayout) {
         (b[0][1] + b[1][1]) / 2
     ];
 
-    // adjust projection to user setting
     projection
-        .scale(projLayout.scale * s)
         .translate([t[0] + (midPt[0] - t[0]), t[1] + (midPt[1] - t[1])])
         .clipExtent(b);
 
@@ -314,7 +393,7 @@ proto.updateBaseLayers = function(fullLayout, geoLayout) {
         } else if(isLineLayer(d) || isFillLayer(d)) {
             path.datum(topojsonFeature(topojson, topojson.objects[d]));
         } else if(isAxisLayer(d)) {
-            path.datum(makeGraticule(d, geoLayout))
+            path.datum(makeGraticule(d, geoLayout, fullLayout))
                 .call(Color.stroke, geoLayout[d].gridcolor)
                 .call(Drawing.dashLine, '', geoLayout[d].gridwidth);
         }
@@ -367,7 +446,7 @@ proto.updateFx = function(fullLayout, geoLayout) {
             updateObj[_this.id + '.' + k] = viewInitial[k];
         }
 
-        Registry.call('relayout', gd, updateObj);
+        Registry.call('_guiRelayout', gd, updateObj);
         gd.emit('plotly_doubleclick', null);
     }
 
@@ -411,7 +490,7 @@ proto.updateFx = function(fullLayout, geoLayout) {
         subplot: _this.id,
         clickFn: function(numClicks) {
             if(numClicks === 2) {
-                fullLayout._zoomlayer.selectAll('.select-outline').remove();
+                clearSelect(gd);
             }
         }
     };
@@ -420,8 +499,10 @@ proto.updateFx = function(fullLayout, geoLayout) {
         bgRect.node().onmousedown = null;
         bgRect.call(createGeoZoom(_this, geoLayout));
         bgRect.on('dblclick.zoom', zoomReset);
-    }
-    else if(dragMode === 'select' || dragMode === 'lasso') {
+        if(!gd._context._scrollZoom.geo) {
+            bgRect.on('wheel.zoom', null);
+        }
+    } else if(dragMode === 'select' || dragMode === 'lasso') {
         bgRect.on('.zoom', null);
 
         dragOptions.prepFn = function(e, startX, startY) {
@@ -470,7 +551,8 @@ proto.updateFx = function(fullLayout, geoLayout) {
 
 proto.makeFramework = function() {
     var _this = this;
-    var fullLayout = _this.graphDiv._fullLayout;
+    var gd = _this.graphDiv;
+    var fullLayout = gd._fullLayout;
     var clipId = 'clip' + fullLayout._uid + _this.id;
 
     _this.clipDef = fullLayout._clips.append('clipPath')
@@ -480,7 +562,7 @@ proto.makeFramework = function() {
 
     _this.framework = d3.select(_this.container).append('g')
         .attr('class', 'geo ' + _this.id)
-        .call(Drawing.setClipUrl, clipId);
+        .call(Drawing.setClipUrl, clipId, gd);
 
     // sane lonlat to px
     _this.project = function(v) {
@@ -514,26 +596,31 @@ proto.saveViewInitial = function(geoLayout) {
     var projLayout = geoLayout.projection;
     var rotation = projLayout.rotation || {};
 
+    this.viewInitial = {
+        'fitbounds': geoLayout.fitbounds,
+        'projection.scale': projLayout.scale
+    };
+
+    var extra;
     if(geoLayout._isScoped) {
-        this.viewInitial = {
+        extra = {
             'center.lon': center.lon,
             'center.lat': center.lat,
-            'projection.scale': projLayout.scale
         };
     } else if(geoLayout._isClipped) {
-        this.viewInitial = {
-            'projection.scale': projLayout.scale,
+        extra = {
             'projection.rotation.lon': rotation.lon,
             'projection.rotation.lat': rotation.lat
         };
     } else {
-        this.viewInitial = {
+        extra = {
             'center.lon': center.lon,
             'center.lat': center.lat,
-            'projection.scale': projLayout.scale,
             'projection.rotation.lon': rotation.lon
         };
     }
+
+    Lib.extendFlat(this.viewInitial, extra);
 };
 
 // [hot code path] (re)draw all paths which depend on the projection
@@ -656,20 +743,58 @@ function getProjection(geoLayout) {
     return projection;
 }
 
-function makeGraticule(axisName, geoLayout) {
-    var axisLayout = geoLayout[axisName];
-    var dtick = axisLayout.dtick;
-    var scopeDefaults = constants.scopeDefaults[geoLayout.scope];
-    var lonaxisRange = scopeDefaults.lonaxisRange;
-    var lataxisRange = scopeDefaults.lataxisRange;
-    var step = axisName === 'lonaxis' ? [dtick] : [0, dtick];
+function makeGraticule(axisName, geoLayout, fullLayout) {
+    // equivalent to the d3 "ε"
+    var epsilon = 1e-6;
+    // same as the geoGraticule default
+    var precision = 2.5;
 
-    return d3.geo.graticule()
-        .extent([
-            [lonaxisRange[0], lataxisRange[0]],
-            [lonaxisRange[1], lataxisRange[1]]
-        ])
-        .step(step);
+    var axLayout = geoLayout[axisName];
+    var scopeDefaults = constants.scopeDefaults[geoLayout.scope];
+    var rng;
+    var oppRng;
+    var coordFn;
+
+    if(axisName === 'lonaxis') {
+        rng = scopeDefaults.lonaxisRange;
+        oppRng = scopeDefaults.lataxisRange;
+        coordFn = function(v, l) { return [v, l]; };
+    } else if(axisName === 'lataxis') {
+        rng = scopeDefaults.lataxisRange;
+        oppRng = scopeDefaults.lonaxisRange;
+        coordFn = function(v, l) { return [l, v]; };
+    }
+
+    var dummyAx = {
+        type: 'linear',
+        range: [rng[0], rng[1] - epsilon],
+        tick0: axLayout.tick0,
+        dtick: axLayout.dtick
+    };
+
+    Axes.setConvert(dummyAx, fullLayout);
+    var vals = Axes.calcTicks(dummyAx);
+
+    // remove duplicate on antimeridian
+    if(!geoLayout.isScoped && axisName === 'lonaxis') {
+        vals.pop();
+    }
+
+    var len = vals.length;
+    var coords = new Array(len);
+
+    for(var i = 0; i < len; i++) {
+        var v = vals[i].x;
+        var line = coords[i] = [];
+        for(var l = oppRng[0]; l < oppRng[1] + precision; l += precision) {
+            line.push(coordFn(v, l));
+        }
+    }
+
+    return {
+        type: 'MultiLineString',
+        coordinates: coords
+    };
 }
 
 // Returns polygon GeoJSON corresponding to lon/lat range box

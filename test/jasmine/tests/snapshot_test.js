@@ -13,7 +13,6 @@ describe('Plotly.Snapshot', function() {
     'use strict';
 
     describe('clone', function() {
-
         var data,
             layout,
             dummyTrace1, dummyTrace2,
@@ -36,19 +35,19 @@ describe('Plotly.Snapshot', function() {
 
         data = [dummyTrace1, dummyTrace2];
         layout = {
-            title: 'Chart Title',
+            title: {text: 'Chart Title'},
             showlegend: true,
             autosize: true,
             width: 688,
             height: 460,
             xaxis: {
-                title: 'xaxis title',
+                title: {text: 'xaxis title'},
                 range: [-0.323374917925, 5.32337491793],
                 type: 'linear',
                 autorange: true
             },
             yaxis: {
-                title: 'yaxis title',
+                title: {text: 'yaxis title'},
                 range: [1.41922290389, 10.5807770961],
                 type: 'linear',
                 autorange: true
@@ -70,7 +69,7 @@ describe('Plotly.Snapshot', function() {
                 autosize: true,
                 width: 150,
                 height: 150,
-                title: '',
+                title: {text: ''},
                 showlegend: false,
                 margin: {'l': 5, 'r': 5, 't': 5, 'b': 5, 'pad': 0},
                 annotations: []
@@ -100,7 +99,7 @@ describe('Plotly.Snapshot', function() {
             };
 
             var THUMBNAIL_DEFAULT_LAYOUT = {
-                'title': '',
+                'title': {text: ''},
                 'hidesources': true,
                 'showlegend': false,
                 'hovermode': false,
@@ -117,10 +116,10 @@ describe('Plotly.Snapshot', function() {
             expect(thumbTile.layout.showlegend).toEqual(THUMBNAIL_DEFAULT_LAYOUT.showlegend);
             expect(thumbTile.layout.borderwidth).toEqual(THUMBNAIL_DEFAULT_LAYOUT.borderwidth);
             expect(thumbTile.layout.annotations).toEqual(THUMBNAIL_DEFAULT_LAYOUT.annotations);
+            expect(thumbTile.layout.title).toEqual(THUMBNAIL_DEFAULT_LAYOUT.title);
         });
 
         it('should create a 3D thumbnail with limited attributes', function() {
-
             var figure = {
                 data: [{
                     type: 'scatter',
@@ -142,7 +141,7 @@ describe('Plotly.Snapshot', function() {
             };
 
             var AXIS_OVERRIDE = {
-                title: '',
+                title: {text: ''},
                 showaxeslabels: false,
                 showticklabels: false,
                 linetickenable: false
@@ -206,8 +205,8 @@ describe('Plotly.Snapshot', function() {
             Plotly.plot(gd, subplotMock.data, subplotMock.layout).then(function() {
                 return Plotly.Snapshot.toSVG(gd);
             }).then(function(svg) {
-                var svgDOM = parser.parseFromString(svg, 'image/svg+xml'),
-                    svgElements = svgDOM.getElementsByTagName('svg');
+                var svgDOM = parser.parseFromString(svg, 'image/svg+xml');
+                var svgElements = svgDOM.getElementsByTagName('svg');
 
                 expect(svgElements.length).toBe(1);
             }).then(done);
@@ -217,8 +216,8 @@ describe('Plotly.Snapshot', function() {
             Plotly.plot(gd, annotationMock.data, annotationMock.layout).then(function() {
                 return Plotly.Snapshot.toSVG(gd);
             }).then(function(svg) {
-                var svgDOM = parser.parseFromString(svg, 'image/svg+xml'),
-                    svgElements = svgDOM.getElementsByTagName('svg');
+                var svgDOM = parser.parseFromString(svg, 'image/svg+xml');
+                var svgElements = svgDOM.getElementsByTagName('svg');
 
                 expect(svgElements.length).toBe(1);
             }).then(done);
@@ -229,7 +228,6 @@ describe('Plotly.Snapshot', function() {
             d3.select(gd).style('visibility', 'inherit');
 
             Plotly.plot(gd, subplotMock.data, subplotMock.layout).then(function() {
-
                 d3.select(gd).selectAll('text').each(function() {
                     var thisStyle = window.getComputedStyle(this);
                     expect(thisStyle.visibility).toEqual('visible');
@@ -239,8 +237,8 @@ describe('Plotly.Snapshot', function() {
                 return Plotly.Snapshot.toSVG(gd);
             })
             .then(function(svg) {
-                var svgDOM = parser.parseFromString(svg, 'image/svg+xml'),
-                    textElements = svgDOM.getElementsByTagName('text');
+                var svgDOM = parser.parseFromString(svg, 'image/svg+xml');
+                var textElements = svgDOM.getElementsByTagName('text');
 
                 for(var i = 0; i < textElements.length; i++) {
                     expect(textElements[i].style.visibility).toEqual('');
@@ -339,6 +337,24 @@ describe('Plotly.Snapshot', function() {
 
                     var fillItems = svgDOM.getElementsByClassName('cbfill');
                     expect(fillItems.length).toBe(1, '# of colorbars');
+                    for(var i = 0; i < fillItems.length; i++) {
+                        checkURL(fillItems[i].style.fill, 'fill gradient ' + i);
+                    }
+                })
+                .catch(failTest)
+                .then(done);
+            });
+
+            it('- legend3dandfriends case', function(done) {
+                var fig = Lib.extendDeep({}, require('@mocks/geo_choropleth-legend.json'));
+
+                Plotly.plot(gd, fig)
+                .then(function() { return Plotly.Snapshot.toSVG(gd); })
+                .then(function(svg) {
+                    var svgDOM = parser.parseFromString(svg, 'image/svg+xml');
+
+                    var fillItems = svgDOM.getElementsByClassName('legend3dandfriends');
+                    expect(fillItems.length).toBe(4, '# of legend items');
                     for(var i = 0; i < fillItems.length; i++) {
                         checkURL(fillItems[i].style.fill, 'fill gradient ' + i);
                     }

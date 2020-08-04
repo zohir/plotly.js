@@ -22,7 +22,6 @@ function supplyDataDefaults(dataIn, dataOut) {
 }
 
 describe('groupby', function() {
-
     describe('one-to-many transforms:', function() {
         'use strict';
 
@@ -50,6 +49,20 @@ describe('groupby', function() {
                 styles: [
                     {target: 'a', value: {marker: {color: 'green'}}},
                     {target: 'b', value: {marker: {color: 'black'}}}
+                ]
+            }]
+        }];
+
+        var mockDataWithTypedArrayGroups = [{
+            mode: 'markers',
+            x: [20, 11, 12, 0, 1, 2, 3],
+            y: [1, 2, 3, 2, 5, 2, 0],
+            transforms: [{
+                type: 'groupby',
+                groups: new Uint8Array([2, 1, 2, 2, 2, 1, 1]),
+                styles: [
+                    {target: 1, value: {marker: {color: 'green'}}},
+                    {target: 2, value: {marker: {color: 'black'}}}
                 ]
             }]
         }];
@@ -319,6 +332,22 @@ describe('groupby', function() {
             .catch(failTest)
             .then(done);
         });
+
+        it('Plotly.plot should group points properly using typed array', function(done) {
+            var data = Lib.extendDeep([], mockDataWithTypedArrayGroups);
+
+            var gd = createGraphDiv();
+
+            Plotly.plot(gd, data).then(function() {
+                expect(gd._fullData.length).toEqual(2);
+                expect(gd._fullData[0].x).toEqual([20, 12, 0, 1]);
+                expect(gd._fullData[0].y).toEqual([1, 3, 2, 5]);
+                expect(gd._fullData[1].x).toEqual([11, 2, 3]);
+                expect(gd._fullData[1].y).toEqual([2, 2, 0]);
+            })
+            .catch(failTest)
+            .then(done);
+        });
     });
 
     describe('many-to-many transforms', function() {
@@ -519,14 +548,12 @@ describe('groupby', function() {
         afterEach(destroyGraphDiv);
 
         function test(mockData) {
-
             return function(done) {
                 var data = Lib.extendDeep([], mockData);
 
                 var gd = createGraphDiv();
 
                 Plotly.plot(gd, data).then(function() {
-
                     expect(gd.data.length).toEqual(1);
                     expect(gd.data[0].ids).toEqual(['q', 'w', 'r', 't', 'y', 'u', 'i']);
                     expect(gd.data[0].x).toEqual([1, -1, -2, 0, 1, 2, 3]);
@@ -688,7 +715,6 @@ describe('groupby', function() {
         it('passes with no explicit styling for the individual group', test(mockData4));
 
         it('passes with no explicit styling in the group transform at all', test(mockData5));
-
     });
 
     describe('passes with no `groups`', function() {
@@ -697,14 +723,12 @@ describe('groupby', function() {
         afterEach(destroyGraphDiv);
 
         function test(mockData) {
-
             return function(done) {
                 var data = Lib.extendDeep([], mockData);
 
                 var gd = createGraphDiv();
 
                 Plotly.plot(gd, data).then(function() {
-
                     expect(gd.data.length).toEqual(1);
                     expect(gd.data[0].ids).toEqual(['q', 'w', 'r', 't', 'y', 'u', 'i']);
                     expect(gd.data[0].x).toEqual([1, -1, -2, 0, 1, 2, 3]);

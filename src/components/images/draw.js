@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -14,12 +14,12 @@ var Axes = require('../../plots/cartesian/axes');
 var xmlnsNamespaces = require('../../constants/xmlns_namespaces');
 
 module.exports = function draw(gd) {
-    var fullLayout = gd._fullLayout,
-        imageDataAbove = [],
-        imageDataSubplot = {},
-        imageDataBelow = [],
-        subplot,
-        i;
+    var fullLayout = gd._fullLayout;
+    var imageDataAbove = [];
+    var imageDataSubplot = {};
+    var imageDataBelow = [];
+    var subplot;
+    var i;
 
     // Sort into top, subplot, and bottom layers
     for(i = 0; i < fullLayout.images.length; i++) {
@@ -74,73 +74,76 @@ module.exports = function draw(gd) {
     function setImage(d) {
         var thisImage = d3.select(this);
 
-        if(this.img && this.img.src === d.source) {
+        if(this._imgSrc === d.source) {
             return;
         }
 
         thisImage.attr('xmlns', xmlnsNamespaces.svg);
 
-        var imagePromise = new Promise(function(resolve) {
+        if(d.source && d.source.slice(0, 5) === 'data:') {
+            thisImage.attr('xlink:href', d.source);
+            this._imgSrc = d.source;
+        } else {
+            var imagePromise = new Promise(function(resolve) {
+                var img = new Image();
+                this.img = img;
 
-            var img = new Image();
-            this.img = img;
+                // If not set, a `tainted canvas` error is thrown
+                img.setAttribute('crossOrigin', 'anonymous');
+                img.onerror = errorHandler;
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    canvas.width = this.width;
+                    canvas.height = this.height;
 
-            // If not set, a `tainted canvas` error is thrown
-            img.setAttribute('crossOrigin', 'anonymous');
-            img.onerror = errorHandler;
-            img.onload = function() {
-                var canvas = document.createElement('canvas');
-                canvas.width = this.width;
-                canvas.height = this.height;
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(this, 0, 0);
 
-                var ctx = canvas.getContext('2d');
-                ctx.drawImage(this, 0, 0);
+                    var dataURL = canvas.toDataURL('image/png');
 
-                var dataURL = canvas.toDataURL('image/png');
+                    thisImage.attr('xlink:href', dataURL);
 
-                thisImage.attr('xlink:href', dataURL);
+                    // resolve promise in onload handler instead of on 'load' to support IE11
+                    // see https://github.com/plotly/plotly.js/issues/1685
+                    // for more details
+                    resolve();
+                };
 
-                // resolve promise in onload handler instead of on 'load' to support IE11
-                // see https://github.com/plotly/plotly.js/issues/1685
-                // for more details
-                resolve();
-            };
+                thisImage.on('error', errorHandler);
 
+                img.src = d.source;
+                this._imgSrc = d.source;
 
-            thisImage.on('error', errorHandler);
+                function errorHandler() {
+                    thisImage.remove();
+                    resolve();
+                }
+            }.bind(this));
 
-            img.src = d.source;
-
-            function errorHandler() {
-                thisImage.remove();
-                resolve();
-            }
-        }.bind(this));
-
-        gd._promises.push(imagePromise);
+            gd._promises.push(imagePromise);
+        }
     }
 
     function applyAttributes(d) {
         var thisImage = d3.select(this);
 
         // Axes if specified
-        var xa = Axes.getFromId(gd, d.xref),
-            ya = Axes.getFromId(gd, d.yref);
+        var xa = Axes.getFromId(gd, d.xref);
+        var ya = Axes.getFromId(gd, d.yref);
 
-        var size = fullLayout._size,
-            width = xa ? Math.abs(xa.l2p(d.sizex) - xa.l2p(0)) : d.sizex * size.w,
-            height = ya ? Math.abs(ya.l2p(d.sizey) - ya.l2p(0)) : d.sizey * size.h;
+        var size = fullLayout._size;
+        var width = xa ? Math.abs(xa.l2p(d.sizex) - xa.l2p(0)) : d.sizex * size.w;
+        var height = ya ? Math.abs(ya.l2p(d.sizey) - ya.l2p(0)) : d.sizey * size.h;
 
         // Offsets for anchor positioning
-        var xOffset = width * anchors.x[d.xanchor].offset,
-            yOffset = height * anchors.y[d.yanchor].offset;
+        var xOffset = width * anchors.x[d.xanchor].offset;
+        var yOffset = height * anchors.y[d.yanchor].offset;
 
         var sizing = anchors.x[d.xanchor].sizing + anchors.y[d.yanchor].sizing;
 
         // Final positions
-        var xPos = (xa ? xa.r2p(d.x) + xa._offset : d.x * size.w + size.l) + xOffset,
-            yPos = (ya ? ya.r2p(d.y) + ya._offset : size.h - d.y * size.h + size.t) + yOffset;
-
+        var xPos = (xa ? xa.r2p(d.x) + xa._offset : d.x * size.w + size.l) + xOffset;
+        var yPos = (ya ? ya.r2p(d.y) + ya._offset : size.h - d.y * size.h + size.t) + yOffset;
 
         // Construct the proper aspectRatio attribute
         switch(d.sizing) {
@@ -164,20 +167,21 @@ module.exports = function draw(gd) {
 
 
         // Set proper clipping on images
-        var xId = xa ? xa._id : '',
-            yId = ya ? ya._id : '',
-            clipAxes = xId + yId;
+        var xId = xa ? xa._id : '';
+        var yId = ya ? ya._id : '';
+        var clipAxes = xId + yId;
 
-        thisImage.call(Drawing.setClipUrl, clipAxes ?
-            ('clip' + fullLayout._uid + clipAxes) :
-            null
+        Drawing.setClipUrl(
+            thisImage,
+            clipAxes ? ('clip' + fullLayout._uid + clipAxes) : null,
+            gd
         );
     }
 
     var imagesBelow = fullLayout._imageLowerLayer.selectAll('image')
-            .data(imageDataBelow),
-        imagesAbove = fullLayout._imageUpperLayer.selectAll('image')
-            .data(imageDataAbove);
+        .data(imageDataBelow);
+    var imagesAbove = fullLayout._imageUpperLayer.selectAll('image')
+        .data(imageDataAbove);
 
     imagesBelow.enter().append('image');
     imagesAbove.enter().append('image');

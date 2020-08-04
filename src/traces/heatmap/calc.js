@@ -1,11 +1,10 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
 * LICENSE file in the root directory of this source tree.
 */
-
 
 'use strict';
 
@@ -16,31 +15,30 @@ var Axes = require('../../plots/cartesian/axes');
 var histogram2dCalc = require('../histogram2d/calc');
 var colorscaleCalc = require('../../components/colorscale/calc');
 var convertColumnData = require('./convert_column_xyz');
-var maxRowLength = require('./max_row_length');
 var clean2dArray = require('./clean_2d_array');
 var interp2d = require('./interp2d');
 var findEmpties = require('./find_empties');
 var makeBoundArray = require('./make_bound_array');
-
+var BADNUM = require('../../constants/numerical').BADNUM;
 
 module.exports = function calc(gd, trace) {
     // prepare the raw data
     // run makeCalcdata on x and y even for heatmaps, in case of category mappings
-    var xa = Axes.getFromId(gd, trace.xaxis || 'x'),
-        ya = Axes.getFromId(gd, trace.yaxis || 'y'),
-        isContour = Registry.traceIs(trace, 'contour'),
-        isHist = Registry.traceIs(trace, 'histogram'),
-        isGL2D = Registry.traceIs(trace, 'gl2d'),
-        zsmooth = isContour ? 'best' : trace.zsmooth,
-        x,
-        x0,
-        dx,
-        y,
-        y0,
-        dy,
-        z,
-        i,
-        binned;
+    var xa = Axes.getFromId(gd, trace.xaxis || 'x');
+    var ya = Axes.getFromId(gd, trace.yaxis || 'y');
+    var isContour = Registry.traceIs(trace, 'contour');
+    var isHist = Registry.traceIs(trace, 'histogram');
+    var isGL2D = Registry.traceIs(trace, 'gl2d');
+    var zsmooth = isContour ? 'best' : trace.zsmooth;
+    var x;
+    var x0;
+    var dx;
+    var y;
+    var y0;
+    var dy;
+    var z;
+    var i;
+    var binned;
 
     // cancel minimum tick spacings (only applies to bars and boxes)
     xa._minDtick = 0;
@@ -55,8 +53,7 @@ module.exports = function calc(gd, trace) {
         y0 = binned.y0;
         dy = binned.dy;
         z = binned.z;
-    }
-    else {
+    } else {
         var zIn = trace.z;
         if(Lib.isArray1D(zIn)) {
             convertColumnData(trace, xa, ya, 'x', 'y', ['z']);
@@ -64,21 +61,33 @@ module.exports = function calc(gd, trace) {
             y = trace._y;
             zIn = trace._z;
         } else {
-            x = trace.x ? xa.makeCalcdata(trace, 'x') : [];
-            y = trace.y ? ya.makeCalcdata(trace, 'y') : [];
+            x = trace._x = trace.x ? xa.makeCalcdata(trace, 'x') : [];
+            y = trace._y = trace.y ? ya.makeCalcdata(trace, 'y') : [];
         }
 
-        x0 = trace.x0 || 0;
-        dx = trace.dx || 1;
-        y0 = trace.y0 || 0;
-        dy = trace.dy || 1;
+        x0 = trace.x0;
+        dx = trace.dx;
+        y0 = trace.y0;
+        dy = trace.dy;
 
-        z = clean2dArray(zIn, trace.transpose);
+        z = clean2dArray(zIn, trace, xa, ya);
+    }
 
-        if(isContour || trace.connectgaps) {
-            trace._emptypoints = findEmpties(z);
-            interp2d(z, trace._emptypoints);
+    if(xa.rangebreaks || ya.rangebreaks) {
+        z = dropZonBreaks(x, y, z);
+
+        if(!isHist) {
+            x = skipBreaks(x);
+            y = skipBreaks(y);
+
+            trace._x = x;
+            trace._y = y;
         }
+    }
+
+    if(!isHist && (isContour || trace.connectgaps)) {
+        trace._emptypoints = findEmpties(z);
+        interp2d(z, trace._emptypoints);
     }
 
     function noZsmooth(msg) {
@@ -90,11 +99,10 @@ module.exports = function calc(gd, trace) {
     if(zsmooth === 'fast') {
         if(xa.type === 'log' || ya.type === 'log') {
             noZsmooth('log axis found');
-        }
-        else if(!isHist) {
+        } else if(!isHist) {
             if(x.length) {
-                var avgdx = (x[x.length - 1] - x[0]) / (x.length - 1),
-                    maxErrX = Math.abs(avgdx / 100);
+                var avgdx = (x[x.length - 1] - x[0]) / (x.length - 1);
+                var maxErrX = Math.abs(avgdx / 100);
                 for(i = 0; i < x.length - 1; i++) {
                     if(Math.abs(x[i + 1] - x[i] - avgdx) > maxErrX) {
                         noZsmooth('x scale is not linear');
@@ -103,8 +111,8 @@ module.exports = function calc(gd, trace) {
                 }
             }
             if(y.length && zsmooth === 'fast') {
-                var avgdy = (y[y.length - 1] - y[0]) / (y.length - 1),
-                    maxErrY = Math.abs(avgdy / 100);
+                var avgdy = (y[y.length - 1] - y[0]) / (y.length - 1);
+                var maxErrY = Math.abs(avgdy / 100);
                 for(i = 0; i < y.length - 1; i++) {
                     if(Math.abs(y[i + 1] - y[i] - avgdy) > maxErrY) {
                         noZsmooth('y scale is not linear');
@@ -116,7 +124,7 @@ module.exports = function calc(gd, trace) {
     }
 
     // create arrays of brick boundaries, to be used by autorange and heatmap.plot
-    var xlen = maxRowLength(z);
+    var xlen = Lib.maxRowLength(z);
     var xIn = trace.xtype === 'scaled' ? '' : x;
     var xArray = makeBoundArray(trace, xIn, x0, dx, xlen, xa);
     var yIn = trace.ytype === 'scaled' ? '' : y;
@@ -132,7 +140,8 @@ module.exports = function calc(gd, trace) {
         x: xArray,
         y: yArray,
         z: z,
-        text: trace._text || trace.text
+        text: trace._text || trace.text,
+        hovertext: trace._hovertext || trace.hovertext
     };
 
     if(xIn && xIn.length === xArray.length - 1) cd0.xCenter = xIn;
@@ -144,9 +153,8 @@ module.exports = function calc(gd, trace) {
         cd0.pts = binned.pts;
     }
 
-    // auto-z and autocolorscale if applicable
-    if(!isContour || trace.contours.type !== 'constraint') {
-        colorscaleCalc(trace, z, '', 'z');
+    if(!isContour) {
+        colorscaleCalc(gd, trace, {vals: z, cLetter: 'z'});
     }
 
     if(isContour && trace.contours && trace.contours.coloring === 'heatmap') {
@@ -161,3 +169,29 @@ module.exports = function calc(gd, trace) {
 
     return [cd0];
 };
+
+function skipBreaks(a) {
+    var b = [];
+    var len = a.length;
+    for(var i = 0; i < len; i++) {
+        var v = a[i];
+        if(v !== BADNUM) b.push(v);
+    }
+    return b;
+}
+
+function dropZonBreaks(x, y, z) {
+    var newZ = [];
+    var k = -1;
+    for(var i = 0; i < z.length; i++) {
+        if(y[i] === BADNUM) continue;
+        k++;
+        newZ[k] = [];
+        for(var j = 0; j < z[i].length; j++) {
+            if(x[j] === BADNUM) continue;
+
+            newZ[k].push(z[i][j]);
+        }
+    }
+    return newZ;
+}

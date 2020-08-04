@@ -2,6 +2,7 @@ var Plotly = require('@lib/index');
 
 var createGraphDiv = require('../assets/create_graph_div');
 var destroyGraphDiv = require('../assets/destroy_graph_div');
+var failTest = require('../assets/fail_test');
 
 describe('aggregate', function() {
     var gd;
@@ -340,5 +341,47 @@ describe('aggregate', function() {
 
         expect(enabledAggregations[2].target).toEqual('marker.color');
         expect(enabledAggregations[2]._index).toEqual(-1);
+    });
+
+    it('does not error out on bad *group* value', function(done) {
+        Plotly.newPlot(gd, [{
+            y: [16.99, 10.34, 11.01, 23.68, 24.59],
+            transforms: [{
+                type: 'aggregate',
+                groups: null
+            }]
+        }])
+        .then(function() {
+            var tOut = gd._fullData[0].transforms[0];
+            expect(tOut.type).toBe('aggregate', 'transform type');
+            expect(tOut.groups).toBe('x', 'the *groups* default');
+            expect(tOut.enabled).toBe(false, 'should not be *enabled*');
+        })
+        .catch(failTest)
+        .then(done);
+    });
+
+    it('use numeric sort function for median', function() {
+        var subject = ['M', 'M', 'M'];
+        var score = [2, 10, 11];
+
+        var data = [{
+            type: 'scatter',
+            x: subject,
+            y: score,
+            mode: 'markers',
+            transforms: [{
+                type: 'aggregate',
+                groups: subject,
+                aggregations: [
+                    { target: 'y', func: 'median' },
+                ]
+            }]
+        }];
+
+        Plotly.newPlot(gd, data);
+
+        var traceOut = gd._fullData[0];
+        expect(traceOut.y[0]).toBe(10);
     });
 });

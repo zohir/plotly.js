@@ -1,17 +1,15 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
 * LICENSE file in the root directory of this source tree.
 */
 
-
 'use strict';
 
 var d3 = require('d3');
 var isNumeric = require('fast-isnumeric');
-var tinycolor = require('tinycolor2');
 
 var Lib = require('../../lib');
 var svgTextUtils = require('../../lib/svg_text_utils');
@@ -19,32 +17,109 @@ var svgTextUtils = require('../../lib/svg_text_utils');
 var Color = require('../../components/color');
 var Drawing = require('../../components/drawing');
 var Registry = require('../../registry');
+var tickText = require('../../plots/cartesian/axes').tickText;
 
-var attributes = require('./attributes'),
-    attributeText = attributes.text,
-    attributeTextPosition = attributes.textposition,
-    attributeTextFont = attributes.textfont,
-    attributeInsideTextFont = attributes.insidetextfont,
-    attributeOutsideTextFont = attributes.outsidetextfont;
+var uniformText = require('./uniform_text');
+var recordMinTextSize = uniformText.recordMinTextSize;
+var clearMinTextSize = uniformText.clearMinTextSize;
 
-// padding in pixels around text
-var TEXTPAD = 3;
+var style = require('./style');
+var helpers = require('./helpers');
+var constants = require('./constants');
+var attributes = require('./attributes');
 
-module.exports = function plot(gd, plotinfo, cdbar, barLayer) {
+var attributeText = attributes.text;
+var attributeTextPosition = attributes.textposition;
+
+var appendArrayPointValue = require('../../components/fx/helpers').appendArrayPointValue;
+
+var TEXTPAD = constants.TEXTPAD;
+
+function keyFunc(d) {return d.id;}
+function getKeyFunc(trace) {
+    if(trace.ids) {
+        return keyFunc;
+    }
+}
+
+function dirSign(a, b) {
+    return (a < b) ? 1 : -1;
+}
+
+function getXY(di, xa, ya, isHorizontal) {
+    var s = [];
+    var p = [];
+
+    var sAxis = isHorizontal ? xa : ya;
+    var pAxis = isHorizontal ? ya : xa;
+
+    s[0] = sAxis.c2p(di.s0, true);
+    p[0] = pAxis.c2p(di.p0, true);
+
+    s[1] = sAxis.c2p(di.s1, true);
+    p[1] = pAxis.c2p(di.p1, true);
+
+    return isHorizontal ? [s, p] : [p, s];
+}
+
+function transition(selection, fullLayout, opts, makeOnCompleteCallback) {
+    if(!fullLayout.uniformtext.mode && hasTransition(opts)) {
+        var onComplete;
+        if(makeOnCompleteCallback) {
+            onComplete = makeOnCompleteCallback();
+        }
+        return selection
+          .transition()
+          .duration(opts.duration)
+          .ease(opts.easing)
+          .each('end', function() { onComplete && onComplete(); })
+          .each('interrupt', function() { onComplete && onComplete(); });
+    } else {
+        return selection;
+    }
+}
+
+function hasTransition(transitionOpts) {
+    return transitionOpts && transitionOpts.duration > 0;
+}
+
+function plot(gd, plotinfo, cdModule, traceLayer, opts, makeOnCompleteCallback) {
     var xa = plotinfo.xaxis;
     var ya = plotinfo.yaxis;
     var fullLayout = gd._fullLayout;
 
-    var bartraces = Lib.makeTraceGroups(barLayer, cdbar, 'trace bars').each(function(cd) {
-        var plotGroup = d3.select(this);
-        var cd0 = cd[0];
-        var trace = cd0.trace;
+    if(!opts) {
+        opts = {
+            mode: fullLayout.barmode,
+            norm: fullLayout.barmode,
+            gap: fullLayout.bargap,
+            groupgap: fullLayout.bargroupgap
+        };
 
-        if(!plotinfo.isRangePlot) cd0.node3 = plotGroup;
+        // don't clear bar when this is called from waterfall or funnel
+        clearMinTextSize('bar', fullLayout);
+    }
+
+    var bartraces = Lib.makeTraceGroups(traceLayer, cdModule, 'trace bars').each(function(cd) {
+        var plotGroup = d3.select(this);
+        var trace = cd[0].trace;
+        var isWaterfall = (trace.type === 'waterfall');
+        var isFunnel = (trace.type === 'funnel');
+        var isBar = (trace.type === 'bar');
+        var shouldDisplayZeros = (isBar || isFunnel);
+
+        var adjustPixel = 0;
+        if(isWaterfall && trace.connector.visible && trace.connector.mode === 'between') {
+            adjustPixel = trace.connector.line.width / 2;
+        }
+
+        var isHorizontal = (trace.orientation === 'h');
+        var withTransition = hasTransition(opts);
 
         var pointGroup = Lib.ensureSingle(plotGroup, 'g', 'points');
 
-        var bars = pointGroup.selectAll('g.point').data(Lib.identity);
+        var keyFunc = getKeyFunc(trace);
+        var bars = pointGroup.selectAll('g.point').data(Lib.identity, keyFunc);
 
         bars.enter().append('g')
             .classed('point', true);
@@ -58,45 +133,86 @@ module.exports = function plot(gd, plotinfo, cdbar, barLayer) {
             // clipped xf/yf (2nd arg true): non-positive
             // log values go off-screen by plotwidth
             // so you see them continue if you drag the plot
-            var x0, x1, y0, y1;
-            if(trace.orientation === 'h') {
-                y0 = ya.c2p(di.p0, true);
-                y1 = ya.c2p(di.p1, true);
-                x0 = xa.c2p(di.s0, true);
-                x1 = xa.c2p(di.s1, true);
+            var xy = getXY(di, xa, ya, isHorizontal);
 
-                // for selections
-                di.ct = [x1, (y0 + y1) / 2];
-            }
-            else {
-                x0 = xa.c2p(di.p0, true);
-                x1 = xa.c2p(di.p1, true);
-                y0 = ya.c2p(di.s0, true);
-                y1 = ya.c2p(di.s1, true);
+            var x0 = xy[0][0];
+            var x1 = xy[0][1];
+            var y0 = xy[1][0];
+            var y1 = xy[1][1];
 
-                // for selections
-                di.ct = [(x0 + x1) / 2, y1];
+            // empty bars
+            var isBlank = (isHorizontal ? x1 - x0 : y1 - y0) === 0;
+
+            // display zeros if line.width > 0
+            if(isBlank && shouldDisplayZeros && helpers.getLineWidth(trace, di)) {
+                isBlank = false;
             }
 
-            if(!isNumeric(x0) || !isNumeric(x1) ||
-                    !isNumeric(y0) || !isNumeric(y1) ||
-                    x0 === x1 || y0 === y1) {
-                bar.remove();
-                return;
+            // skip nulls
+            if(!isBlank) {
+                isBlank = (
+                    !isNumeric(x0) ||
+                    !isNumeric(x1) ||
+                    !isNumeric(y0) ||
+                    !isNumeric(y1)
+                );
             }
 
-            var lw = (di.mlw + 1 || trace.marker.line.width + 1 ||
-                    (di.trace ? di.trace.marker.line.width : 0) + 1) - 1,
-                offset = d3.round((lw / 2) % 1, 2);
+            // record isBlank
+            di.isBlank = isBlank;
+
+            // for blank bars, ensure start and end positions are equal - important for smooth transitions
+            if(isBlank) {
+                if(isHorizontal) {
+                    x1 = x0;
+                } else {
+                    y1 = y0;
+                }
+            }
+
+            // in waterfall mode `between` we need to adjust bar end points to match the connector width
+            if(adjustPixel && !isBlank) {
+                if(isHorizontal) {
+                    x0 -= dirSign(x0, x1) * adjustPixel;
+                    x1 += dirSign(x0, x1) * adjustPixel;
+                } else {
+                    y0 -= dirSign(y0, y1) * adjustPixel;
+                    y1 += dirSign(y0, y1) * adjustPixel;
+                }
+            }
+
+            var lw;
+            var mc;
+
+            if(trace.type === 'waterfall') {
+                if(!isBlank) {
+                    var cont = trace[di.dir].marker;
+                    lw = cont.line.width;
+                    mc = cont.color;
+                }
+            } else {
+                lw = helpers.getLineWidth(trace, di);
+                mc = di.mc || trace.marker.color;
+            }
 
             function roundWithLine(v) {
+                var offset = d3.round((lw / 2) % 1, 2);
+
                 // if there are explicit gaps, don't round,
                 // it can make the gaps look crappy
-                return (fullLayout.bargap === 0 && fullLayout.bargroupgap === 0) ?
+                return (opts.gap === 0 && opts.groupgap === 0) ?
                     d3.round(Math.round(v) - offset, 2) : v;
             }
 
-            function expandToVisible(v, vc) {
+            function expandToVisible(v, vc, hideZeroSpan) {
+                if(hideZeroSpan && v === vc) {
+                    // should not expand zero span bars
+                    // when start and end positions are identical
+                    // i.e. for vertical when y0 === y1
+                    // and for horizontal when x0 === x1
+                    return v;
+                }
+
                 // if it's not in danger of disappearing entirely,
                 // round more precisely
                 return Math.abs(v - vc) >= 2 ? roundWithLine(v) :
@@ -113,22 +229,28 @@ module.exports = function plot(gd, plotinfo, cdbar, barLayer) {
                 // pixelation. if the bars ARE fully opaque and have
                 // no line, expand to a full pixel to make sure we
                 // can see them
-                var op = Color.opacity(di.mc || trace.marker.color),
-                    fixpx = (op < 1 || lw > 0.01) ?
-                        roundWithLine : expandToVisible;
-                x0 = fixpx(x0, x1);
-                x1 = fixpx(x1, x0);
-                y0 = fixpx(y0, y1);
-                y1 = fixpx(y1, y0);
+
+                var op = Color.opacity(mc);
+                var fixpx = (op < 1 || lw > 0.01) ? roundWithLine : expandToVisible;
+
+                x0 = fixpx(x0, x1, isHorizontal);
+                x1 = fixpx(x1, x0, isHorizontal);
+                y0 = fixpx(y0, y1, !isHorizontal);
+                y1 = fixpx(y1, y0, !isHorizontal);
             }
 
-            Lib.ensureSingle(bar, 'path')
+            var sel = transition(Lib.ensureSingle(bar, 'path'), fullLayout, opts, makeOnCompleteCallback);
+            sel
                 .style('vector-effect', 'non-scaling-stroke')
-                .attr('d',
-                    'M' + x0 + ',' + y0 + 'V' + y1 + 'H' + x1 + 'V' + y0 + 'Z')
-                .call(Drawing.setClipUrl, plotinfo.layerClipId);
+                .attr('d', isNaN((x1 - x0) * (y1 - y0)) ? 'M0,0Z' : 'M' + x0 + ',' + y0 + 'V' + y1 + 'H' + x1 + 'V' + y0 + 'Z')
+                .call(Drawing.setClipUrl, plotinfo.layerClipId, gd);
 
-            appendBarText(gd, bar, cd, i, x0, x1, y0, y1);
+            if(!fullLayout.uniformtext.mode && withTransition) {
+                var styleFns = Drawing.makePointStyleFns(trace);
+                Drawing.singlePointStyle(di, sel, trace, styleFns, gd);
+            }
+
+            appendBarText(gd, plotinfo, bar, cd, i, x0, x1, y0, y1, opts, makeOnCompleteCallback);
 
             if(plotinfo.layerClipId) {
                 Drawing.hideOutsideRangePoint(di, bar.select('text'), xa, ya, trace.xcalendar, trace.ycalendar);
@@ -137,110 +259,148 @@ module.exports = function plot(gd, plotinfo, cdbar, barLayer) {
 
         // lastly, clip points groups of `cliponaxis !== false` traces
         // on `plotinfo._hasClipOnAxisFalse === true` subplots
-        var hasClipOnAxisFalse = cd0.trace.cliponaxis === false;
-        Drawing.setClipUrl(plotGroup, hasClipOnAxisFalse ? null : plotinfo.layerClipId);
+        var hasClipOnAxisFalse = trace.cliponaxis === false;
+        Drawing.setClipUrl(plotGroup, hasClipOnAxisFalse ? null : plotinfo.layerClipId, gd);
     });
 
     // error bars are on the top
-    Registry.getComponentMethod('errorbars', 'plot')(bartraces, plotinfo);
-};
+    Registry.getComponentMethod('errorbars', 'plot')(gd, bartraces, plotinfo, opts);
+}
 
-function appendBarText(gd, bar, calcTrace, i, x0, x1, y0, y1) {
+function appendBarText(gd, plotinfo, bar, cd, i, x0, x1, y0, y1, opts, makeOnCompleteCallback) {
+    var xa = plotinfo.xaxis;
+    var ya = plotinfo.yaxis;
+
+    var fullLayout = gd._fullLayout;
     var textPosition;
 
-    function appendTextNode(bar, text, textFont) {
+    function appendTextNode(bar, text, font) {
         var textSelection = Lib.ensureSingle(bar, 'text')
             .text(text)
             .attr({
                 'class': 'bartext bartext-' + textPosition,
-                transform: '',
                 'text-anchor': 'middle',
                 // prohibit tex interpretation until we can handle
                 // tex and regular text together
                 'data-notex': 1
             })
-            .call(Drawing.font, textFont)
+            .call(Drawing.font, font)
             .call(svgTextUtils.convertToTspans, gd);
 
         return textSelection;
     }
 
     // get trace attributes
-    var trace = calcTrace[0].trace,
-        orientation = trace.orientation;
+    var trace = cd[0].trace;
+    var isHorizontal = (trace.orientation === 'h');
 
-    var text = getText(trace, i);
+    var text = getText(fullLayout, cd, i, xa, ya);
     textPosition = getTextPosition(trace, i);
 
-    if(!text || textPosition === 'none') {
+    // compute text position
+    var inStackOrRelativeMode =
+        opts.mode === 'stack' ||
+        opts.mode === 'relative';
+
+    var calcBar = cd[i];
+    var isOutmostBar = !inStackOrRelativeMode || calcBar._outmost;
+
+    if(!text ||
+        textPosition === 'none' ||
+        ((calcBar.isBlank || x0 === x1 || y0 === y1) && (
+            textPosition === 'auto' ||
+            textPosition === 'inside'))) {
         bar.select('text').remove();
         return;
     }
 
-    var textFont = getTextFont(trace, i, gd._fullLayout.font),
-        insideTextFont = getInsideTextFont(trace, i, textFont),
-        outsideTextFont = getOutsideTextFont(trace, i, textFont);
+    var layoutFont = fullLayout.font;
+    var barColor = style.getBarColor(cd[i], trace);
+    var insideTextFont = style.getInsideTextFont(trace, i, layoutFont, barColor);
+    var outsideTextFont = style.getOutsideTextFont(trace, i, layoutFont);
 
-    // compute text position
-    var barmode = gd._fullLayout.barmode,
-        inStackMode = (barmode === 'stack'),
-        inRelativeMode = (barmode === 'relative'),
-        inStackOrRelativeMode = inStackMode || inRelativeMode,
+    // Special case: don't use the c2p(v, true) value on log size axes,
+    // so that we can get correctly inside text scaling
+    var di = bar.datum();
+    if(isHorizontal) {
+        if(xa.type === 'log' && di.s0 <= 0) {
+            if(xa.range[0] < xa.range[1]) {
+                x0 = 0;
+            } else {
+                x0 = xa._length;
+            }
+        }
+    } else {
+        if(ya.type === 'log' && di.s0 <= 0) {
+            if(ya.range[0] < ya.range[1]) {
+                y0 = ya._length;
+            } else {
+                y0 = 0;
+            }
+        }
+    }
 
-        calcBar = calcTrace[i],
-        isOutmostBar = !inStackOrRelativeMode || calcBar._outmost,
+    // padding excluded
+    var barWidth = Math.abs(x1 - x0) - 2 * TEXTPAD;
+    var barHeight = Math.abs(y1 - y0) - 2 * TEXTPAD;
 
-        barWidth = Math.abs(x1 - x0) - 2 * TEXTPAD,  // padding excluded
-        barHeight = Math.abs(y1 - y0) - 2 * TEXTPAD,  // padding excluded
-
-        textSelection,
-        textBB,
-        textWidth,
-        textHeight;
+    var textSelection;
+    var textBB;
+    var textWidth;
+    var textHeight;
+    var font;
 
     if(textPosition === 'outside') {
-        if(!isOutmostBar) textPosition = 'inside';
+        if(!isOutmostBar && !calcBar.hasB) textPosition = 'inside';
     }
 
     if(textPosition === 'auto') {
         if(isOutmostBar) {
             // draw text using insideTextFont and check if it fits inside bar
             textPosition = 'inside';
-            textSelection = appendTextNode(bar, text, insideTextFont);
+
+            font = Lib.ensureUniformFontSize(gd, insideTextFont);
+
+            textSelection = appendTextNode(bar, text, font);
 
             textBB = Drawing.bBox(textSelection.node()),
             textWidth = textBB.width,
             textHeight = textBB.height;
 
-            var textHasSize = (textWidth > 0 && textHeight > 0),
-                fitsInside =
-                    (textWidth <= barWidth && textHeight <= barHeight),
-                fitsInsideIfRotated =
-                    (textWidth <= barHeight && textHeight <= barWidth),
-                fitsInsideIfShrunk = (orientation === 'h') ?
-                    (barWidth >= textWidth * (barHeight / textHeight)) :
-                    (barHeight >= textHeight * (barWidth / textWidth));
-            if(textHasSize &&
-                    (fitsInside || fitsInsideIfRotated || fitsInsideIfShrunk)) {
+            var textHasSize = (textWidth > 0 && textHeight > 0);
+            var fitsInside = (textWidth <= barWidth && textHeight <= barHeight);
+            var fitsInsideIfRotated = (textWidth <= barHeight && textHeight <= barWidth);
+            var fitsInsideIfShrunk = (isHorizontal) ?
+                (barWidth >= textWidth * (barHeight / textHeight)) :
+                (barHeight >= textHeight * (barWidth / textWidth));
+
+            if(textHasSize && (
+                fitsInside ||
+                fitsInsideIfRotated ||
+                fitsInsideIfShrunk)
+            ) {
                 textPosition = 'inside';
-            }
-            else {
+            } else {
                 textPosition = 'outside';
                 textSelection.remove();
                 textSelection = null;
             }
+        } else {
+            textPosition = 'inside';
         }
-        else textPosition = 'inside';
     }
 
     if(!textSelection) {
-        textSelection = appendTextNode(bar, text,
-                (textPosition === 'outside') ?
-                outsideTextFont : insideTextFont);
+        font = Lib.ensureUniformFontSize(gd, (textPosition === 'outside') ? outsideTextFont : insideTextFont);
 
+        textSelection = appendTextNode(bar, text, font);
+
+        var currentTransform = textSelection.attr('transform');
+        textSelection.attr('transform', '');
         textBB = Drawing.bBox(textSelection.node()),
         textWidth = textBB.width,
         textHeight = textBB.height;
+        textSelection.attr('transform', currentTransform);
 
         if(textWidth <= 0 || textHeight <= 0) {
             textSelection.remove();
@@ -248,279 +408,376 @@ function appendBarText(gd, bar, calcTrace, i, x0, x1, y0, y1) {
         }
     }
 
+    var angle = trace.textangle;
+
     // compute text transform
     var transform, constrained;
     if(textPosition === 'outside') {
-        constrained = trace.constraintext === 'both' || trace.constraintext === 'outside';
-        transform = getTransformToMoveOutsideBar(x0, x1, y0, y1, textBB,
-            orientation, constrained);
-    }
-    else {
-        constrained = trace.constraintext === 'both' || trace.constraintext === 'inside';
-        transform = getTransformToMoveInsideBar(x0, x1, y0, y1, textBB,
-            orientation, constrained);
+        constrained =
+            trace.constraintext === 'both' ||
+            trace.constraintext === 'outside';
+
+        transform = toMoveOutsideBar(x0, x1, y0, y1, textBB, {
+            isHorizontal: isHorizontal,
+            constrained: constrained,
+            angle: angle
+        });
+    } else {
+        constrained =
+            trace.constraintext === 'both' ||
+            trace.constraintext === 'inside';
+
+        transform = toMoveInsideBar(x0, x1, y0, y1, textBB, {
+            isHorizontal: isHorizontal,
+            constrained: constrained,
+            angle: angle,
+            anchor: trace.insidetextanchor
+        });
     }
 
-    textSelection.attr('transform', transform);
+    transform.fontSize = font.size;
+    recordMinTextSize(trace.type, transform, fullLayout);
+    calcBar.transform = transform;
+
+    transition(textSelection, fullLayout, opts, makeOnCompleteCallback)
+        .attr('transform', Lib.getTextTransform(transform));
 }
 
-function getTransformToMoveInsideBar(x0, x1, y0, y1, textBB, orientation, constrained) {
-    // compute text and target positions
-    var textWidth = textBB.width,
-        textHeight = textBB.height,
-        textX = (textBB.left + textBB.right) / 2,
-        textY = (textBB.top + textBB.bottom) / 2,
-        barWidth = Math.abs(x1 - x0),
-        barHeight = Math.abs(y1 - y0),
-        targetWidth,
-        targetHeight,
-        targetX,
-        targetY;
-
-    // apply text padding
-    var textpad;
-    if(barWidth > (2 * TEXTPAD) && barHeight > (2 * TEXTPAD)) {
-        textpad = TEXTPAD;
-        barWidth -= 2 * textpad;
-        barHeight -= 2 * textpad;
-    }
-    else textpad = 0;
-
-    // compute rotation and scale
-    var rotate,
-        scale;
-
-    if(textWidth <= barWidth && textHeight <= barHeight) {
-        // no scale or rotation is required
-        rotate = false;
-        scale = 1;
-    }
-    else if(textWidth <= barHeight && textHeight <= barWidth) {
-        // only rotation is required
-        rotate = true;
-        scale = 1;
-    }
-    else if((textWidth < textHeight) === (barWidth < barHeight)) {
-        // only scale is required
-        rotate = false;
-        scale = constrained ? Math.min(barWidth / textWidth, barHeight / textHeight) : 1;
-    }
-    else {
-        // both scale and rotation are required
-        rotate = true;
-        scale = constrained ? Math.min(barHeight / textWidth, barWidth / textHeight) : 1;
-    }
-
-    if(rotate) rotate = 90;  // rotate clockwise
-
-    // compute text and target positions
-    if(rotate) {
-        targetWidth = scale * textHeight;
-        targetHeight = scale * textWidth;
-    }
-    else {
-        targetWidth = scale * textWidth;
-        targetHeight = scale * textHeight;
-    }
-
-    if(orientation === 'h') {
-        if(x1 < x0) {
-            // bar end is on the left hand side
-            targetX = x1 + textpad + targetWidth / 2;
-            targetY = (y0 + y1) / 2;
-        }
-        else {
-            targetX = x1 - textpad - targetWidth / 2;
-            targetY = (y0 + y1) / 2;
-        }
-    }
-    else {
-        if(y1 > y0) {
-            // bar end is on the bottom
-            targetX = (x0 + x1) / 2;
-            targetY = y1 - textpad - targetHeight / 2;
-        }
-        else {
-            targetX = (x0 + x1) / 2;
-            targetY = y1 + textpad + targetHeight / 2;
-        }
-    }
-
-    return getTransform(textX, textY, targetX, targetY, scale, rotate);
+function getRotateFromAngle(angle) {
+    return (angle === 'auto') ? 0 : angle;
 }
 
-function getTransformToMoveOutsideBar(x0, x1, y0, y1, textBB, orientation, constrained) {
-    var barWidth = (orientation === 'h') ?
-            Math.abs(y1 - y0) :
-            Math.abs(x1 - x0),
-        textpad;
-
-    // Keep the padding so the text doesn't sit right against
-    // the bars, but don't factor it into barWidth
-    if(barWidth > 2 * TEXTPAD) {
-        textpad = TEXTPAD;
-    }
-
-    // compute rotation and scale
-    var scale = 1;
-    if(constrained) {
-        scale = (orientation === 'h') ?
-            Math.min(1, barWidth / textBB.height) :
-            Math.min(1, barWidth / textBB.width);
-    }
-
-    // compute text and target positions
-    var textX = (textBB.left + textBB.right) / 2,
-        textY = (textBB.top + textBB.bottom) / 2,
-        targetWidth,
-        targetHeight,
-        targetX,
-        targetY;
-
-    targetWidth = scale * textBB.width;
-    targetHeight = scale * textBB.height;
-
-    if(orientation === 'h') {
-        if(x1 < x0) {
-            // bar end is on the left hand side
-            targetX = x1 - textpad - targetWidth / 2;
-            targetY = (y0 + y1) / 2;
-        }
-        else {
-            targetX = x1 + textpad + targetWidth / 2;
-            targetY = (y0 + y1) / 2;
-        }
-    }
-    else {
-        if(y1 > y0) {
-            // bar end is on the bottom
-            targetX = (x0 + x1) / 2;
-            targetY = y1 + textpad + targetHeight / 2;
-        }
-        else {
-            targetX = (x0 + x1) / 2;
-            targetY = y1 - textpad - targetHeight / 2;
-        }
-    }
-
-    return getTransform(textX, textY, targetX, targetY, scale, false);
-}
-
-function getTransform(textX, textY, targetX, targetY, scale, rotate) {
-    var transformScale,
-        transformRotate,
-        transformTranslate;
-
-    if(scale < 1) transformScale = 'scale(' + scale + ') ';
-    else {
-        scale = 1;
-        transformScale = '';
-    }
-
-    transformRotate = (rotate) ?
-        'rotate(' + rotate + ' ' + textX + ' ' + textY + ') ' : '';
-
-    // Note that scaling also affects the center of the text box
-    var translateX = (targetX - scale * textX),
-        translateY = (targetY - scale * textY);
-    transformTranslate = 'translate(' + translateX + ' ' + translateY + ')';
-
-    return transformTranslate + transformScale + transformRotate;
-}
-
-function getText(trace, index) {
-    var value = getValue(trace.text, index);
-    return coerceString(attributeText, value);
-}
-
-function getTextPosition(trace, index) {
-    var value = getValue(trace.textposition, index);
-    return coerceEnumerated(attributeTextPosition, value);
-}
-
-function getTextFont(trace, index, defaultValue) {
-    return getFontValue(
-        attributeTextFont, trace.textfont, index, defaultValue);
-}
-
-function getInsideTextFont(trace, index, defaultValue) {
-    return getFontValue(
-        attributeInsideTextFont, trace.insidetextfont, index, defaultValue);
-}
-
-function getOutsideTextFont(trace, index, defaultValue) {
-    return getFontValue(
-        attributeOutsideTextFont, trace.outsidetextfont, index, defaultValue);
-}
-
-function getFontValue(attributeDefinition, attributeValue, index, defaultValue) {
-    attributeValue = attributeValue || {};
-
-    var familyValue = getValue(attributeValue.family, index),
-        sizeValue = getValue(attributeValue.size, index),
-        colorValue = getValue(attributeValue.color, index);
+function getRotatedTextSize(textBB, rotate) {
+    var a = Math.PI / 180 * rotate;
+    var absSin = Math.abs(Math.sin(a));
+    var absCos = Math.abs(Math.cos(a));
 
     return {
-        family: coerceString(
-            attributeDefinition.family, familyValue, defaultValue.family),
-        size: coerceNumber(
-            attributeDefinition.size, sizeValue, defaultValue.size),
-        color: coerceColor(
-            attributeDefinition.color, colorValue, defaultValue.color)
+        x: textBB.width * absCos + textBB.height * absSin,
+        y: textBB.width * absSin + textBB.height * absCos
     };
 }
 
-function getValue(arrayOrScalar, index) {
+function toMoveInsideBar(x0, x1, y0, y1, textBB, opts) {
+    var isHorizontal = !!opts.isHorizontal;
+    var constrained = !!opts.constrained;
+    var angle = opts.angle || 0;
+    var anchor = opts.anchor || 'end';
+    var isEnd = anchor === 'end';
+    var isStart = anchor === 'start';
+    var leftToRight = opts.leftToRight || 0; // left: -1, center: 0, right: 1
+    var toRight = (leftToRight + 1) / 2;
+    var toLeft = 1 - toRight;
+
+    var textWidth = textBB.width;
+    var textHeight = textBB.height;
+    var lx = Math.abs(x1 - x0);
+    var ly = Math.abs(y1 - y0);
+
+    // compute remaining space
+    var textpad = (
+        lx > (2 * TEXTPAD) &&
+        ly > (2 * TEXTPAD)
+    ) ? TEXTPAD : 0;
+
+    lx -= 2 * textpad;
+    ly -= 2 * textpad;
+
+    var rotate = getRotateFromAngle(angle);
+    if((angle === 'auto') &&
+        !(textWidth <= lx && textHeight <= ly) &&
+        (textWidth > lx || textHeight > ly) && (
+        !(textWidth > ly || textHeight > lx) ||
+        ((textWidth < textHeight) !== (lx < ly))
+    )) {
+        rotate += 90;
+    }
+
+    var t = getRotatedTextSize(textBB, rotate);
+
+    var scale = 1;
+    if(constrained) {
+        scale = Math.min(
+            1,
+            lx / t.x,
+            ly / t.y
+        );
+    }
+
+    // compute text and target positions
+    var textX = (
+        textBB.left * toLeft +
+        textBB.right * toRight
+    );
+    var textY = (textBB.top + textBB.bottom) / 2;
+    var targetX = (
+        (x0 + TEXTPAD) * toLeft +
+        (x1 - TEXTPAD) * toRight
+    );
+    var targetY = (y0 + y1) / 2;
+    var anchorX = 0;
+    var anchorY = 0;
+    if(isStart || isEnd) {
+        var extrapad = (isHorizontal ? t.x : t.y) / 2;
+        var dir = isHorizontal ? dirSign(x0, x1) : dirSign(y0, y1);
+
+        if(isHorizontal) {
+            if(isStart) {
+                targetX = x0 + dir * textpad;
+                anchorX = -dir * extrapad;
+            } else {
+                targetX = x1 - dir * textpad;
+                anchorX = dir * extrapad;
+            }
+        } else {
+            if(isStart) {
+                targetY = y0 + dir * textpad;
+                anchorY = -dir * extrapad;
+            } else {
+                targetY = y1 - dir * textpad;
+                anchorY = dir * extrapad;
+            }
+        }
+    }
+
+    return {
+        textX: textX,
+        textY: textY,
+        targetX: targetX,
+        targetY: targetY,
+        anchorX: anchorX,
+        anchorY: anchorY,
+        scale: scale,
+        rotate: rotate
+    };
+}
+
+function toMoveOutsideBar(x0, x1, y0, y1, textBB, opts) {
+    var isHorizontal = !!opts.isHorizontal;
+    var constrained = !!opts.constrained;
+    var angle = opts.angle || 0;
+
+    var textWidth = textBB.width;
+    var textHeight = textBB.height;
+    var lx = Math.abs(x1 - x0);
+    var ly = Math.abs(y1 - y0);
+
+    var textpad;
+    // Keep the padding so the text doesn't sit right against
+    // the bars, but don't factor it into barWidth
+    if(isHorizontal) {
+        textpad = (ly > 2 * TEXTPAD) ? TEXTPAD : 0;
+    } else {
+        textpad = (lx > 2 * TEXTPAD) ? TEXTPAD : 0;
+    }
+
+    // compute rotate and scale
+    var scale = 1;
+    if(constrained) {
+        scale = (isHorizontal) ?
+            Math.min(1, ly / textHeight) :
+            Math.min(1, lx / textWidth);
+    }
+
+    var rotate = getRotateFromAngle(angle);
+    var t = getRotatedTextSize(textBB, rotate);
+
+    // compute text and target positions
+    var extrapad = (isHorizontal ? t.x : t.y) / 2;
+    var textX = (textBB.left + textBB.right) / 2;
+    var textY = (textBB.top + textBB.bottom) / 2;
+    var targetX = (x0 + x1) / 2;
+    var targetY = (y0 + y1) / 2;
+    var anchorX = 0;
+    var anchorY = 0;
+
+    var dir = isHorizontal ? dirSign(x1, x0) : dirSign(y0, y1);
+    if(isHorizontal) {
+        targetX = x1 - dir * textpad;
+        anchorX = dir * extrapad;
+    } else {
+        targetY = y1 + dir * textpad;
+        anchorY = -dir * extrapad;
+    }
+
+    return {
+        textX: textX,
+        textY: textY,
+        targetX: targetX,
+        targetY: targetY,
+        anchorX: anchorX,
+        anchorY: anchorY,
+        scale: scale,
+        rotate: rotate
+    };
+}
+
+function getText(fullLayout, cd, index, xa, ya) {
+    var trace = cd[0].trace;
+    var texttemplate = trace.texttemplate;
+
     var value;
-    if(!Array.isArray(arrayOrScalar)) value = arrayOrScalar;
-    else if(index < arrayOrScalar.length) value = arrayOrScalar[index];
-    return value;
-}
-
-function coerceString(attributeDefinition, value, defaultValue) {
-    if(typeof value === 'string') {
-        if(value || !attributeDefinition.noBlank) return value;
-    }
-    else if(typeof value === 'number') {
-        if(!attributeDefinition.strict) return String(value);
+    if(texttemplate) {
+        value = calcTexttemplate(fullLayout, cd, index, xa, ya);
+    } else if(trace.textinfo) {
+        value = calcTextinfo(cd, index, xa, ya);
+    } else {
+        value = helpers.getValue(trace.text, index);
     }
 
-    return (defaultValue !== undefined) ?
-        defaultValue :
-        attributeDefinition.dflt;
+    return helpers.coerceString(attributeText, value);
 }
 
-function coerceEnumerated(attributeDefinition, value, defaultValue) {
-    if(attributeDefinition.coerceNumber) value = +value;
-
-    if(attributeDefinition.values.indexOf(value) !== -1) return value;
-
-    return (defaultValue !== undefined) ?
-        defaultValue :
-        attributeDefinition.dflt;
+function getTextPosition(trace, index) {
+    var value = helpers.getValue(trace.textposition, index);
+    return helpers.coerceEnumerated(attributeTextPosition, value);
 }
 
-function coerceNumber(attributeDefinition, value, defaultValue) {
-    if(isNumeric(value)) {
-        value = +value;
+function calcTexttemplate(fullLayout, cd, index, xa, ya) {
+    var trace = cd[0].trace;
+    var texttemplate = Lib.castOption(trace, index, 'texttemplate');
+    if(!texttemplate) return '';
+    var isWaterfall = (trace.type === 'waterfall');
+    var isFunnel = (trace.type === 'funnel');
 
-        var min = attributeDefinition.min,
-            max = attributeDefinition.max,
-            isOutOfBounds = (min !== undefined && value < min) ||
-                (max !== undefined && value > max);
-
-        if(!isOutOfBounds) return value;
+    var pLetter, pAxis;
+    var vLetter, vAxis;
+    if(trace.orientation === 'h') {
+        pLetter = 'y';
+        pAxis = ya;
+        vLetter = 'x';
+        vAxis = xa;
+    } else {
+        pLetter = 'x';
+        pAxis = xa;
+        vLetter = 'y';
+        vAxis = ya;
     }
 
-    return (defaultValue !== undefined) ?
-        defaultValue :
-        attributeDefinition.dflt;
+    function formatLabel(u) {
+        return tickText(pAxis, u, true).text;
+    }
+
+    function formatNumber(v) {
+        return tickText(vAxis, +v, true).text;
+    }
+
+    var cdi = cd[index];
+    var obj = {};
+
+    obj.label = cdi.p;
+    obj.labelLabel = obj[pLetter + 'Label'] = formatLabel(cdi.p);
+
+    var tx = Lib.castOption(trace, cdi.i, 'text');
+    if(tx === 0 || tx) obj.text = tx;
+
+    obj.value = cdi.s;
+    obj.valueLabel = obj[vLetter + 'Label'] = formatNumber(cdi.s);
+
+    var pt = {};
+    appendArrayPointValue(pt, trace, cdi.i);
+
+    if(isWaterfall) {
+        obj.delta = +cdi.rawS || cdi.s;
+        obj.deltaLabel = formatNumber(obj.delta);
+        obj.final = cdi.v;
+        obj.finalLabel = formatNumber(obj.final);
+        obj.initial = obj.final - obj.delta;
+        obj.initialLabel = formatNumber(obj.initial);
+    }
+
+    if(isFunnel) {
+        obj.value = cdi.s;
+        obj.valueLabel = formatNumber(obj.value);
+
+        obj.percentInitial = cdi.begR;
+        obj.percentInitialLabel = Lib.formatPercent(cdi.begR);
+        obj.percentPrevious = cdi.difR;
+        obj.percentPreviousLabel = Lib.formatPercent(cdi.difR);
+        obj.percentTotal = cdi.sumR;
+        obj.percenTotalLabel = Lib.formatPercent(cdi.sumR);
+    }
+
+    var customdata = Lib.castOption(trace, cdi.i, 'customdata');
+    if(customdata) obj.customdata = customdata;
+    return Lib.texttemplateString(texttemplate, obj, fullLayout._d3locale, pt, obj, trace._meta || {});
 }
 
-function coerceColor(attributeDefinition, value, defaultValue) {
-    if(tinycolor(value).isValid()) return value;
+function calcTextinfo(cd, index, xa, ya) {
+    var trace = cd[0].trace;
+    var isHorizontal = (trace.orientation === 'h');
+    var isWaterfall = (trace.type === 'waterfall');
+    var isFunnel = (trace.type === 'funnel');
 
-    return (defaultValue !== undefined) ?
-        defaultValue :
-        attributeDefinition.dflt;
+    function formatLabel(u) {
+        var pAxis = isHorizontal ? ya : xa;
+        return tickText(pAxis, u, true).text;
+    }
+
+    function formatNumber(v) {
+        var sAxis = isHorizontal ? xa : ya;
+        return tickText(sAxis, +v, true).text;
+    }
+
+    var textinfo = trace.textinfo;
+    var cdi = cd[index];
+
+    var parts = textinfo.split('+');
+    var text = [];
+    var tx;
+
+    var hasFlag = function(flag) { return parts.indexOf(flag) !== -1; };
+
+    if(hasFlag('label')) {
+        text.push(formatLabel(cd[index].p));
+    }
+
+    if(hasFlag('text')) {
+        tx = Lib.castOption(trace, cdi.i, 'text');
+        if(tx === 0 || tx) text.push(tx);
+    }
+
+    if(isWaterfall) {
+        var delta = +cdi.rawS || cdi.s;
+        var final = cdi.v;
+        var initial = final - delta;
+
+        if(hasFlag('initial')) text.push(formatNumber(initial));
+        if(hasFlag('delta')) text.push(formatNumber(delta));
+        if(hasFlag('final')) text.push(formatNumber(final));
+    }
+
+    if(isFunnel) {
+        if(hasFlag('value')) text.push(formatNumber(cdi.s));
+
+        var nPercent = 0;
+        if(hasFlag('percent initial')) nPercent++;
+        if(hasFlag('percent previous')) nPercent++;
+        if(hasFlag('percent total')) nPercent++;
+
+        var hasMultiplePercents = nPercent > 1;
+
+        if(hasFlag('percent initial')) {
+            tx = Lib.formatPercent(cdi.begR);
+            if(hasMultiplePercents) tx += ' of initial';
+            text.push(tx);
+        }
+        if(hasFlag('percent previous')) {
+            tx = Lib.formatPercent(cdi.difR);
+            if(hasMultiplePercents) tx += ' of previous';
+            text.push(tx);
+        }
+        if(hasFlag('percent total')) {
+            tx = Lib.formatPercent(cdi.sumR);
+            if(hasMultiplePercents) tx += ' of total';
+            text.push(tx);
+        }
+    }
+
+    return text.join('<br>');
 }
+
+module.exports = {
+    plot: plot,
+    toMoveInsideBar: toMoveInsideBar
+};

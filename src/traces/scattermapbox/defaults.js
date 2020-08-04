@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -29,8 +29,11 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     }
 
     coerce('text');
+    coerce('texttemplate');
     coerce('hovertext');
+    coerce('hovertemplate');
     coerce('mode');
+    coerce('below');
 
     if(subTypes.hasLines(traceOut)) {
         handleLineDefaults(traceIn, traceOut, defaultColor, layout, coerce, {noDash: true});
@@ -39,6 +42,9 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
 
     if(subTypes.hasMarkers(traceOut)) {
         handleMarkerDefaults(traceIn, traceOut, defaultColor, layout, coerce, {noLine: true});
+
+        coerce('marker.allowoverlap');
+        coerce('marker.angle');
 
         // array marker.size and marker.color are only supported with circles
         var marker = traceOut.marker;

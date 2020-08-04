@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -11,6 +11,7 @@
 var Lib = require('../../lib');
 var Registry = require('../../registry');
 
+var helpers = require('./helpers');
 var attributes = require('./attributes');
 var constants = require('../scatter/constants');
 var subTypes = require('../scatter/subtypes');
@@ -25,7 +26,7 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
         return Lib.coerce(traceIn, traceOut, attributes, attr, dflt);
     }
 
-    var isOpen = traceIn.marker ? /-open/.test(traceIn.marker.symbol) : false;
+    var isOpen = traceIn.marker ? helpers.isOpenSymbol(traceIn.marker.symbol) : false;
     var isBubble = subTypes.isBubble(traceIn);
 
     var len = handleXYDefaults(traceIn, traceOut, layout, coerce);
@@ -37,11 +38,13 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
 
     coerce('text');
     coerce('hovertext');
+    coerce('hovertemplate');
     coerce('mode', defaultMode);
 
     if(subTypes.hasLines(traceOut)) {
         coerce('connectgaps');
         handleLineDefaults(traceIn, traceOut, defaultColor, layout, coerce);
+        coerce('line.shape');
     }
 
     if(subTypes.hasMarkers(traceOut)) {
@@ -50,8 +53,12 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     }
 
     if(subTypes.hasText(traceOut)) {
+        coerce('texttemplate');
         handleTextDefaults(traceIn, traceOut, layout, coerce);
     }
+
+    var lineColor = (traceOut.line || {}).color;
+    var markerColor = (traceOut.marker || {}).color;
 
     coerce('fill');
     if(traceOut.fill !== 'none') {
@@ -59,8 +66,8 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     }
 
     var errorBarsSupplyDefaults = Registry.getComponentMethod('errorbars', 'supplyDefaults');
-    errorBarsSupplyDefaults(traceIn, traceOut, defaultColor, {axis: 'y'});
-    errorBarsSupplyDefaults(traceIn, traceOut, defaultColor, {axis: 'x', inherit: 'y'});
+    errorBarsSupplyDefaults(traceIn, traceOut, lineColor || markerColor || defaultColor, {axis: 'y'});
+    errorBarsSupplyDefaults(traceIn, traceOut, lineColor || markerColor || defaultColor, {axis: 'x', inherit: 'y'});
 
     Lib.coerceSelectionMarkerOpacity(traceOut, coerce);
 };

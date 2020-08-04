@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -13,6 +13,7 @@ var createTubeMesh = tube2mesh.createTubeMesh;
 
 var Lib = require('../../lib');
 var parseColorScale = require('../../lib/gl_format_color').parseColorScale;
+var extractOpts = require('../../components/colorscale').extractOpts;
 var zip3 = require('../../plots/gl3d/zip3');
 
 var axisName2scaleIndex = {xaxis: 0, yaxis: 1, zaxis: 2};
@@ -55,15 +56,11 @@ proto.handlePick = function(selection) {
             selection.data.divergence
         ];
 
-        selection.textLabel = this.data.text;
+        selection.textLabel = this.data.hovertext || this.data.text;
 
         return true;
     }
 };
-
-function distinctVals(col) {
-    return Lib.distinctVals(col).vals;
-}
 
 function getDfltStartingPositions(vec) {
     var len = vec.length;
@@ -101,33 +98,33 @@ function convert(scene, trace) {
     }
 
     tubeOpts.vectors = zip3(
-        toDataCoords(trace.u, 'xaxis'),
-        toDataCoords(trace.v, 'yaxis'),
-        toDataCoords(trace.w, 'zaxis'),
+        toDataCoords(trace._u, 'xaxis'),
+        toDataCoords(trace._v, 'yaxis'),
+        toDataCoords(trace._w, 'zaxis'),
         len
     );
 
-    var valsx = distinctVals(trace.x.slice(0, len));
-    var valsy = distinctVals(trace.y.slice(0, len));
-    var valsz = distinctVals(trace.z.slice(0, len));
-
     // Over-specified mesh case, this would error in tube2mesh
-    if(valsx.length * valsy.length * valsz.length > len) {
-        return {positions: [], cells: []};
+    if(!len) {
+        return {
+            positions: [],
+            cells: []
+        };
     }
 
-    var meshx = toDataCoords(valsx, 'xaxis');
-    var meshy = toDataCoords(valsy, 'yaxis');
-    var meshz = toDataCoords(valsz, 'zaxis');
+    var meshx = toDataCoords(trace._Xs, 'xaxis');
+    var meshy = toDataCoords(trace._Ys, 'yaxis');
+    var meshz = toDataCoords(trace._Zs, 'zaxis');
 
     tubeOpts.meshgrid = [meshx, meshy, meshz];
+    tubeOpts.gridFill = trace._gridFill;
 
-    if(trace.starts) {
-        var slen = trace._slen;
+    var slen = trace._slen;
+    if(slen) {
         tubeOpts.startingPositions = zip3(
-            toDataCoords(trace.starts.x.slice(0, slen), 'xaxis'),
-            toDataCoords(trace.starts.y.slice(0, slen), 'yaxis'),
-            toDataCoords(trace.starts.z.slice(0, slen), 'zaxis')
+            toDataCoords(trace._startsX, 'xaxis'),
+            toDataCoords(trace._startsY, 'yaxis'),
+            toDataCoords(trace._startsZ, 'zaxis')
         );
     } else {
         // Default starting positions:
@@ -153,7 +150,7 @@ function convert(scene, trace) {
         tubeOpts.startingPositions = startingPositions;
     }
 
-    tubeOpts.colormap = parseColorScale(trace.colorscale);
+    tubeOpts.colormap = parseColorScale(trace);
     tubeOpts.tubeSize = trace.sizeref;
     tubeOpts.maxLength = trace.maxdisplayed;
 
@@ -177,7 +174,8 @@ function convert(scene, trace) {
     // N.B. cmin/cmax correspond to the min/max vector norm
     // in the u/v/w arrays, which in general is NOT equal to max
     // intensity that colors the tubes.
-    meshData.vertexIntensityBounds = [trace.cmin / trace._normMax, trace.cmax / trace._normMax];
+    var cOpts = extractOpts(trace);
+    meshData.vertexIntensityBounds = [cOpts.min / trace._normMax, cOpts.max / trace._normMax];
 
     // pass gl-mesh3d lighting attributes
     var lp = trace.lightposition;

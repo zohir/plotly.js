@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -59,8 +59,8 @@ exports.extractPathCoords = function(path, paramsToUse) {
 };
 
 exports.getDataToPixel = function(gd, axis, isVertical) {
-    var gs = gd._fullLayout._size,
-        dataToPixel;
+    var gs = gd._fullLayout._size;
+    var dataToPixel;
 
     if(axis) {
         var d2r = exports.shapePositionToRange(axis);
@@ -70,11 +70,9 @@ exports.getDataToPixel = function(gd, axis, isVertical) {
         };
 
         if(axis.type === 'date') dataToPixel = exports.decodeDate(dataToPixel);
-    }
-    else if(isVertical) {
+    } else if(isVertical) {
         dataToPixel = function(v) { return gs.t + gs.h * (1 - v); };
-    }
-    else {
+    } else {
         dataToPixel = function(v) { return gs.l + gs.w * v; };
     }
 
@@ -82,17 +80,15 @@ exports.getDataToPixel = function(gd, axis, isVertical) {
 };
 
 exports.getPixelToData = function(gd, axis, isVertical) {
-    var gs = gd._fullLayout._size,
-        pixelToData;
+    var gs = gd._fullLayout._size;
+    var pixelToData;
 
     if(axis) {
         var r2d = exports.rangeToShapePosition(axis);
         pixelToData = function(p) { return r2d(axis.p2r(p - axis._offset)); };
-    }
-    else if(isVertical) {
+    } else if(isVertical) {
         pixelToData = function(p) { return 1 - (p - gs.t) / gs.h; };
-    }
-    else {
+    } else {
         pixelToData = function(p) { return (p - gs.l) / gs.w; };
     }
 
@@ -120,4 +116,28 @@ exports.roundPositionForSharpStrokeRendering = function(pos, strokeWidth) {
     var posValAsInt = Math.round(pos);
 
     return strokeWidthIsOdd ? posValAsInt + 0.5 : posValAsInt;
+};
+
+exports.makeOptionsAndPlotinfo = function(gd, index) {
+    var options = gd._fullLayout.shapes[index] || {};
+
+    var plotinfo = gd._fullLayout._plots[options.xref + options.yref];
+    var hasPlotinfo = !!plotinfo;
+    if(hasPlotinfo) {
+        plotinfo._hadPlotinfo = true;
+    } else {
+        plotinfo = {};
+        if(options.xref && options.xref !== 'paper') plotinfo.xaxis = gd._fullLayout[options.xref + 'axis'];
+        if(options.yref && options.yref !== 'paper') plotinfo.yaxis = gd._fullLayout[options.yref + 'axis'];
+    }
+
+    plotinfo.xsizemode = options.xsizemode;
+    plotinfo.ysizemode = options.ysizemode;
+    plotinfo.xanchor = options.xanchor;
+    plotinfo.yanchor = options.yanchor;
+
+    return {
+        options: options,
+        plotinfo: plotinfo
+    };
 };

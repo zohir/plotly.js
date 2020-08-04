@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -12,6 +12,7 @@
 var axisIds = require('../../plots/cartesian/axis_ids');
 var scatterSubTypes = require('../../traces/scatter/subtypes');
 var Registry = require('../../registry');
+var isUnifiedHover = require('../fx/helpers').isUnifiedHover;
 
 var createModeBar = require('./modebar');
 var modeBarButtons = require('./buttons');
@@ -25,11 +26,11 @@ var modeBarButtons = require('./buttons');
  *
  */
 module.exports = function manageModeBar(gd) {
-    var fullLayout = gd._fullLayout,
-        context = gd._context,
-        modeBar = fullLayout._modeBar;
+    var fullLayout = gd._fullLayout;
+    var context = gd._context;
+    var modeBar = fullLayout._modeBar;
 
-    if(!context.displayModeBar) {
+    if(!context.displayModeBar && !context.watermark) {
         if(modeBar) {
             modeBar.destroy();
             delete fullLayout._modeBar;
@@ -56,33 +57,45 @@ module.exports = function manageModeBar(gd) {
 
     if(Array.isArray(customButtons) && customButtons.length) {
         buttonGroups = fillCustomButton(customButtons);
-    }
-    else {
-        buttonGroups = getButtonGroups(
-            gd,
-            context.modeBarButtonsToRemove,
-            context.modeBarButtonsToAdd
-        );
+    } else if(!context.displayModeBar && context.watermark) {
+        buttonGroups = [];
+    } else {
+        buttonGroups = getButtonGroups(gd);
     }
 
     if(modeBar) modeBar.update(gd, buttonGroups);
     else fullLayout._modeBar = createModeBar(gd, buttonGroups);
 };
 
+var DRAW_MODES = [
+    'drawline',
+    'drawopenpath',
+    'drawclosedpath',
+    'drawcircle',
+    'drawrect',
+    'eraseshape'
+];
+
 // logic behind which buttons are displayed by default
-function getButtonGroups(gd, buttonsToRemove, buttonsToAdd) {
+function getButtonGroups(gd) {
     var fullLayout = gd._fullLayout;
     var fullData = gd._fullData;
+    var context = gd._context;
+    var buttonsToRemove = context.modeBarButtonsToRemove;
+    var buttonsToAdd = context.modeBarButtonsToAdd;
 
     var hasCartesian = fullLayout._has('cartesian');
     var hasGL3D = fullLayout._has('gl3d');
     var hasGeo = fullLayout._has('geo');
     var hasPie = fullLayout._has('pie');
+    var hasFunnelarea = fullLayout._has('funnelarea');
     var hasGL2D = fullLayout._has('gl2d');
     var hasTernary = fullLayout._has('ternary');
     var hasMapbox = fullLayout._has('mapbox');
     var hasPolar = fullLayout._has('polar');
+    var hasSankey = fullLayout._has('sankey');
     var allAxesFixed = areAllAxesFixed(fullLayout);
+    var hasUnifiedHoverLabel = isUnifiedHover(fullLayout.hovermode);
 
     var groups = [];
 
@@ -101,39 +114,40 @@ function getButtonGroups(gd, buttonsToRemove, buttonsToAdd) {
     }
 
     // buttons common to all plot types
-    addGroup(['toImage', 'sendDataToCloud']);
+    var commonGroup = ['toImage'];
+    if(context.showEditInChartStudio) commonGroup.push('editInChartStudio');
+    else if(context.showSendToCloud) commonGroup.push('sendDataToCloud');
+    addGroup(commonGroup);
 
     var zoomGroup = [];
     var hoverGroup = [];
     var resetGroup = [];
     var dragModeGroup = [];
 
-    if((hasCartesian || hasGL2D || hasPie || hasTernary) + hasGeo + hasGL3D + hasMapbox + hasPolar > 1) {
+    if((hasCartesian || hasGL2D || hasPie || hasFunnelarea || hasTernary) + hasGeo + hasGL3D + hasMapbox + hasPolar > 1) {
         // graphs with more than one plot types get 'union buttons'
         // which reset the view or toggle hover labels across all subplots.
         hoverGroup = ['toggleHover'];
         resetGroup = ['resetViews'];
-    }
-    else if(hasGeo) {
+    } else if(hasGeo) {
         zoomGroup = ['zoomInGeo', 'zoomOutGeo'];
         hoverGroup = ['hoverClosestGeo'];
         resetGroup = ['resetGeo'];
-    }
-    else if(hasGL3D) {
+    } else if(hasGL3D) {
         hoverGroup = ['hoverClosest3d'];
         resetGroup = ['resetCameraDefault3d', 'resetCameraLastSave3d'];
-    }
-    else if(hasMapbox) {
+    } else if(hasMapbox) {
+        zoomGroup = ['zoomInMapbox', 'zoomOutMapbox'];
         hoverGroup = ['toggleHover'];
         resetGroup = ['resetViewMapbox'];
-    }
-    else if(hasGL2D) {
+    } else if(hasGL2D) {
         hoverGroup = ['hoverClosestGl2d'];
-    }
-    else if(hasPie) {
+    } else if(hasPie) {
         hoverGroup = ['hoverClosestPie'];
-    }
-    else { // hasPolar, hasTernary
+    } else if(hasSankey) {
+        hoverGroup = ['hoverClosestCartesian', 'hoverCompareCartesian'];
+        resetGroup = ['resetViewSankey'];
+    } else { // hasPolar, hasTernary
         // always show at least one hover icon.
         hoverGroup = ['toggleHover'];
     }
@@ -143,6 +157,9 @@ function getButtonGroups(gd, buttonsToRemove, buttonsToAdd) {
     if(hasCartesian) {
         hoverGroup = ['toggleSpikelines', 'hoverClosestCartesian', 'hoverCompareCartesian'];
     }
+    if(hasNoHover(fullData) || hasUnifiedHoverLabel) {
+        hoverGroup = [];
+    }
 
     if((hasCartesian || hasGL2D) && !allAxesFixed) {
         zoomGroup = ['zoomIn2d', 'zoomOut2d', 'autoScale2d'];
@@ -151,18 +168,34 @@ function getButtonGroups(gd, buttonsToRemove, buttonsToAdd) {
 
     if(hasGL3D) {
         dragModeGroup = ['zoom3d', 'pan3d', 'orbitRotation', 'tableRotation'];
-    }
-    else if(((hasCartesian || hasGL2D) && !allAxesFixed) || hasTernary) {
+    } else if(((hasCartesian || hasGL2D) && !allAxesFixed) || hasTernary) {
         dragModeGroup = ['zoom2d', 'pan2d'];
-    }
-    else if(hasMapbox || hasGeo) {
+    } else if(hasMapbox || hasGeo) {
         dragModeGroup = ['pan2d'];
-    }
-    else if(hasPolar) {
+    } else if(hasPolar) {
         dragModeGroup = ['zoom2d'];
     }
     if(isSelectable(fullData)) {
         dragModeGroup.push('select2d', 'lasso2d');
+    }
+
+    // accept pre-defined buttons as string
+    if(Array.isArray(buttonsToAdd)) {
+        var newList = [];
+        for(var i = 0; i < buttonsToAdd.length; i++) {
+            var b = buttonsToAdd[i];
+            if(typeof b === 'string') {
+                if(DRAW_MODES.indexOf(b) !== -1) {
+                    if(
+                        fullLayout._has('mapbox') || // draw shapes in paper coordinate (could be improved in future to support data coordinate, when there is no pitch)
+                        fullLayout._has('cartesian') // draw shapes in data coordinate
+                    ) {
+                        dragModeGroup.push(b);
+                    }
+                }
+            } else newList.push(b);
+        }
+        buttonsToAdd = newList;
     }
 
     addGroup(dragModeGroup);
@@ -204,14 +237,24 @@ function isSelectable(fullData) {
             if(trace.boxpoints === 'all' || trace.points === 'all') {
                 selectable = true;
             }
+        } else {
+            // assume that in general if the trace module has selectPoints,
+            // then it's selectable. Scatter is an exception to this because it must
+            // have markers or text, not just be a scatter type.
+
+            selectable = true;
         }
-        // assume that in general if the trace module has selectPoints,
-        // then it's selectable. Scatter is an exception to this because it must
-        // have markers or text, not just be a scatter type.
-        else selectable = true;
     }
 
     return selectable;
+}
+
+// check whether all trace are 'noHover'
+function hasNoHover(fullData) {
+    for(var i = 0; i < fullData.length; i++) {
+        if(!Registry.traceIs(fullData[i], 'noHover')) return false;
+    }
+    return true;
 }
 
 function appendButtonsToGroups(groups, buttons) {
@@ -220,8 +263,7 @@ function appendButtonsToGroups(groups, buttons) {
             for(var i = 0; i < buttons.length; i++) {
                 groups.push(buttons[i]);
             }
-        }
-        else groups.push(buttons);
+        } else groups.push(buttons);
     }
 
     return groups;
@@ -238,8 +280,7 @@ function fillCustomButton(customButtons) {
             if(typeof button === 'string') {
                 if(modeBarButtons[button] !== undefined) {
                     customButtons[i][j] = modeBarButtons[button];
-                }
-                else {
+                } else {
                     throw new Error([
                         '*modeBarButtons* configuration options',
                         'invalid button name'

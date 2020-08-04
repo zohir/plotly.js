@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -166,13 +166,16 @@ function setConvertAngular(ax, polarLayout) {
                 // Set the angular range in degrees to make auto-tick computation cleaner,
                 // changing rotation/direction should not affect the angular tick value.
                 ax.range = Lib.isFullCircle(sectorInRad) ?
-                    sector.slice() :
+                    [sector[0], sector[0] + 360] :
                     sectorInRad.map(g2rad).map(rad2deg);
                 break;
 
             case 'category':
                 var catLen = ax._categories.length;
                 var _period = ax.period ? Math.max(ax.period, catLen) : catLen;
+
+                // fallback in case all categories have been filtered out
+                if(_period === 0) _period = 1;
 
                 c2rad = t2rad = function(v) { return v * 2 * Math.PI / _period; };
                 rad2c = rad2t = function(v) { return v * _period / Math.PI / 2; };

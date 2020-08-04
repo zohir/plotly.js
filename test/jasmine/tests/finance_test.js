@@ -6,6 +6,8 @@ var d3 = require('d3');
 var createGraphDiv = require('../assets/create_graph_div');
 var destroyGraphDiv = require('../assets/destroy_graph_div');
 var supplyAllDefaults = require('../assets/supply_defaults');
+var hover = require('../assets/hover');
+var assertHoverLabelContent = require('../assets/custom_assertions').assertHoverLabelContent;
 var failTest = require('../assets/fail_test');
 
 var mock0 = {
@@ -114,7 +116,6 @@ describe('finance charts defaults:', function() {
     });
 
     it('should not slice data arrays but record minimum supplied length', function() {
-
         function assertDataLength(trace, fullTrace, len) {
             expect(fullTrace.visible).toBe(true);
 
@@ -426,15 +427,22 @@ describe('finance charts calc', function() {
         addJunk(trace1);
 
         var out = _calcRaw([trace0, trace1]);
-        var indices = [0, 1, 2, 3, 4, 5, 6, 7];
+        var indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
         var i = 'increasing';
         var d = 'decreasing';
-        var directions = [i, d, d, i, d, i, d, i];
+        var directions = [i, d, d, i, d, i, d, i, undefined, undefined, undefined, undefined];
+        var empties = [
+            undefined, undefined, undefined, undefined,
+            undefined, undefined, undefined, undefined,
+            true, true, true, true
+        ];
 
         expect(mapGet(out[0], 'pos')).toEqual(indices);
         expect(mapGet(out[0], 'dir')).toEqual(directions);
         expect(mapGet(out[1], 'pos')).toEqual(indices);
         expect(mapGet(out[1], 'dir')).toEqual(directions);
+        expect(mapGet(out[0], 'empty')).toEqual(empties);
+        expect(mapGet(out[1], 'empty')).toEqual(empties);
     });
 
     it('should work with *filter* transforms', function() {
@@ -637,6 +645,44 @@ describe('finance charts calc', function() {
     });
 });
 
+describe('finance charts auto-range', function() {
+    var gd;
+
+    beforeEach(function() { gd = createGraphDiv(); });
+
+    afterEach(destroyGraphDiv);
+
+    describe('should give correct results with trailing nulls', function() {
+        var base = {
+            x: ['time1', 'time2', 'time3'],
+            high: [10, 11, null],
+            close: [5, 6, null],
+            low: [3, 3, null],
+            open: [4, 4, null]
+        };
+
+        it('- ohlc case', function(done) {
+            var trace = Lib.extendDeep({}, base, {type: 'ohlc'});
+
+            Plotly.plot(gd, [trace]).then(function() {
+                expect(gd._fullLayout.xaxis.range).toBeCloseToArray([-0.5, 2.5], 1);
+            })
+            .catch(failTest)
+            .then(done);
+        });
+
+        it('- candlestick case', function(done) {
+            var trace = Lib.extendDeep({}, base, {type: 'candlestick'});
+
+            Plotly.plot(gd, [trace]).then(function() {
+                expect(gd._fullLayout.xaxis.range).toBeCloseToArray([-0.5, 2.5], 1);
+            })
+            .catch(failTest)
+            .then(done);
+        });
+    });
+});
+
 describe('finance charts updates:', function() {
     'use strict';
 
@@ -763,7 +809,6 @@ describe('finance charts updates:', function() {
         })
         .catch(failTest)
         .then(done);
-
     });
 
     it('Plotly.extendTraces should work', function(done) {
@@ -845,7 +890,6 @@ describe('finance charts updates:', function() {
     });
 
     it('Plotly.addTraces + Plotly.relayout should update candlestick box position values', function(done) {
-
         function assertBoxPosFields(bPos) {
             expect(gd.calcdata.length).toEqual(bPos.length);
 
@@ -868,7 +912,6 @@ describe('finance charts updates:', function() {
             assertBoxPosFields([0]);
 
             return Plotly.addTraces(gd, [Lib.extendDeep({}, trace0)]);
-
         })
         .then(function() {
             assertBoxPosFields([-15120000, 15120000]);
@@ -983,6 +1026,37 @@ describe('finance charts updates:', function() {
         .then(done);
     });
 
+    it('should work with typed array', function(done) {
+        var mockTA = {
+            open: new Float32Array(mock0.open),
+            high: new Float32Array(mock0.high),
+            low: new Float32Array(mock0.low),
+            close: new Float32Array(mock0.close)
+        };
+
+        var dataTA = [
+            Lib.extendDeep({}, mockTA, {type: 'ohlc'}),
+            Lib.extendDeep({}, mockTA, {type: 'candlestick'}),
+        ];
+
+        var data0 = [
+            Lib.extendDeep({}, mock0, {type: 'ohlc'}),
+            Lib.extendDeep({}, mock0, {type: 'candlestick'}),
+        ];
+
+        Plotly.plot(gd, dataTA)
+        .then(function() {
+            expect(countOHLCTraces()).toBe(1, '# of ohlc traces');
+            expect(countBoxTraces()).toBe(1, '# of candlestick traces');
+        })
+        .then(function() { return Plotly.react(gd, data0); })
+        .then(function() {
+            expect(countOHLCTraces()).toBe(1, '# of ohlc traces');
+            expect(countBoxTraces()).toBe(1, '# of candlestick traces');
+        })
+        .catch(failTest)
+        .then(done);
+    });
 });
 
 describe('finance charts *special* handlers:', function() {
@@ -991,7 +1065,6 @@ describe('finance charts *special* handlers:', function() {
     afterEach(destroyGraphDiv);
 
     it('`editable: true` handlers should work', function(done) {
-
         var gd = createGraphDiv();
 
         function editText(itemNumber, newText) {
@@ -1046,5 +1119,241 @@ describe('finance charts *special* handlers:', function() {
         .catch(failTest)
         .then(done);
     });
+});
 
+describe('finance trace hover:', function() {
+    var gd;
+
+    afterEach(destroyGraphDiv);
+
+    function run(specs) {
+        gd = createGraphDiv();
+
+        var data = specs.traces.map(function(t) {
+            return Lib.extendFlat({
+                type: specs.type,
+                open: [1, 2],
+                close: [2, 3],
+                high: [3, 4],
+                low: [0, 5]
+            }, t);
+        });
+
+        var layout = Lib.extendFlat({
+            showlegend: false,
+            width: 400,
+            height: 400,
+            margin: {t: 0, b: 0, l: 0, r: 0, pad: 0}
+        }, specs.layout || {});
+
+        var xval = 'xval' in specs ? specs.xval : 0;
+        var yval = 'yval' in specs ? specs.yval : 1;
+        var hovermode = layout.hovermode || 'x';
+
+        return Plotly.plot(gd, data, layout).then(function() {
+            var results = gd.calcdata.map(function(cd) {
+                var trace = cd[0].trace;
+                var pointData = {
+                    index: false,
+                    distance: 20,
+                    cd: cd,
+                    trace: trace,
+                    xa: gd._fullLayout.xaxis,
+                    ya: gd._fullLayout.yaxis,
+                    maxHoverDistance: 20
+                };
+                var pts = trace._module.hoverPoints(pointData, xval, yval, hovermode);
+                return pts ? pts[0] : {distance: Infinity};
+            });
+
+            var actual = results[0];
+            var exp = specs.exp;
+
+            for(var k in exp) {
+                var msg = '- key ' + k;
+                expect(actual[k]).toBe(exp[k], msg);
+            }
+        });
+    }
+
+    ['ohlc', 'candlestick'].forEach(function(type) {
+        [{
+            type: type,
+            desc: 'basic',
+            traces: [{}],
+            exp: {
+                extraText: 'open: 1<br>high: 3<br>low: 0<br>close: 2  ▲'
+            }
+        }, {
+            type: type,
+            desc: 'with scalar text',
+            traces: [{text: 'SCALAR'}],
+            exp: {
+                extraText: 'open: 1<br>high: 3<br>low: 0<br>close: 2  ▲<br>SCALAR'
+            }
+        }, {
+            type: type,
+            desc: 'with array text',
+            traces: [{text: ['A', 'B']}],
+            exp: {
+                extraText: 'open: 1<br>high: 3<br>low: 0<br>close: 2  ▲<br>A'
+            }
+        }, {
+            type: type,
+            desc: 'just scalar text',
+            traces: [{hoverinfo: 'text', text: 'SCALAR'}],
+            exp: {
+                extraText: 'SCALAR'
+            }
+        }, {
+            type: type,
+            desc: 'just array text',
+            traces: [{hoverinfo: 'text', text: ['A', 'B']}],
+            exp: {
+                extraText: 'A'
+            }
+        }, {
+            type: type,
+            desc: 'just scalar hovertext',
+            traces: [{hoverinfo: 'text', hovertext: 'SCALAR', text: 'NOP'}],
+            exp: {
+                extraText: 'SCALAR'
+            }
+        }, {
+            type: type,
+            desc: 'just array hovertext',
+            traces: [{hoverinfo: 'text', hovertext: ['A', 'B'], text: ['N', 'O', 'P']}],
+            exp: {
+                extraText: 'A'
+            }
+        }, {
+            type: type,
+            desc: 'just array text with array hoverinfo',
+            traces: [{hoverinfo: ['text', 'text'], text: ['A', 'B']}],
+            exp: {
+                extraText: 'A'
+            }
+        }, {
+            type: type,
+            desc: 'when high === low in *closest* mode',
+            traces: [{
+                high: [6, null, 7, 8],
+                close: [4, null, 7, 8],
+                low: [5, null, 7, 8],
+                open: [3, null, 7, 8]
+            }],
+            layout: {hovermode: 'closest'},
+            xval: 2,
+            yval: 6.9,
+            exp: {
+                extraText: 'open: 7<br>high: 7<br>low: 7<br>close: 7  ▲'
+            }
+        }]
+        .forEach(function(specs) {
+            it('should generate correct hover labels ' + type + ' - ' + specs.desc, function(done) {
+                run(specs).catch(failTest).then(done);
+            });
+        });
+    });
+});
+
+describe('finance trace hover via Fx.hover():', function() {
+    var gd;
+
+    beforeEach(function() { gd = createGraphDiv(); });
+
+    afterEach(destroyGraphDiv);
+
+    ['candlestick', 'ohlc'].forEach(function(type) {
+        it('should pick correct ' + type + ' item', function(done) {
+            var x = ['hover ok!', 'time2', 'hover off by 1', 'time4'];
+
+            Plotly.newPlot(gd, [{
+                x: x,
+                high: [6, null, 7, 8],
+                close: [4, null, 7, 8],
+                low: [5, null, 7, 8],
+                open: [3, null, 7, 8],
+                type: type
+            }, {
+                x: x,
+                y: [1, null, 2, 3],
+                type: 'bar'
+            }], {
+                xaxis: { rangeslider: {visible: false} },
+                width: 500,
+                height: 500
+            })
+            .then(function() {
+                gd.on('plotly_hover', function(d) {
+                    Plotly.Fx.hover(gd, [
+                        {curveNumber: 0, pointNumber: d.points[0].pointNumber},
+                        {curveNumber: 1, pointNumber: d.points[0].pointNumber}
+                    ]);
+                });
+            })
+            .then(function() { hover(281, 252); })
+            .then(function() {
+                assertHoverLabelContent({
+                    nums: [
+                        'hover off by 1\nopen: 7\nhigh: 7\nlow: 7\nclose: 7  ▲',
+                        '(hover off by 1, 2)'
+                    ],
+                    name: ['trace 0', 'trace 1']
+                }, 'hover over 3rd items (aka 2nd visible items)');
+            })
+            .then(function() {
+                Lib.clearThrottle();
+                return Plotly.react(gd, [gd.data[0]], gd.layout);
+            })
+            .then(function() { hover(281, 252); })
+            .then(function() {
+                assertHoverLabelContent({
+                    nums: 'hover off by 1\nopen: 7\nhigh: 7\nlow: 7\nclose: 7  ▲',
+                    name: ''
+                }, 'after removing 2nd trace');
+            })
+            .catch(failTest)
+            .then(done);
+        });
+
+        it('should ignore empty ' + type + ' item', function(done) {
+            // only the bar chart's hover will be displayed when hovering over the 3rd items
+            var x = ['time1', 'time2', 'time3', 'time4'];
+
+            Plotly.newPlot(gd, [{
+                x: x,
+                high: [6, 3, null, 8],
+                close: [4, 3, null, 8],
+                low: [5, 3, null, 8],
+                open: [3, 3, null, 8],
+                type: type
+            }, {
+                x: x,
+                y: [1, 2, 3, 4],
+                type: 'bar'
+            }], {
+                xaxis: { rangeslider: {visible: false} },
+                width: 500,
+                height: 500
+            })
+            .then(function() {
+                gd.on('plotly_hover', function(d) {
+                    Plotly.Fx.hover(gd, [
+                        {curveNumber: 0, pointNumber: d.points[0].pointNumber},
+                        {curveNumber: 1, pointNumber: d.points[0].pointNumber}
+                    ]);
+                });
+            })
+            .then(function() { hover(281, 252); })
+            .then(function() {
+                assertHoverLabelContent({
+                    nums: '(time3, 3)',
+                    name: 'trace 1'
+                }, 'hover over 3rd items');
+            })
+            .catch(failTest)
+            .then(done);
+        });
+    });
 });

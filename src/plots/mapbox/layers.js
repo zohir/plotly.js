@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -9,16 +9,18 @@
 'use strict';
 
 var Lib = require('../../lib');
+var sanitizeHTML = require('../../lib/svg_text_utils').sanitizeHTML;
 var convertTextOpts = require('./convert_text_opts');
+var constants = require('./constants');
 
-function MapboxLayer(mapbox, index) {
-    this.mapbox = mapbox;
-    this.map = mapbox.map;
+function MapboxLayer(subplot, index) {
+    this.subplot = subplot;
 
-    this.uid = mapbox.uid + '-' + 'layer' + index;
+    this.uid = subplot.uid + '-' + index;
+    this.index = index;
 
-    this.idSource = this.uid + '-source';
-    this.idLayer = this.uid + '-layer';
+    this.idSource = 'source-' + this.uid;
+    this.idLayer = constants.layoutLayerPrefix + this.uid;
 
     // some state variable to check if a remove/add step is needed
     this.sourceType = null;
@@ -37,6 +39,8 @@ proto.update = function update(opts) {
         // IMPORTANT: must create source before layer to not cause errors
         this.updateSource(opts);
         this.updateLayer(opts);
+    } else if(this.needsNewImage(opts)) {
+        this.updateImage(opts);
     } else if(this.needsNewSource(opts)) {
         // IMPORTANT: must delete layer before source to not cause errors
         this.removeLayer();
@@ -49,6 +53,18 @@ proto.update = function update(opts) {
     }
 
     this.visible = isVisible(opts);
+};
+
+proto.needsNewImage = function(opts) {
+    var map = this.subplot.map;
+    return (
+        map.getSource(this.idSource) &&
+        this.sourceType === 'image' &&
+        opts.sourcetype === 'image' &&
+        (this.source !== opts.source ||
+            JSON.stringify(this.coordinates) !==
+            JSON.stringify(opts.coordinates))
+    );
 };
 
 proto.needsNewSource = function(opts) {
@@ -65,12 +81,19 @@ proto.needsNewSource = function(opts) {
 proto.needsNewLayer = function(opts) {
     return (
         this.layerType !== opts.type ||
-        this.below !== opts.below
+        this.below !== this.subplot.belowLookup['layout-' + this.index]
     );
 };
 
+proto.updateImage = function(opts) {
+    var map = this.subplot.map;
+    map.getSource(this.idSource).updateImage({
+        url: opts.source, coordinates: opts.coordinates
+    });
+};
+
 proto.updateSource = function(opts) {
-    var map = this.map;
+    var map = this.subplot.map;
 
     if(map.getSource(this.idSource)) map.removeSource(this.idSource);
 
@@ -85,60 +108,92 @@ proto.updateSource = function(opts) {
 };
 
 proto.updateLayer = function(opts) {
-    var map = this.map;
+    var subplot = this.subplot;
     var convertedOpts = convertOpts(opts);
 
+    var below = this.subplot.belowLookup['layout-' + this.index];
+    var _below;
+
+    if(below === 'traces') {
+        var mapLayers = subplot.getMapLayers();
+
+        // find id of first plotly trace layer
+        for(var i = 0; i < mapLayers.length; i++) {
+            var layerId = mapLayers[i].id;
+            if(typeof layerId === 'string' &&
+                layerId.indexOf(constants.traceLayerPrefix) === 0
+            ) {
+                _below = layerId;
+                break;
+            }
+        }
+    } else {
+        _below = below;
+    }
+
     this.removeLayer();
-    this.layerType = opts.type;
 
     if(isVisible(opts)) {
-        map.addLayer({
+        subplot.addLayer({
             id: this.idLayer,
             source: this.idSource,
             'source-layer': opts.sourcelayer || '',
             type: opts.type,
+            minzoom: opts.minzoom,
+            maxzoom: opts.maxzoom,
             layout: convertedOpts.layout,
             paint: convertedOpts.paint
-        }, opts.below);
+        }, _below);
     }
+
+    this.layerType = opts.type;
+    this.below = below;
 };
 
 proto.updateStyle = function(opts) {
     if(isVisible(opts)) {
         var convertedOpts = convertOpts(opts);
-        this.mapbox.setOptions(this.idLayer, 'setLayoutProperty', convertedOpts.layout);
-        this.mapbox.setOptions(this.idLayer, 'setPaintProperty', convertedOpts.paint);
+        this.subplot.setOptions(this.idLayer, 'setLayoutProperty', convertedOpts.layout);
+        this.subplot.setOptions(this.idLayer, 'setPaintProperty', convertedOpts.paint);
     }
 };
 
 proto.removeLayer = function() {
-    var map = this.map;
+    var map = this.subplot.map;
     if(map.getLayer(this.idLayer)) {
         map.removeLayer(this.idLayer);
     }
 };
 
-proto.dispose = function dispose() {
-    var map = this.map;
-    map.removeLayer(this.idLayer);
-    map.removeSource(this.idSource);
+proto.dispose = function() {
+    var map = this.subplot.map;
+    if(map.getLayer(this.idLayer)) map.removeLayer(this.idLayer);
+    if(map.getSource(this.idSource)) map.removeSource(this.idSource);
 };
 
 function isVisible(opts) {
+    if(!opts.visible) return false;
+
     var source = opts.source;
 
-    return opts.visible && (
-        Lib.isPlainObject(source) ||
-        (typeof source === 'string' && source.length > 0)
-    );
+    if(Array.isArray(source) && source.length > 0) {
+        for(var i = 0; i < source.length; i++) {
+            if(typeof source[i] !== 'string' || source[i].length === 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    return Lib.isPlainObject(source) ||
+        (typeof source === 'string' && source.length > 0);
 }
 
 function convertOpts(opts) {
-    var layout = {},
-        paint = {};
+    var layout = {};
+    var paint = {};
 
     switch(opts.type) {
-
         case 'circle':
             Lib.extendFlat(paint, {
                 'circle-radius': opts.circle.radius,
@@ -151,7 +206,8 @@ function convertOpts(opts) {
             Lib.extendFlat(paint, {
                 'line-width': opts.line.width,
                 'line-color': opts.color,
-                'line-opacity': opts.opacity
+                'line-opacity': opts.opacity,
+                'line-dasharray': opts.line.dash
             });
             break;
 
@@ -166,8 +222,8 @@ function convertOpts(opts) {
             break;
 
         case 'symbol':
-            var symbol = opts.symbol,
-                textOpts = convertTextOpts(symbol.textposition, symbol.iconsize);
+            var symbol = opts.symbol;
+            var textOpts = convertTextOpts(symbol.textposition, symbol.iconsize);
 
             Lib.extendFlat(layout, {
                 'icon-image': symbol.icon + '-15',
@@ -176,7 +232,8 @@ function convertOpts(opts) {
                 'text-field': symbol.text,
                 'text-size': symbol.textfont.size,
                 'text-anchor': textOpts.anchor,
-                'text-offset': textOpts.offset
+                'text-offset': textOpts.offset,
+                'symbol-placement': symbol.placement,
 
                 // TODO font family
                 // 'text-font': symbol.textfont.family.split(', '),
@@ -188,9 +245,18 @@ function convertOpts(opts) {
                 'text-opacity': opts.opacity
             });
             break;
+        case 'raster':
+            Lib.extendFlat(paint, {
+                'raster-fade-duration': 0,
+                'raster-opacity': opts.opacity
+            });
+            break;
     }
 
-    return { layout: layout, paint: paint };
+    return {
+        layout: layout,
+        paint: paint
+    };
 }
 
 function convertSourceOpts(opts) {
@@ -203,14 +269,25 @@ function convertSourceOpts(opts) {
         field = 'data';
     } else if(sourceType === 'vector') {
         field = typeof source === 'string' ? 'url' : 'tiles';
+    } else if(sourceType === 'raster') {
+        field = 'tiles';
+        sourceOpts.tileSize = 256;
+    } else if(sourceType === 'image') {
+        field = 'url';
+        sourceOpts.coordinates = opts.coordinates;
     }
 
     sourceOpts[field] = source;
+
+    if(opts.sourceattribution) {
+        sourceOpts.attribution = sanitizeHTML(opts.sourceattribution);
+    }
+
     return sourceOpts;
 }
 
-module.exports = function createMapboxLayer(mapbox, index, opts) {
-    var mapboxLayer = new MapboxLayer(mapbox, index);
+module.exports = function createMapboxLayer(subplot, index, opts) {
+    var mapboxLayer = new MapboxLayer(subplot, index);
 
     mapboxLayer.update(opts);
 

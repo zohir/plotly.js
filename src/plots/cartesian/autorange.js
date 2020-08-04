@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -12,6 +12,7 @@ var isNumeric = require('fast-isnumeric');
 
 var Lib = require('../../lib');
 var FP_SAFE = require('../../constants/numerical').FP_SAFE;
+var Registry = require('../../registry');
 
 module.exports = {
     getAutoRange: getAutoRange,
@@ -94,6 +95,19 @@ function getAutoRange(gd, ax) {
     // don't allow padding to reduce the data to < 10% of the length
     var minSpan = axLen / 10;
 
+    // find axis rangebreaks in [v0,v1] and compute its length in value space
+    var calcBreaksLength = function(v0, v1) {
+        var lBreaks = 0;
+        if(ax.rangebreaks) {
+            var rangebreaksOut = ax.locateBreaks(v0, v1);
+            for(var i = 0; i < rangebreaksOut.length; i++) {
+                var brk = rangebreaksOut[i];
+                lBreaks += brk.max - brk.min;
+            }
+        }
+        return lBreaks;
+    };
+
     var mbest = 0;
     var minpt, maxpt, minbest, maxbest, dp, dv;
 
@@ -101,7 +115,7 @@ function getAutoRange(gd, ax) {
         minpt = minArray[i];
         for(j = 0; j < maxArray.length; j++) {
             maxpt = maxArray[j];
-            dv = maxpt.val - minpt.val;
+            dv = maxpt.val - minpt.val - calcBreaksLength(minpt.val, maxpt.val);
             if(dv > 0) {
                 dp = axLen - getPad(minpt) - getPad(maxpt);
                 if(dp > minSpan) {
@@ -110,8 +124,7 @@ function getAutoRange(gd, ax) {
                         maxbest = maxpt;
                         mbest = dv / dp;
                     }
-                }
-                else if(dv / axLen > mbest) {
+                } else if(dv / axLen > mbest) {
                     // in case of padding longer than the axis
                     // at least include the unpadded data values.
                     minbest = {val: minpt.val, pad: 0};
@@ -136,8 +149,7 @@ function getAutoRange(gd, ax) {
                 // In principle this could be [0, 1] or [-1, 0] but usually
                 // 'tozero' pins 0 to the low end, so follow that.
                 newRange = [0, 1];
-            }
-            else {
+            } else {
                 var maxPad = (minmin > 0 ? maxArray : minArray).reduce(getMaxPad, 0);
                 // we're pushing a single value away from the edge due to its
                 // padding, with the other end clamped at zero
@@ -150,8 +162,7 @@ function getAutoRange(gd, ax) {
         } else {
             newRange = [lower, upper];
         }
-    }
-    else {
+    } else {
         if(toZero) {
             if(minbest.val >= 0) {
                 minbest = {val: 0, pad: 0};
@@ -159,8 +170,7 @@ function getAutoRange(gd, ax) {
             if(maxbest.val <= 0) {
                 maxbest = {val: 0, pad: 0};
             }
-        }
-        else if(nonNegative) {
+        } else if(nonNegative) {
             if(minbest.val - mbest * getPad(minbest) < 0) {
                 minbest = {val: 0, pad: 0};
             }
@@ -170,7 +180,7 @@ function getAutoRange(gd, ax) {
         }
 
         // in case it changed again...
-        mbest = (maxbest.val - minbest.val) /
+        mbest = (maxbest.val - minbest.val - calcBreaksLength(minpt.val, maxpt.val)) /
             (axLen - getPad(minbest) - getPad(maxbest));
 
         newRange = [
@@ -236,9 +246,7 @@ function concatExtremes(gd, ax) {
 }
 
 function doAutoRange(gd, ax) {
-    if(!ax._length) ax.setScale();
-
-    var axIn;
+    ax.setScale();
 
     if(ax.autorange) {
         ax.range = getAutoRange(gd, ax);
@@ -249,20 +257,28 @@ function doAutoRange(gd, ax) {
         // doAutoRange will get called on fullLayout,
         // but we want to report its results back to layout
 
-        axIn = ax._input;
+        var axIn = ax._input;
+
+        // before we edit _input, store preGUI values
+        var edits = {};
+        edits[ax._attr + '.range'] = ax.range;
+        edits[ax._attr + '.autorange'] = ax.autorange;
+        Registry.call('_storeDirectGUIEdit', gd.layout, gd._fullLayout._preGUI, edits);
+
         axIn.range = ax.range.slice();
         axIn.autorange = ax.autorange;
     }
 
-    if(ax._anchorAxis && ax._anchorAxis.rangeslider) {
-        var axeRangeOpts = ax._anchorAxis.rangeslider[ax._name];
+    var anchorAx = ax._anchorAxis;
+
+    if(anchorAx && anchorAx.rangeslider) {
+        var axeRangeOpts = anchorAx.rangeslider[ax._name];
         if(axeRangeOpts) {
             if(axeRangeOpts.rangemode === 'auto') {
                 axeRangeOpts.range = getAutoRange(gd, ax);
             }
         }
-        axIn = ax._anchorAxis._input;
-        axIn.rangeslider[ax._name] = Lib.extendFlat({}, axeRangeOpts);
+        anchorAx._input.rangeslider[ax._name] = Lib.extendFlat({}, axeRangeOpts);
     }
 }
 
@@ -285,7 +301,7 @@ function doAutoRange(gd, ax) {
  *   - ax.d2l
  * @param {array} data:
  *  array of numbers (i.e. already run though ax.d2c)
- * @param {object} options:
+ * @param {object} opts:
  *  available keys are:
  *      vpad: (number or number array) pad values (data value +-vpad)
  *      ppad: (number or number array) pad pixels (pixel location +-ppad)
@@ -295,6 +311,8 @@ function doAutoRange(gd, ax) {
  *          (unless one end is overridden by tozero)
  *      tozero: (boolean) make sure to include zero if axis is linear,
  *          and make it a tight bound if possible
+ *      vpadLinearized: (boolean) whether or not vpad (or vpadplus/vpadminus)
+ *          is linearized (for log scale axes)
  *
  * @return {object}
  *  - min {array of objects}
@@ -303,38 +321,39 @@ function doAutoRange(gd, ax) {
  *    - val {number}
  *    - pad {number}
  *    - extrappad {number}
+ *  - opts {object}: a ref to the passed "options" object
  */
-function findExtremes(ax, data, options) {
-    if(!options) options = {};
+function findExtremes(ax, data, opts) {
+    if(!opts) opts = {};
     if(!ax._m) ax.setScale();
 
     var minArray = [];
     var maxArray = [];
 
     var len = data.length;
-    var extrapad = options.padded || false;
-    var tozero = options.tozero && (ax.type === 'linear' || ax.type === '-');
+    var extrapad = opts.padded || false;
+    var tozero = opts.tozero && (ax.type === 'linear' || ax.type === '-');
     var isLog = ax.type === 'log';
     var hasArrayOption = false;
+    var vpadLinearized = opts.vpadLinearized || false;
     var i, v, di, dmin, dmax, ppadiplus, ppadiminus, vmin, vmax;
 
     function makePadAccessor(item) {
         if(Array.isArray(item)) {
             hasArrayOption = true;
             return function(i) { return Math.max(Number(item[i]||0), 0); };
-        }
-        else {
+        } else {
             var v = Math.max(Number(item||0), 0);
             return function() { return v; };
         }
     }
 
     var ppadplus = makePadAccessor((ax._m > 0 ?
-        options.ppadplus : options.ppadminus) || options.ppad || 0);
+        opts.ppadplus : opts.ppadminus) || opts.ppad || 0);
     var ppadminus = makePadAccessor((ax._m > 0 ?
-        options.ppadminus : options.ppadplus) || options.ppad || 0);
-    var vpadplus = makePadAccessor(options.vpadplus || options.vpad);
-    var vpadminus = makePadAccessor(options.vpadminus || options.vpad);
+        opts.ppadminus : opts.ppadplus) || opts.ppad || 0);
+    var vpadplus = makePadAccessor(opts.vpadplus || opts.vpad);
+    var vpadminus = makePadAccessor(opts.vpadminus || opts.vpad);
 
     if(!hasArrayOption) {
         // with no arrays other than `data` we don't need to consider
@@ -368,16 +387,22 @@ function findExtremes(ax, data, options) {
         if(!isNumeric(di)) return;
         ppadiplus = ppadplus(i);
         ppadiminus = ppadminus(i);
-        vmin = di - vpadminus(i);
-        vmax = di + vpadplus(i);
-        // special case for log axes: if vpad makes this object span
-        // more than an order of mag, clip it to one order. This is so
-        // we don't have non-positive errors or absurdly large lower
-        // range due to rounding errors
-        if(isLog && vmin < vmax / 10) vmin = vmax / 10;
 
-        dmin = ax.c2l(vmin);
-        dmax = ax.c2l(vmax);
+        if(vpadLinearized) {
+            dmin = ax.c2l(di) - vpadminus(i);
+            dmax = ax.c2l(di) + vpadplus(i);
+        } else {
+            vmin = di - vpadminus(i);
+            vmax = di + vpadplus(i);
+            // special case for log axes: if vpad makes this object span
+            // more than an order of mag, clip it to one order. This is so
+            // we don't have non-positive errors or absurdly large lower
+            // range due to rounding errors
+            if(isLog && vmin < vmax / 10) vmin = vmax / 10;
+
+            dmin = ax.c2l(vmin);
+            dmax = ax.c2l(vmax);
+        }
 
         if(tozero) {
             dmin = Math.min(0, dmin);
@@ -398,7 +423,11 @@ function findExtremes(ax, data, options) {
     for(i = 0; i < iMax; i++) addItem(i);
     for(i = len - 1; i >= iMax; i--) addItem(i);
 
-    return {min: minArray, max: maxArray};
+    return {
+        min: minArray,
+        max: maxArray,
+        opts: opts
+    };
 }
 
 function collapseMinArray(array, newVal, newPad, opts) {

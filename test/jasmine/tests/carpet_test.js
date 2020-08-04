@@ -13,21 +13,22 @@ var failTest = require('../assets/fail_test');
 
 var mouseEvent = require('../assets/mouse_event');
 var assertHoverLabelContent = require('../assets/custom_assertions').assertHoverLabelContent;
+var checkTextTemplate = require('../assets/check_texttemplate');
 
 var supplyAllDefaults = require('../assets/supply_defaults');
 
 describe('carpet supplyDefaults', function() {
     'use strict';
 
-    var traceIn,
-        traceOut;
+    var traceIn;
+    var traceOut;
 
     var supplyDefaults = Carpet.supplyDefaults;
 
-    var defaultColor = '#444',
-        layout = {
-            font: Plots.layoutAttributes.font
-        };
+    var defaultColor = '#444';
+    var layout = {
+        font: Plots.layoutAttributes.font
+    };
 
     beforeEach(function() {
         traceOut = {};
@@ -657,6 +658,18 @@ describe('scattercarpet hover labels', function() {
         .then(done);
     });
 
+    it('should generate hover label (with hovertext array)', function(done) {
+        var fig = Lib.extendDeep({}, require('@mocks/scattercarpet.json'));
+        fig.data[5].hovertext = ['A', 'B', 'C', 'D'];
+        fig.data[5].text = ['N', 'O', 'P', '!'];
+
+        run(
+            [200, 200], fig,
+            [['a: 0.200', 'b: 3.500', 'y: 2.900', 'D'], 'a = 0.2']
+        )
+        .then(done);
+    });
+
     it('should generate hover label with \'hoverinfo\' set', function(done) {
         var fig = Lib.extendDeep({}, require('@mocks/scattercarpet.json'));
         fig.data[5].hoverinfo = 'a+y';
@@ -678,8 +691,49 @@ describe('scattercarpet hover labels', function() {
         )
         .then(done);
     });
+
+    it('should generate hover label with *hovertemplate*', function(done) {
+        var fig = Lib.extendDeep({}, require('@mocks/scattercarpet.json'));
+        fig.data[5].hovertemplate = 'f(%{a}, %{b}) = %{y}<extra>scattercarpet #%{curveNumber}</extra>';
+
+        run(
+            [200, 200], fig,
+            [['f(0.2, 3.5) = 2.900'], 'scattercarpet #5']
+        )
+        .then(done);
+    });
+
+    it('should generate hover label with arrayOk *hovertemplate*', function(done) {
+        var fig = Lib.extendDeep({}, require('@mocks/scattercarpet.json'));
+        fig.data[5].hovertemplate = ['', '', '', 'f(%{a}, %{b}) = %{y:.1f}<extra>pt #%{pointNumber}</extra>'];
+
+        run(
+            [200, 200], fig,
+            [['f(0.2, 3.5) = 3.0'], 'pt #3']
+        )
+        .then(done);
+    });
 });
 
+describe('scattercarpet texttemplates', function() {
+    checkTextTemplate([{
+        'type': 'scattercarpet',
+        'carpet': 'carpet1',
+        'mode': 'markers+text',
+        'a': [0.1, 0.15, 0.25],
+        'b': [1.5, 1.5, 1.5],
+        'text': ['A', 'B', 'C']
+    }, {
+        'type': 'carpet',
+        'carpet': 'carpet1',
+        'a': [0.1, 0.2, 0.3],
+        'b': [1, 2, 3],
+        'y': [[1, 2.2, 3], [1.5, 2.7, 3.5], [1.7, 2.9, 3.7]]
+    }], 'g.textpoint', [
+        ['%{text}: %{a:0.1f}, %{b:0.1f}', ['A: 0.1, 1.5', 'B: 0.1, 1.5', 'C: 0.3, 1.5']],
+        ['%{y}', ['1.000', '1.000', '2.200']]
+    ]);
+});
 describe('contourcarpet plotting & editing', function() {
     var gd;
 

@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -8,17 +8,18 @@
 
 'use strict';
 
+var hovertemplateAttrs = require('../../plots/template_attributes').hovertemplateAttrs;
+var texttemplateAttrs = require('../../plots/template_attributes').texttemplateAttrs;
 var scatterAttrs = require('../scatter/attributes');
-var plotAttrs = require('../../plots/attributes');
-var colorAttributes = require('../../components/colorscale/attributes');
-var colorbarAttrs = require('../../components/colorbar/attributes');
+var baseAttrs = require('../../plots/attributes');
+var colorScaleAttrs = require('../../components/colorscale/attributes');
 var dash = require('../../components/drawing/attributes').dash;
 
 var extendFlat = require('../../lib/extend').extendFlat;
 
-var scatterMarkerAttrs = scatterAttrs.marker,
-    scatterLineAttrs = scatterAttrs.line,
-    scatterMarkerLineAttrs = scatterMarkerAttrs.line;
+var scatterMarkerAttrs = scatterAttrs.marker;
+var scatterLineAttrs = scatterAttrs.line;
+var scatterMarkerLineAttrs = scatterMarkerAttrs.line;
 
 module.exports = {
     a: {
@@ -80,6 +81,9 @@ module.exports = {
             'these elements will be seen in the hover labels.'
         ].join(' ')
     }),
+    texttemplate: texttemplateAttrs({editType: 'plot'}, {
+        keys: ['a', 'b', 'c', 'text']
+    }),
     hovertext: extendFlat({}, scatterAttrs.hovertext, {
         description: [
             'Sets hover text elements associated with each (a,b,c) point.',
@@ -129,13 +133,13 @@ module.exports = {
             width: scatterMarkerLineAttrs.width,
             editType: 'calc'
         },
-            colorAttributes('marker.line')
+            colorScaleAttrs('marker.line')
         ),
         gradient: scatterMarkerAttrs.gradient,
         editType: 'calc'
-    }, colorAttributes('marker'), {
-        colorbar: colorbarAttrs
-    }),
+    },
+        colorScaleAttrs('marker')
+    ),
 
     textfont: scatterAttrs.textfont,
     textposition: scatterAttrs.textposition,
@@ -143,8 +147,9 @@ module.exports = {
     selected: scatterAttrs.selected,
     unselected: scatterAttrs.unselected,
 
-    hoverinfo: extendFlat({}, plotAttrs.hoverinfo, {
+    hoverinfo: extendFlat({}, baseAttrs.hoverinfo, {
         flags: ['a', 'b', 'c', 'text', 'name']
     }),
     hoveron: scatterAttrs.hoveron,
+    hovertemplate: hovertemplateAttrs(),
 };

@@ -6,7 +6,7 @@ var Lib = require('@src/lib');
 
 var Contour = require('@src/traces/contour');
 var makeColorMap = require('@src/traces/contour/make_color_map');
-var colorScales = require('@src/components/colorscale/scales');
+var colorScales = require('@src/components/colorscale/scales').scales;
 
 var failTest = require('../assets/fail_test');
 var createGraphDiv = require('../assets/create_graph_div');
@@ -20,14 +20,14 @@ var supplyAllDefaults = require('../assets/supply_defaults');
 describe('contour defaults', function() {
     'use strict';
 
-    var traceIn,
-        traceOut;
+    var traceIn;
+    var traceOut;
 
-    var defaultColor = '#444',
-        layout = {
-            font: Plots.layoutAttributes.font,
-            _dfltTitle: {colorbar: 'cb'}
-        };
+    var defaultColor = '#444';
+    var layout = {
+        font: Plots.layoutAttributes.font,
+        _dfltTitle: {colorbar: 'cb'}
+    };
 
     var supplyDefaults = Contour.supplyDefaults;
 
@@ -62,6 +62,28 @@ describe('contour defaults', function() {
         };
         supplyDefaults(traceIn, traceOut, defaultColor, layout);
         expect(traceOut.autocontour).toBe(true);
+    });
+
+    it('should default connectgaps to false if `z` is not a one dimensional array', function() {
+        traceIn = {
+            type: 'contour',
+            z: [[0, null], [1, 2]]
+        };
+
+        supplyDefaults(traceIn, traceOut, defaultColor, layout);
+        expect(traceOut.connectgaps).toBe(false);
+    });
+
+    it('should default connectgaps to true if `z` is a one dimensional array', function() {
+        traceIn = {
+            type: 'contour',
+            x: [0, 1, 0, 1],
+            y: [0, 0, 1, 1],
+            z: [0, null, 1, 2]
+        };
+
+        supplyDefaults(traceIn, traceOut, defaultColor, layout);
+        expect(traceOut.connectgaps).toBe(true);
     });
 
     it('should inherit layout.calendar', function() {
@@ -183,17 +205,28 @@ describe('contour makeColorMap', function() {
 describe('contour calc', function() {
     'use strict';
 
-    function _calc(opts) {
-        var base = { type: 'contour' },
-            trace = Lib.extendFlat({}, base, opts),
-            gd = { data: [trace] };
+    function _calc(opts, layout) {
+        var base = { type: 'contour' };
+        var trace = Lib.extendFlat({}, base, opts);
+        var gd = { data: [trace] };
+        if(layout) gd.layout = layout;
 
         supplyAllDefaults(gd);
         var fullTrace = gd._fullData[0];
+        var fullLayout = gd._fullLayout;
         fullTrace._extremes = {};
+
+        // we used to call ax.setScale during supplyDefaults, and this had a
+        // fallback to provide _categories and _categoriesMap. Now neither of
+        // those is true... anyway the right way to do this though is
+        // ax.clearCalc.
+        fullLayout.xaxis.clearCalc();
+        fullLayout.yaxis.clearCalc();
 
         var out = Contour.calc(gd, fullTrace)[0];
         out.trace = fullTrace;
+        out._xcategories = fullLayout.xaxis._categories;
+        out._ycategories = fullLayout.yaxis._categories;
         return out;
     }
 
@@ -309,14 +342,7 @@ describe('contour calc', function() {
 
                 ['start', 'end', 'size'].forEach(function(attr) {
                     expect(out.contours[attr]).toBe(spec[attr], [contoursIn, spec.inputNcontours, attr]);
-                    // all these get copied back to the input trace
-                    expect(out._input.contours[attr]).toBe(spec[attr], [contoursIn, spec.inputNcontours, attr]);
                 });
-
-                expect(out._input.autocontour).toBe(true);
-                expect(out._input.zauto).toBe(true);
-                expect(out._input.zmin).toBe(0);
-                expect(out._input.zmax).toBe(5);
             });
         });
     });
@@ -333,9 +359,9 @@ describe('contour calc', function() {
                 [spec.start, spec.end, 'normal'],
                 [spec.end, spec.start, 'reversed']
             ].forEach(function(v) {
-                var startIn = v[0],
-                    endIn = v[1],
-                    order = v[2];
+                var startIn = v[0];
+                var endIn = v[1];
+                var order = v[2];
 
                 var out = _calc({
                     z: [[1, 2], [3, 4]],
@@ -348,6 +374,57 @@ describe('contour calc', function() {
                     expect(out._input.contours[attr]).toBe(spec[attr], [spec, order, attr]);
                 });
             });
+        });
+    });
+
+    ['contour'].forEach(function(traceType) {
+        it('should sort z data based on axis categoryorder for ' + traceType, function() {
+            var mock = require('@mocks/heatmap_categoryorder');
+            var mockCopy = Lib.extendDeep({}, mock);
+            var data = mockCopy.data[0];
+            data.type = traceType;
+            var layout = mockCopy.layout;
+
+            // sort x axis categories
+            var mockLayout = Lib.extendDeep({}, layout);
+            var out = _calc(data, mockLayout);
+            mockLayout.xaxis.categoryorder = 'category ascending';
+            var out1 = _calc(data, mockLayout);
+
+            expect(out._xcategories).toEqual(out1._xcategories.slice().reverse());
+            // Check z data is also sorted
+            for(var i = 0; i < out.z.length; i++) {
+                expect(out1.z[i]).toEqual(out.z[i].slice().reverse());
+            }
+
+            // sort y axis categories
+            mockLayout = Lib.extendDeep({}, layout);
+            out = _calc(data, mockLayout);
+            mockLayout.yaxis.categoryorder = 'category ascending';
+            out1 = _calc(data, mockLayout);
+
+            expect(out._ycategories).toEqual(out1._ycategories.slice().reverse());
+            // Check z data is also sorted
+            expect(out1.z).toEqual(out.z.slice().reverse());
+        });
+
+        it('should sort z data based on axis categoryarray ' + traceType, function() {
+            var mock = require('@mocks/heatmap_categoryorder');
+            var mockCopy = Lib.extendDeep({}, mock);
+            var data = mockCopy.data[0];
+            data.type = traceType;
+            var layout = mockCopy.layout;
+
+            layout.xaxis.categoryorder = 'array';
+            layout.xaxis.categoryarray = ['x', 'z', 'y', 'w'];
+            layout.yaxis.categoryorder = 'array';
+            layout.yaxis.categoryarray = ['a', 'd', 'b', 'c'];
+
+            var out = _calc(data, layout);
+
+            expect(out._xcategories).toEqual(layout.xaxis.categoryarray, 'xaxis should reorder');
+            expect(out._ycategories).toEqual(layout.yaxis.categoryarray, 'yaxis should reorder');
+            expect(out.z[0][0]).toEqual(0);
         });
     });
 });
@@ -512,5 +589,95 @@ describe('contour plotting and editing', function() {
         })
         .catch(failTest)
         .then(done);
+    });
+});
+
+describe('contour hover', function() {
+    'use strict';
+
+    var gd;
+
+    function _hover(gd, xval, yval) {
+        var fullLayout = gd._fullLayout;
+        var calcData = gd.calcdata;
+        var hoverData = [];
+
+        for(var i = 0; i < calcData.length; i++) {
+            var pointData = {
+                index: false,
+                distance: 20,
+                cd: calcData[i],
+                trace: calcData[i][0].trace,
+                xa: fullLayout.xaxis,
+                ya: fullLayout.yaxis
+            };
+
+            var hoverPoint = Contour.hoverPoints(pointData, xval, yval);
+            if(hoverPoint) hoverData.push(hoverPoint[0]);
+        }
+
+        return hoverData;
+    }
+
+    function assertLabels(hoverPoint, xLabel, yLabel, zLabel, text) {
+        expect(hoverPoint.xLabelVal).toBe(xLabel, 'have correct x label');
+        expect(hoverPoint.yLabelVal).toBe(yLabel, 'have correct y label');
+        expect(hoverPoint.zLabelVal).toBe(zLabel, 'have correct z label');
+        expect(hoverPoint.text).toBe(text, 'have correct text label');
+    }
+
+    describe('missing data', function() {
+        beforeAll(function(done) {
+            gd = createGraphDiv();
+
+            Plotly.plot(gd, {
+                data: [{
+                    type: 'contour',
+                    x: [10, 11, 10, 11],
+                    y: [100, 100, 101, 101],
+                    z: [null, 1, 2, 3],
+                    connectgaps: false,
+                    hoverongaps: false
+                }]
+            }).then(done);
+        });
+        afterAll(destroyGraphDiv);
+
+        it('should not display hover on missing data and hoverongaps is disabled', function() {
+            var pt = _hover(gd, 10, 100)[0];
+
+            var hoverData;
+            gd.on('plotly_hover', function(data) {
+                hoverData = data;
+            });
+
+            expect(hoverData).toEqual(undefined);
+            expect(pt).toEqual(undefined);
+        });
+    });
+
+    describe('for xyz-column traces', function() {
+        beforeAll(function(done) {
+            gd = createGraphDiv();
+
+            Plotly.plot(gd, [{
+                type: 'contour',
+                x: [1, 2, 3],
+                y: [2, 3, 4],
+                z: [10, 4, 20],
+                text: ['a', 'b', 'c'],
+                hoverinfo: 'text'
+            }])
+            .then(done);
+        });
+
+        afterAll(destroyGraphDiv);
+
+        it('should find closest point and should', function() {
+            var pt = _hover(gd, 2, 3)[0];
+
+            expect(pt.index).toBe(1, 'have correct index');
+            assertLabels(pt, 2, 3, 4, 'b');
+        });
     });
 });

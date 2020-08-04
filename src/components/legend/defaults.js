@@ -1,11 +1,10 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
 * LICENSE file in the root directory of this source tree.
 */
-
 
 'use strict';
 
@@ -25,8 +24,6 @@ module.exports = function legendDefaults(layoutIn, layoutOut, fullData) {
     var legendReallyHasATrace = false;
     var defaultOrder = 'normal';
 
-    var defaultX, defaultY, defaultXAnchor, defaultYAnchor;
-
     for(var i = 0; i < fullData.length; i++) {
         var trace = fullData[i];
 
@@ -36,13 +33,20 @@ module.exports = function legendDefaults(layoutIn, layoutOut, fullData) {
         // *would* be shown by default, toward the two traces you need to
         // ensure the legend is shown by default, because this can still help
         // disambiguate.
-        if(trace.showlegend || trace._dfltShowLegend) {
+        if(trace.showlegend || (
+            trace._dfltShowLegend && !(
+                trace._module &&
+                trace._module.attributes &&
+                trace._module.attributes.showlegend &&
+                trace._module.attributes.showlegend.dflt === false
+            )
+        )) {
             legendTraceCount++;
             if(trace.showlegend) {
                 legendReallyHasATrace = true;
                 // Always show the legend by default if there's a pie,
                 // or if there's only one trace but it's explicitly shown
-                if(Registry.traceIs(trace, 'pie') ||
+                if(Registry.traceIs(trace, 'pie-like') ||
                     trace._input.showlegend === true
                 ) {
                     legendTraceCount++;
@@ -66,7 +70,7 @@ module.exports = function legendDefaults(layoutIn, layoutOut, fullData) {
         basePlotLayoutAttributes, 'showlegend',
         legendReallyHasATrace && legendTraceCount > 1);
 
-    if(showLegend === false) return;
+    if(showLegend === false && !containerIn.uirevision) return;
 
     var containerOut = Template.newContainer(layoutOut, 'legend');
 
@@ -74,34 +78,55 @@ module.exports = function legendDefaults(layoutIn, layoutOut, fullData) {
         return Lib.coerce(containerIn, containerOut, attributes, attr, dflt);
     }
 
+    coerce('uirevision', layoutOut.uirevision);
+
+    if(showLegend === false) return;
+
     coerce('bgcolor', layoutOut.paper_bgcolor);
     coerce('bordercolor');
     coerce('borderwidth');
     Lib.coerceFont(coerce, 'font', layoutOut.font);
 
-    coerce('orientation');
-    if(containerOut.orientation === 'h') {
-        var xaxis = layoutIn.xaxis;
-        if(xaxis && xaxis.rangeslider && xaxis.rangeslider.visible) {
-            defaultX = 0;
-            defaultXAnchor = 'left';
+    var orientation = coerce('orientation');
+    var defaultX, defaultY, defaultYAnchor;
+
+    if(orientation === 'h') {
+        defaultX = 0;
+
+        if(Registry.getComponentMethod('rangeslider', 'isVisible')(layoutIn.xaxis)) {
             defaultY = 1.1;
             defaultYAnchor = 'bottom';
-        }
-        else {
-            defaultX = 0;
-            defaultXAnchor = 'left';
+        } else {
+            // maybe use y=1.1 / yanchor=bottom as above
+            //   to avoid https://github.com/plotly/plotly.js/issues/1199
+            //   in v2
             defaultY = -0.1;
             defaultYAnchor = 'top';
         }
+    } else {
+        defaultX = 1.02;
+        defaultY = 1;
+        defaultYAnchor = 'auto';
     }
 
     coerce('traceorder', defaultOrder);
     if(helpers.isGrouped(layoutOut.legend)) coerce('tracegroupgap');
 
+    coerce('itemsizing');
+
+    coerce('itemclick');
+    coerce('itemdoubleclick');
+
     coerce('x', defaultX);
-    coerce('xanchor', defaultXAnchor);
+    coerce('xanchor');
     coerce('y', defaultY);
     coerce('yanchor', defaultYAnchor);
+    coerce('valign');
     Lib.noneOrAll(containerIn, containerOut, ['x', 'y']);
+
+    var titleText = coerce('title.text');
+    if(titleText) {
+        coerce('title.side', orientation === 'h' ? 'left' : 'top');
+        Lib.coerceFont(coerce, 'title.font', layoutOut.font);
+    }
 };

@@ -1,15 +1,15 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
 * LICENSE file in the root directory of this source tree.
 */
 
-
 'use strict';
 
 var d3 = require('d3');
+var utcFormat = require('d3-time-format').utcFormat;
 var isNumeric = require('fast-isnumeric');
 
 var numConstants = require('../constants/numerical');
@@ -24,17 +24,20 @@ lib.relativeAttr = require('./relative_attr');
 lib.isPlainObject = require('./is_plain_object');
 lib.toLogRange = require('./to_log_range');
 lib.relinkPrivateKeys = require('./relink_private');
-lib.ensureArray = require('./ensure_array');
+
+var arrayModule = require('./array');
+lib.isTypedArrayEncoding = arrayModule.isTypedArrayEncoding;
+lib.isTypedArray = arrayModule.isTypedArray;
+lib.isArrayOrTypedArray = arrayModule.isArrayOrTypedArray;
+lib.isArray1D = arrayModule.isArray1D;
+lib.ensureArray = arrayModule.ensureArray;
+lib.concat = arrayModule.concat;
+lib.maxRowLength = arrayModule.maxRowLength;
+lib.minRowLength = arrayModule.minRowLength;
 
 var modModule = require('./mod');
 lib.mod = modModule.mod;
 lib.modHalf = modModule.modHalf;
-
-var isArrayModule = require('./is_array');
-lib.isTypedArray = isArrayModule.isTypedArray;
-lib.isArrayOrTypedArray = isArrayModule.isArrayOrTypedArray;
-lib.isArray1D = isArrayModule.isArray1D;
-lib.isTypedArrayEncoding = isArrayModule.isTypedArrayEncoding;
 
 var coerceModule = require('./coerce');
 lib.valObjectMeta = coerceModule.valObjectMeta;
@@ -73,6 +76,7 @@ var statsModule = require('./stats');
 lib.aggNums = statsModule.aggNums;
 lib.len = statsModule.len;
 lib.mean = statsModule.mean;
+lib.median = statsModule.median;
 lib.midRange = statsModule.midRange;
 lib.variance = statsModule.variance;
 lib.stdev = statsModule.stdev;
@@ -99,6 +103,14 @@ lib.isPtInsideSector = anglesModule.isPtInsideSector;
 lib.pathArc = anglesModule.pathArc;
 lib.pathSector = anglesModule.pathSector;
 lib.pathAnnulus = anglesModule.pathAnnulus;
+
+var anchorUtils = require('./anchor_utils');
+lib.isLeftAnchor = anchorUtils.isLeftAnchor;
+lib.isCenterAnchor = anchorUtils.isCenterAnchor;
+lib.isRightAnchor = anchorUtils.isRightAnchor;
+lib.isTopAnchor = anchorUtils.isTopAnchor;
+lib.isMiddleAnchor = anchorUtils.isMiddleAnchor;
+lib.isBottomAnchor = anchorUtils.isBottomAnchor;
 
 var geom2dModule = require('./geometry2d');
 lib.segmentsIntersect = geom2dModule.segmentsIntersect;
@@ -127,7 +139,13 @@ lib.throttle = throttleModule.throttle;
 lib.throttleDone = throttleModule.done;
 lib.clearThrottle = throttleModule.clear;
 
-lib.getGraphDiv = require('./get_graph_div');
+var domModule = require('./dom');
+lib.getGraphDiv = domModule.getGraphDiv;
+lib.isPlotDiv = domModule.isPlotDiv;
+lib.removeElement = domModule.removeElement;
+lib.addStyleRule = domModule.addStyleRule;
+lib.addRelatedStyleRule = domModule.addRelatedStyleRule;
+lib.deleteRelatedStyleRule = domModule.deleteRelatedStyleRule;
 
 lib.clearResponsive = require('./clear_responsive');
 
@@ -143,7 +161,7 @@ lib.pushUnique = require('./push_unique');
 
 lib.cleanNumber = require('./clean_number');
 
-lib.ensureNumber = function num(v) {
+lib.ensureNumber = function ensureNumber(v) {
     if(!isNumeric(v)) return BADNUM;
     v = Number(v);
     if(v < -FP_SAFE || v > FP_SAFE) return BADNUM;
@@ -190,10 +208,10 @@ lib.swapAttrs = function(cont, attrList, part1, part2) {
     if(!part1) part1 = 'x';
     if(!part2) part2 = 'y';
     for(var i = 0; i < attrList.length; i++) {
-        var attr = attrList[i],
-            xp = lib.nestedProperty(cont, attr.replace('?', part1)),
-            yp = lib.nestedProperty(cont, attr.replace('?', part2)),
-            temp = xp.get();
+        var attr = attrList[i];
+        var xp = lib.nestedProperty(cont, attr.replace('?', part1));
+        var yp = lib.nestedProperty(cont, attr.replace('?', part2));
+        var temp = xp.get();
         xp.set(yp.get());
         yp.set(temp);
     }
@@ -241,10 +259,10 @@ lib.bBoxIntersect = function(a, b, pad) {
  * func: the function to apply
  * x1, x2: optional extra args
  */
-lib.simpleMap = function(array, func, x1, x2) {
-    var len = array.length,
-        out = new Array(len);
-    for(var i = 0; i < len; i++) out[i] = func(array[i], x1, x2);
+lib.simpleMap = function(array, func, x1, x2, opts) {
+    var len = array.length;
+    var out = new Array(len);
+    for(var i = 0; i < len; i++) out[i] = func(array[i], x1, x2, opts);
     return out;
 };
 
@@ -292,8 +310,7 @@ lib.randstr = function randstr(existing, bits, base, _recursion) {
             return res;
         }
         return randstr(existing, bits, base, (_recursion || 0) + 1);
-    }
-    else return res;
+    } else return res;
 };
 
 lib.OptionControl = function(opt, optname) {
@@ -331,15 +348,15 @@ lib.smooth = function(arrayIn, FWHM) {
     FWHM = Math.round(FWHM) || 0; // only makes sense for integers
     if(FWHM < 2) return arrayIn;
 
-    var alen = arrayIn.length,
-        alen2 = 2 * alen,
-        wlen = 2 * FWHM - 1,
-        w = new Array(wlen),
-        arrayOut = new Array(alen),
-        i,
-        j,
-        k,
-        v;
+    var alen = arrayIn.length;
+    var alen2 = 2 * alen;
+    var wlen = 2 * FWHM - 1;
+    var w = new Array(wlen);
+    var arrayOut = new Array(alen);
+    var i;
+    var j;
+    var k;
+    var v;
 
     // first make the window array
     for(i = 0; i < wlen; i++) {
@@ -417,10 +434,10 @@ lib.noneOrAll = function(containerIn, containerOut, attrList) {
      */
     if(!containerIn) return;
 
-    var hasAny = false,
-        hasAll = true,
-        i,
-        val;
+    var hasAny = false;
+    var hasAll = true;
+    var i;
+    var val;
 
     for(i = 0; i < attrList.length; i++) {
         val = containerIn[attrList[i]];
@@ -444,11 +461,23 @@ lib.noneOrAll = function(containerIn, containerOut, attrList) {
  * @param {object} cd : calcdata trace
  * @param {string} cdAttr : calcdata key
  */
-lib.mergeArray = function(traceAttr, cd, cdAttr) {
+lib.mergeArray = function(traceAttr, cd, cdAttr, fn) {
+    var hasFn = typeof fn === 'function';
     if(lib.isArrayOrTypedArray(traceAttr)) {
         var imax = Math.min(traceAttr.length, cd.length);
-        for(var i = 0; i < imax; i++) cd[i][cdAttr] = traceAttr[i];
+        for(var i = 0; i < imax; i++) {
+            var v = traceAttr[i];
+            cd[i][cdAttr] = hasFn ? fn(v) : v;
+        }
     }
+};
+
+// cast numbers to positive numbers, returns 0 if not greater than 0
+lib.mergeArrayCastPositive = function(traceAttr, cd, cdAttr) {
+    return lib.mergeArray(traceAttr, cd, cdAttr, function(v) {
+        var w = +v;
+        return !isFinite(w) ? 0 : w > 0 ? w : 0;
+    });
 };
 
 /** fills calcdata field (given by cdAttr) with traceAttr values
@@ -557,7 +586,9 @@ lib.tagSelected = function(calcTrace, trace, ptNumber2cdIndex) {
     for(var i = 0; i < selectedpoints.length; i++) {
         var ptIndex = selectedpoints[i];
 
-        if(lib.isIndex(ptIndex)) {
+        if(lib.isIndex(ptIndex) ||
+           (lib.isArrayOrTypedArray(ptIndex) && lib.isIndex(ptIndex[0]) && lib.isIndex(ptIndex[1]))
+        ) {
             var ptNumber = ptIndex2ptNumber ? ptIndex2ptNumber[ptIndex] : ptIndex;
             var cdIndex = ptNumber2cdIndex ? ptNumber2cdIndex[ptNumber] : ptNumber;
 
@@ -624,18 +655,24 @@ lib.getTargetArray = function(trace, transformOpts) {
 lib.minExtend = function(obj1, obj2) {
     var objOut = {};
     if(typeof obj2 !== 'object') obj2 = {};
-    var arrayLen = 3,
-        keys = Object.keys(obj1),
-        i,
-        k,
-        v;
+    var arrayLen = 3;
+    var keys = Object.keys(obj1);
+    var i, k, v;
+
     for(i = 0; i < keys.length; i++) {
         k = keys[i];
         v = obj1[k];
         if(k.charAt(0) === '_' || typeof v === 'function') continue;
         else if(k === 'module') objOut[k] = v;
-        else if(Array.isArray(v)) objOut[k] = v.slice(0, arrayLen);
-        else if(v && (typeof v === 'object')) objOut[k] = lib.minExtend(obj1[k], obj2[k]);
+        else if(Array.isArray(v)) {
+            if(k === 'colorscale') {
+                objOut[k] = v.slice();
+            } else {
+                objOut[k] = v.slice(0, arrayLen);
+            }
+        } else if(lib.isTypedArray(v)) {
+            objOut[k] = v.subarray(0, arrayLen);
+        } else if(v && (typeof v === 'object')) objOut[k] = lib.minExtend(obj1[k], obj2[k]);
         else objOut[k] = v;
     }
 
@@ -662,44 +699,18 @@ lib.containsAny = function(s, fragments) {
     return false;
 };
 
-lib.isPlotDiv = function(el) {
-    var el3 = d3.select(el);
-    return el3.node() instanceof HTMLElement &&
-        el3.size() &&
-        el3.classed('js-plotly-plot');
-};
-
-lib.removeElement = function(el) {
-    var elParent = el && el.parentNode;
-    if(elParent) elParent.removeChild(el);
-};
-
-/**
- * for dynamically adding style rules
- * makes one stylesheet that contains all rules added
- * by all calls to this function
- */
-lib.addStyleRule = function(selector, styleString) {
-    if(!lib.styleSheet) {
-        var style = document.createElement('style');
-        // WebKit hack :(
-        style.appendChild(document.createTextNode(''));
-        document.head.appendChild(style);
-        lib.styleSheet = style.sheet;
-    }
-    var styleSheet = lib.styleSheet;
-
-    if(styleSheet.insertRule) {
-        styleSheet.insertRule(selector + '{' + styleString + '}', 0);
-    }
-    else if(styleSheet.addRule) {
-        styleSheet.addRule(selector, styleString, 0);
-    }
-    else lib.warn('addStyleRule failed');
-};
-
 lib.isIE = function() {
     return typeof window.navigator.msSaveBlob !== 'undefined';
+};
+
+var IS_IE9_OR_BELOW_REGEX = /MSIE [1-9]\./;
+lib.isIE9orBelow = function() {
+    return lib.isIE() && IS_IE9_OR_BELOW_REGEX.test(window.navigator.userAgent);
+};
+
+var IS_SAFARI_REGEX = /Version\/[\d\.]+.*Safari/;
+lib.isSafari = function() {
+    return IS_SAFARI_REGEX.test(window.navigator.userAgent);
 };
 
 /**
@@ -785,9 +796,9 @@ lib.ensureSingleById = function(parent, nodeType, id, enterFn) {
  * @return {Object} the constructed object with a full nested path
  */
 lib.objectFromPath = function(path, value) {
-    var keys = path.split('.'),
-        tmpObj,
-        obj = tmpObj = {};
+    var keys = path.split('.');
+    var tmpObj;
+    var obj = tmpObj = {};
 
     for(var i = 0; i < keys.length; i++) {
         var key = keys[i];
@@ -809,7 +820,6 @@ lib.objectFromPath = function(path, value) {
 
             tmpObj = tmpObj[el];
         } else {
-
             if(i === keys.length - 1) {
                 tmpObj[key] = value;
             } else {
@@ -942,13 +952,13 @@ lib.numSeparate = function(value, separators, separatethousands) {
         value = String(value);
     }
 
-    var thousandsRe = /(\d+)(\d{3})/,
-        decimalSep = separators.charAt(0),
-        thouSep = separators.charAt(1);
+    var thousandsRe = /(\d+)(\d{3})/;
+    var decimalSep = separators.charAt(0);
+    var thouSep = separators.charAt(1);
 
-    var x = value.split('.'),
-        x1 = x[0],
-        x2 = x.length > 1 ? decimalSep + x[1] : '';
+    var x = value.split('.');
+    var x1 = x[0];
+    var x2 = x.length > 1 ? decimalSep + x[1] : '';
 
     // Years are ignored for thousands separators
     if(thouSep && (x.length > 1 || x1.length > 4 || separatethousands)) {
@@ -960,10 +970,10 @@ lib.numSeparate = function(value, separators, separatethousands) {
     return x1 + x2;
 };
 
-var TEMPLATE_STRING_REGEX = /%{([^\s%{}]*)}/g;
+lib.TEMPLATE_STRING_REGEX = /%{([^\s%{}:]*)([:|\|][^}]*)?}/g;
 var SIMPLE_PROPERTY_REGEX = /^\w*$/;
 
-/*
+/**
  * Substitute values from an object into a string
  *
  * Examples:
@@ -975,20 +985,115 @@ var SIMPLE_PROPERTY_REGEX = /^\w*$/;
  *
  * @return {string} templated string
  */
-
 lib.templateString = function(string, obj) {
     // Not all that useful, but cache nestedProperty instantiation
     // just in case it speeds things up *slightly*:
     var getterCache = {};
 
-    return string.replace(TEMPLATE_STRING_REGEX, function(dummy, key) {
+    return string.replace(lib.TEMPLATE_STRING_REGEX, function(dummy, key) {
+        var v;
         if(SIMPLE_PROPERTY_REGEX.test(key)) {
-            return obj[key] || '';
+            v = obj[key];
+        } else {
+            getterCache[key] = getterCache[key] || lib.nestedProperty(obj, key).get;
+            v = getterCache[key]();
         }
-        getterCache[key] = getterCache[key] || lib.nestedProperty(obj, key).get;
-        return getterCache[key]() || '';
+        return lib.isValidTextValue(v) ? v : '';
     });
 };
+
+var hovertemplateWarnings = {
+    max: 10,
+    count: 0,
+    name: 'hovertemplate'
+};
+lib.hovertemplateString = function() {
+    return templateFormatString.apply(hovertemplateWarnings, arguments);
+};
+
+var texttemplateWarnings = {
+    max: 10,
+    count: 0,
+    name: 'texttemplate'
+};
+lib.texttemplateString = function() {
+    return templateFormatString.apply(texttemplateWarnings, arguments);
+};
+
+var TEMPLATE_STRING_FORMAT_SEPARATOR = /^[:|\|]/;
+/**
+ * Substitute values from an object into a string and optionally formats them using d3-format,
+ * or fallback to associated labels.
+ *
+ * Examples:
+ *  Lib.hovertemplateString('name: %{trace}', {trace: 'asdf'}) --> 'name: asdf'
+ *  Lib.hovertemplateString('name: %{trace[0].name}', {trace: [{name: 'asdf'}]}) --> 'name: asdf'
+ *  Lib.hovertemplateString('price: %{y:$.2f}', {y: 1}) --> 'price: $1.00'
+ *
+ * @param {string}  input string containing %{...:...} template strings
+ * @param {obj}     data object containing fallback text when no formatting is specified, ex.: {yLabel: 'formattedYValue'}
+ * @param {obj}     d3 locale
+ * @param {obj}     data objects containing substitution values
+ *
+ * @return {string} templated string
+ */
+function templateFormatString(string, labels, d3locale) {
+    var opts = this;
+    var args = arguments;
+    if(!labels) labels = {};
+    // Not all that useful, but cache nestedProperty instantiation
+    // just in case it speeds things up *slightly*:
+    var getterCache = {};
+
+    return string.replace(lib.TEMPLATE_STRING_REGEX, function(match, key, format) {
+        var obj, value, i;
+        for(i = 3; i < args.length; i++) {
+            obj = args[i];
+            if(!obj) continue;
+            if(obj.hasOwnProperty(key)) {
+                value = obj[key];
+                break;
+            }
+
+            if(!SIMPLE_PROPERTY_REGEX.test(key)) {
+                value = getterCache[key] || lib.nestedProperty(obj, key).get();
+                if(value) getterCache[key] = value;
+            }
+            if(value !== undefined) break;
+        }
+
+        if(value === undefined && opts) {
+            if(opts.count < opts.max) {
+                lib.warn('Variable \'' + key + '\' in ' + opts.name + ' could not be found!');
+                value = match;
+            }
+
+            if(opts.count === opts.max) {
+                lib.warn('Too many ' + opts.name + ' warnings - additional warnings will be suppressed');
+            }
+            opts.count++;
+
+            return match;
+        }
+
+        if(format) {
+            var fmt;
+            if(format[0] === ':') {
+                fmt = d3locale ? d3locale.numberFormat : d3.format;
+                value = fmt(format.replace(TEMPLATE_STRING_FORMAT_SEPARATOR, ''))(value);
+            }
+
+            if(format[0] === '|') {
+                fmt = d3locale ? d3locale.timeFormat : utcFormat;
+                var ms = lib.dateTime2ms(value);
+                value = lib.formatDate(ms, format.replace(TEMPLATE_STRING_FORMAT_SEPARATOR, ''), false, fmt);
+            }
+        } else {
+            if(labels.hasOwnProperty(key + 'Label')) value = labels[key + 'Label'];
+        }
+        return value;
+    });
+}
 
 /*
  * alphanumeric string sort, tailored for subplot IDs like scene2, scene10, x10y13 etc
@@ -1030,4 +1135,106 @@ lib.pseudoRandom = function() {
     // gets away from really trying to be random, in favor of better local uniformity
     if(Math.abs(randSeed - lastVal) < 429496729) return lib.pseudoRandom();
     return randSeed / 4294967296;
+};
+
+
+/** Fill hover 'pointData' container with 'correct' hover text value
+ *
+ * - If trace hoverinfo contains a 'text' flag and hovertext is not set,
+ *   the text elements will be seen in the hover labels.
+ *
+ * - If trace hoverinfo contains a 'text' flag and hovertext is set,
+ *   hovertext takes precedence over text
+ *   i.e. the hoverinfo elements will be seen in the hover labels
+ *
+ *  @param {object} calcPt
+ *  @param {object} trace
+ *  @param {object || array} contOut (mutated here)
+ */
+lib.fillText = function(calcPt, trace, contOut) {
+    var fill = Array.isArray(contOut) ?
+        function(v) { contOut.push(v); } :
+        function(v) { contOut.text = v; };
+
+    var htx = lib.extractOption(calcPt, trace, 'htx', 'hovertext');
+    if(lib.isValidTextValue(htx)) return fill(htx);
+
+    var tx = lib.extractOption(calcPt, trace, 'tx', 'text');
+    if(lib.isValidTextValue(tx)) return fill(tx);
+};
+
+// accept all truthy values and 0 (which gets cast to '0' in the hover labels)
+lib.isValidTextValue = function(v) {
+    return v || v === 0;
+};
+
+/**
+ * @param {number} ratio
+ * @param {number} n (number of decimal places)
+ */
+lib.formatPercent = function(ratio, n) {
+    n = n || 0;
+    var str = (Math.round(100 * ratio * Math.pow(10, n)) * Math.pow(0.1, n)).toFixed(n) + '%';
+    for(var i = 0; i < n; i++) {
+        if(str.indexOf('.') !== -1) {
+            str = str.replace('0%', '%');
+            str = str.replace('.%', '%');
+        }
+    }
+    return str;
+};
+
+lib.isHidden = function(gd) {
+    var display = window.getComputedStyle(gd).display;
+    return !display || display === 'none';
+};
+
+/** Return transform text for bar bar-like rectangles and pie-like slices
+ *  @param {object} transform
+ *  - targetX: desired position on the x-axis
+ *  - targetY: desired position on the y-axis
+ *  - textX: text middle position on the x-axis
+ *  - textY: text middle position on the y-axis
+ *  - anchorX: (optional) text anchor position on the x-axis (computed from textX), zero for middle anchor
+ *  - anchorY: (optional) text anchor position on the y-axis (computed from textY), zero for middle anchor
+ *  - scale: (optional) scale applied after translate
+ *  - rotate: (optional) rotation applied after scale
+ *  - noCenter: when defined no extra arguments needed in rotation
+ */
+lib.getTextTransform = function(transform) {
+    var noCenter = transform.noCenter;
+    var textX = transform.textX;
+    var textY = transform.textY;
+    var targetX = transform.targetX;
+    var targetY = transform.targetY;
+    var anchorX = transform.anchorX || 0;
+    var anchorY = transform.anchorY || 0;
+    var rotate = transform.rotate;
+    var scale = transform.scale;
+    if(!scale) scale = 0;
+    else if(scale > 1) scale = 1;
+
+    return (
+        'translate(' +
+            (targetX - scale * (textX + anchorX)) + ',' +
+            (targetY - scale * (textY + anchorY)) +
+        ')' +
+        (scale < 1 ?
+            'scale(' + scale + ')' : ''
+        ) +
+        (rotate ?
+            'rotate(' + rotate +
+                (noCenter ? '' : ' ' + textX + ' ' + textY) +
+            ')' : ''
+        )
+    );
+};
+
+lib.ensureUniformFontSize = function(gd, baseFont) {
+    var out = lib.extendFlat({}, baseFont);
+    out.size = Math.max(
+        baseFont.size,
+        gd._fullLayout.uniformtext.minsize || 0
+    );
+    return out;
 };

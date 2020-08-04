@@ -9,7 +9,6 @@ var drag = require('../assets/drag');
 var scatterFillMock = require('@mocks/scatter_fill_self_next.json');
 var templateMock = require('@mocks/template.json');
 
-
 describe('makeTemplate', function() {
     it('does not template arrays', function() {
         var template = Plotly.makeTemplate(Lib.extendDeep({}, scatterFillMock));
@@ -20,7 +19,9 @@ describe('makeTemplate', function() {
                 {fill: 'toself'}
             ] },
             layout: {
-                title: 'Fill toself and tonext',
+                title: {
+                    text: 'Fill toself and tonext'
+                },
                 width: 400,
                 height: 400
             }
@@ -131,15 +132,78 @@ describe('makeTemplate', function() {
                     line: {width: 2, color: 'rgba(160,160,0,0.25)'}
                 }],
                 width: 600,
-                xaxis: {domain: [0, 0.45], color: '#CCC', title: 'XXX'},
-                xaxis2: {domain: [0.55, 1], title: 'XXX222'},
-                yaxis: {color: '#88F', title: 'y'},
+                xaxis: {domain: [0, 0.45], color: '#CCC', title: {text: 'XXX'}},
+                xaxis2: {domain: [0.55, 1], title: {text: 'XXX222'}},
+                yaxis: {color: '#88F', title: {text: 'y'}},
                 // inherits from both yaxis2 and template.yaxis
-                yaxis2: {color: '#88F', title: 'y2', anchor: 'x2'}
+                yaxis2: {color: '#88F', title: {text: 'y2'}, anchor: 'x2'}
             }
         };
 
         expect(template).toEqual(expected);
+    });
+
+    it('works on DOM element', function(done) {
+        var mock = Lib.extendDeep({}, scatterFillMock);
+        var gd = createGraphDiv();
+
+        Plotly.newPlot(gd, mock)
+        .then(function() {
+            var template = Plotly.makeTemplate(gd);
+            delete(template.layout.xaxis);
+            delete(template.layout.yaxis);
+            expect(template).toEqual({
+                data: {scatter: [
+                  {fill: 'tonext', line: {shape: 'spline'}},
+                  {fill: 'tonext'},
+                  {fill: 'toself'}
+                ] },
+                layout: {
+                    title: {
+                        text: 'Fill toself and tonext'
+                    },
+                    width: 400,
+                    height: 400
+                }
+            });
+        })
+      .catch(failTest)
+      .then(destroyGraphDiv)
+      .then(done);
+    });
+
+    it('works with div id', function(done) {
+        var mock = Lib.extendDeep({}, scatterFillMock);
+
+        var gd = document.createElement('div');
+        gd.id = 'myDiv';
+        document.body.appendChild(gd);
+
+        Plotly.newPlot('myDiv', mock)
+        .then(function() {
+            var template = Plotly.makeTemplate('myDiv');
+            delete(template.layout.xaxis);
+            delete(template.layout.yaxis);
+            expect(template).toEqual({
+                data: {scatter: [
+                  {fill: 'tonext', line: {shape: 'spline'}},
+                  {fill: 'tonext'},
+                  {fill: 'toself'}
+                ] },
+                layout: {
+                    title: {
+                        text: 'Fill toself and tonext'
+                    },
+                    width: 400,
+                    height: 400
+                }
+            });
+        })
+        .catch(failTest)
+        .then(function() {
+            document.body.removeChild(gd);
+        })
+        .then(done);
     });
 });
 
@@ -180,13 +244,13 @@ describe('template interactions', function() {
 
         var schoolDragger = checkAnnotations(5, 4, 5);
 
-        drag(schoolDragger, 0, -80)
+        drag({node: schoolDragger, dpos: [0, -80]})
         .then(function() {
             // added an item to layout.annotations and put that before the
             // remaining default item in the DOM
             schoolDragger = checkAnnotations(6, 5, 4, 0.25);
 
-            return drag(schoolDragger, 0, -80);
+            return drag({node: schoolDragger, dpos: [0, -80]});
         })
         .then(function() {
             // item count and order are unchanged now, item just moves.
@@ -218,12 +282,12 @@ describe('template interactions', function() {
 
         var rectDragger = checkShapes(1);
 
-        drag(rectDragger, 0, -80, 's')
+        drag({node: rectDragger, dpos: [0, -80], edge: 's'})
         .then(function() {
             // added an item to layout.shapes
             rectDragger = checkShapes(2, 0.15);
 
-            return drag(rectDragger, 0, -80, 's');
+            return drag({node: rectDragger, dpos: [0, -80], edge: 's'});
         })
         .then(function() {
             // item count and order are unchanged now, item just resizes.
@@ -235,22 +299,36 @@ describe('template interactions', function() {
 });
 
 describe('validateTemplate', function() {
+    function compareOutputs(out1, out2, expected, countToCheck) {
+        expect(out2).toEqual(out1);
+        if(expected) {
+            expect(countToCheck ? out1.slice(0, countToCheck) : out1)
+                .toEqual(expected);
+        } else {
+            expect(out1).toBeUndefined();
+        }
+    }
 
     function checkValidate(mock, expected, countToCheck) {
         var template = mock.layout.template;
         var mockNoTemplate = Lib.extendDeep({}, mock);
         delete mockNoTemplate.layout.template;
 
+        // Test with objects as argument
         var out1 = Plotly.validateTemplate(mock);
         var out2 = Plotly.validateTemplate(mockNoTemplate, template);
         expect(out2).toEqual(out1);
-        if(expected) {
-            expect(countToCheck ? out1.slice(0, countToCheck) : out1)
-                .toEqual(expected);
-        }
-        else {
-            expect(out1).toBeUndefined();
-        }
+        compareOutputs(out1, out2, expected, countToCheck);
+
+        // Test with DOM elements as argument
+        var gd = createGraphDiv();
+        return Plotly.newPlot(gd, mock)
+        .then(function() {out1 = Plotly.validateTemplate(gd);})
+        .then(function() {return Plotly.newPlot(gd, mockNoTemplate);})
+        .then(function() {out2 = Plotly.validateTemplate(gd, template);})
+        .then(function() {compareOutputs(out1, out2, expected, countToCheck);})
+        .catch(failTest)
+        .then(destroyGraphDiv);
     }
 
     var cleanMock = Lib.extendDeep({}, templateMock);
@@ -259,11 +337,11 @@ describe('validateTemplate', function() {
     cleanMock.data.splice(1, 1);
     cleanMock.layout.template.data.bar.pop();
 
-    it('returns undefined when the template matches precisely', function() {
-        checkValidate(cleanMock);
+    it('returns undefined when the template matches precisely', function(done) {
+        checkValidate(cleanMock).then(done);
     });
 
-    it('catches all classes of regular issue', function() {
+    it('catches all classes of regular issue', function(done) {
         var messyMock = Lib.extendDeep({}, templateMock);
         messyMock.data.push({type: 'box', x0: 1, y: [1, 2, 3]});
         messyMock.layout.template.layout.geo = {projection: {type: 'orthographic'}};
@@ -320,10 +398,10 @@ describe('validateTemplate', function() {
             path: 'layout.annotations[4]',
             templateitemname: 'nope',
             msg: 'There are no templates for item layout.annotations[4] with name nope'
-        }]);
+        }]).then(done);
     });
 
-    it('catches missing template.data', function() {
+    it('catches missing template.data', function(done) {
         var noDataMock = Lib.extendDeep({}, cleanMock);
         delete noDataMock.layout.template.data;
 
@@ -333,17 +411,16 @@ describe('validateTemplate', function() {
         }],
         // check only the first error - we don't care about the specifics
         // uncovered after we already know there's no template.data
-        1);
+        1).then(done);
     });
 
-    it('catches missing template.layout', function() {
+    it('catches missing template.layout', function(done) {
         var noLayoutMock = Lib.extendDeep({}, cleanMock);
         delete noLayoutMock.layout.template.layout;
 
         checkValidate(noLayoutMock, [{
             code: 'layout',
             msg: 'The template has no key layout.'
-        }], 1);
+        }], 1).then(done);
     });
-
 });

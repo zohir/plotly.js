@@ -1,6 +1,7 @@
 var Plotly = require('@lib');
 var Lib = require('@src/lib');
 var BADNUM = require('@src/constants/numerical').BADNUM;
+var loggers = require('@src/lib/loggers');
 
 var ScatterGeo = require('@src/traces/scattergeo');
 
@@ -12,6 +13,7 @@ var mouseEvent = require('../assets/mouse_event');
 var customAssertions = require('../assets/custom_assertions');
 var assertHoverLabelStyle = customAssertions.assertHoverLabelStyle;
 var assertHoverLabelContent = customAssertions.assertHoverLabelContent;
+var checkTextTemplate = require('../assets/check_texttemplate');
 var failTest = require('../assets/fail_test');
 var supplyAllDefaults = require('../assets/supply_defaults');
 
@@ -19,8 +21,8 @@ describe('Test scattergeo defaults', function() {
     var traceIn,
         traceOut;
 
-    var defaultColor = '#444',
-        layout = {};
+    var defaultColor = '#444';
+    var layout = {};
 
     beforeEach(function() {
         traceOut = {};
@@ -85,12 +87,72 @@ describe('Test scattergeo defaults', function() {
         traceOut = {};
         testOne();
     });
+
+    it('should default locationmode to *geojson-id* when a valid *geojson* is provided', function() {
+        traceIn = {
+            locations: ['CAN', 'USA'],
+            geojson: 'url'
+        };
+        traceOut = {};
+        ScatterGeo.supplyDefaults(traceIn, traceOut, defaultColor, layout);
+        expect(traceOut.locationmode).toBe('geojson-id', 'valid url string');
+
+        traceIn = {
+            locations: ['CAN', 'USA'],
+            geojson: {}
+        };
+        traceOut = {};
+        ScatterGeo.supplyDefaults(traceIn, traceOut, defaultColor, layout);
+        expect(traceOut.locationmode).toBe('geojson-id', 'valid object');
+
+        traceIn = {
+            locations: ['CAN', 'USA'],
+            geojson: ''
+        };
+        traceOut = {};
+        ScatterGeo.supplyDefaults(traceIn, traceOut, defaultColor, layout);
+        expect(traceOut.locationmode).toBe('ISO-3', 'invalid sting');
+
+        traceIn = {
+            locations: ['CAN', 'USA'],
+            geojson: []
+        };
+        traceOut = {};
+        ScatterGeo.supplyDefaults(traceIn, traceOut, defaultColor, layout);
+        expect(traceOut.locationmode).toBe('ISO-3', 'invalid object');
+
+        traceIn = {
+            lon: [20, 40],
+            lat: [20, 40]
+        };
+        traceOut = {};
+        ScatterGeo.supplyDefaults(traceIn, traceOut, defaultColor, layout);
+        expect(traceOut.locationmode).toBe(undefined, 'lon/lat coordinates');
+    });
+
+    it('should only coerce *featureidkey* when locationmode is *geojson-id', function() {
+        traceIn = {
+            locations: ['CAN', 'USA'],
+            geojson: 'url',
+            featureidkey: 'properties.name'
+        };
+        traceOut = {};
+        ScatterGeo.supplyDefaults(traceIn, traceOut, defaultColor, layout);
+        expect(traceOut.featureidkey).toBe('properties.name', 'coerced');
+
+        traceIn = {
+            locations: ['CAN', 'USA'],
+            featureidkey: 'properties.name'
+        };
+        traceOut = {};
+        ScatterGeo.supplyDefaults(traceIn, traceOut, defaultColor, layout);
+        expect(traceOut.featureidkey).toBe(undefined, 'NOT coerced');
+    });
 });
 
 describe('Test scattergeo calc', function() {
-
     function _calc(opts) {
-        var base = { type: 'scattermapbox' };
+        var base = { type: 'scattergeo' };
         var trace = Lib.extendFlat({}, base, opts);
         var gd = { data: [trace] };
 
@@ -216,7 +278,7 @@ describe('Test scattergeo calc', function() {
 
         expect(calcTrace).toEqual([
             { lonlat: [10, 20], mc: 0, ms: 10 },
-            { lonlat: [20, 30], mc: null, ms: NaN },
+            { lonlat: [20, 30], mc: null, ms: 0 },
             { lonlat: [BADNUM, BADNUM], mc: 5, ms: 8 },
             { lonlat: [30, 10], mc: 10, ms: 10 }
         ]);
@@ -291,6 +353,25 @@ describe('Test scattergeo hover', function() {
         .then(done);
     });
 
+    it('should use the hovertemplate', function(done) {
+        Plotly.restyle(gd, 'hovertemplate', 'tpl %{lat}<extra>x</extra>').then(function() {
+            check([381, 221], ['tpl 10', 'x']);
+        })
+        .catch(failTest)
+        .then(done);
+    });
+
+    it('should not hide hover label when hovertemplate', function(done) {
+        Plotly.restyle(gd, {
+            name: '',
+            hovertemplate: 'tpl %{lat}<extra>x</extra>'
+        }).then(function() {
+            check([381, 221], ['tpl 10', 'x']);
+        })
+        .catch(failTest)
+        .then(done);
+    });
+
     it('should generate hover label info (\'text\' single value case)', function(done) {
         Plotly.restyle(gd, 'text', 'text').then(function() {
             check([381, 221], ['(10°, 10°)\ntext', null]);
@@ -340,6 +421,48 @@ describe('Test scattergeo hover', function() {
         .catch(failTest)
         .then(done);
     });
+
+    describe('should preserve lon/lat formatting hovetemplate equivalence', function() {
+        var pos = [381, 221];
+        var exp = ['(10.00012°, 10.00088°)\nA'];
+
+        it('- base case (truncate z decimals)', function(done) {
+            Plotly.restyle(gd, {
+                lon: [[10.0001221321]],
+                lat: [[10.00087683]]
+            })
+            .then(function() { check(pos, exp); })
+            .catch(failTest)
+            .then(done);
+        });
+
+        it('- hovertemplate case (same lon/lat truncation)', function(done) {
+            Plotly.restyle(gd, {
+                lon: [[10.0001221321]],
+                lat: [[10.00087683]],
+                hovertemplate: '(%{lon}°, %{lat}°)<br>%{text}<extra></extra>'
+            })
+            .then(function() { check(pos, exp); })
+            .catch(failTest)
+            .then(done);
+        });
+    });
+
+    it('should include *properties* from input custom geojson', function(done) {
+        var fig = Lib.extendDeep({}, require('@mocks/geo_custom-geojson.json'));
+        fig.data = [fig.data[3]];
+        fig.data[0].geo = 'geo';
+        fig.data[0].marker = {size: 40};
+        fig.data[0].hovertemplate = '%{properties.name}<extra>LOOK</extra>';
+        fig.layout.geo.projection = {scale: 30};
+
+        Plotly.react(gd, fig)
+        .then(function() {
+            check([275, 255], ['New York', 'LOOK']);
+        })
+        .catch(failTest)
+        .then(done);
+    });
 });
 
 describe('scattergeo drawing', function() {
@@ -352,7 +475,7 @@ describe('scattergeo drawing', function() {
     afterEach(destroyGraphDiv);
 
     it('should not throw an error with bad locations', function(done) {
-        spyOn(Lib, 'log');
+        spyOn(loggers, 'log');
         Plotly.newPlot(gd, [{
             locations: ['canada', 0, null, '', 'utopia'],
             locationmode: 'country names',
@@ -360,7 +483,7 @@ describe('scattergeo drawing', function() {
         }])
         .then(function() {
             // only utopia logs - others are silently ignored
-            expect(Lib.log).toHaveBeenCalledTimes(1);
+            expect(loggers.log).toHaveBeenCalledTimes(1);
         })
         .catch(failTest)
         .then(done);
@@ -391,4 +514,25 @@ describe('scattergeo drawing', function() {
         .catch(failTest)
         .then(done);
     });
+});
+
+describe('Test scattergeo texttemplate:', function() {
+    checkTextTemplate([{
+        'type': 'scattergeo',
+        'mode': 'markers+text',
+        'lon': [-73.57, -79.24, -123.06],
+        'lat': [45.5, 43.4, 49.13],
+        'text': ['Montreal', 'Toronto', 'Vancouver']
+    }], '.scattergeo text', [
+        ['%{text}: %{lon}, %{lat}', ['Montreal: −73.57, 45.5', 'Toronto: −79.24, 43.4', 'Vancouver: −123.06, 49.13']]
+    ]);
+
+    checkTextTemplate([{
+        'type': 'scattergeo',
+        'mode': 'markers+text',
+        'locations': ['Canada'],
+        'locationmode': 'country names'
+    }], '.scattergeo text', [
+        ['%{location}', ['Canada']]
+    ]);
 });

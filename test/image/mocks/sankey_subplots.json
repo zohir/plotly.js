@@ -36,10 +36,14 @@
                 "value": [120, 50],
                 "label": ["stram4", "stream5"]
             }
+        },
+        {
+            "visible": false,
+            "type": "sankey"
         }
     ],
     "layout": {
-        "title": "Multiple Sankey plots",
+        "title": {"text": "Multiple Sankey plots"},
         "autosize": true,
         "showlegend": false
     }

@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -9,55 +9,46 @@
 'use strict';
 
 var isNumeric = require('fast-isnumeric');
-var isArrayOrTypedArray = require('../../lib').isArrayOrTypedArray;
 var tinycolor = require('tinycolor2');
 
 var Color = require('../../components/color');
-var helpers = require('./helpers');
 
-exports.calc = function calc(gd, trace) {
-    var vals = trace.values;
-    var hasVals = isArrayOrTypedArray(vals) && vals.length;
-    var labels = trace.labels;
-    var colors = trace.marker.colors || [];
+var extendedColorWayList = {};
+
+function calc(gd, trace) {
     var cd = [];
+
     var fullLayout = gd._fullLayout;
-    var colorMap = fullLayout._piecolormap;
-    var allThisTraceLabels = {};
-    var vTotal = 0;
     var hiddenLabels = fullLayout.hiddenlabels || [];
 
-    var i, v, label, hidden, pt;
+    var labels = trace.labels;
+    var colors = trace.marker.colors || [];
+    var vals = trace.values;
+    var len = trace._length;
+    var hasValues = trace._hasValues && len;
+
+    var i, pt;
 
     if(trace.dlabel) {
-        labels = new Array(vals.length);
-        for(i = 0; i < vals.length; i++) {
+        labels = new Array(len);
+        for(i = 0; i < len; i++) {
             labels[i] = String(trace.label0 + i * trace.dlabel);
         }
     }
 
-    function pullColor(color, label) {
-        if(!color) return false;
+    var allThisTraceLabels = {};
+    var pullColor = makePullColorFn(fullLayout['_' + trace.type + 'colormap']);
+    var vTotal = 0;
+    var isAggregated = false;
 
-        color = tinycolor(color);
-        if(!color.isValid()) return false;
-
-        color = Color.addOpacity(color, color.getAlpha());
-        if(!colorMap[label]) colorMap[label] = color;
-
-        return color;
-    }
-
-    var seriesLen = (hasVals ? vals : labels).length;
-
-    for(i = 0; i < seriesLen; i++) {
-        if(hasVals) {
+    for(i = 0; i < len; i++) {
+        var v, label, hidden;
+        if(hasValues) {
             v = vals[i];
             if(!isNumeric(v)) continue;
             v = +v;
             if(v < 0) continue;
-        }
-        else v = 1;
+        } else v = 1;
 
         label = labels[i];
         if(label === undefined || label === '') label = i;
@@ -79,8 +70,9 @@ exports.calc = function calc(gd, trace) {
                 pts: [i],
                 hidden: hidden
             });
-        }
-        else {
+        } else {
+            isAggregated = true;
+
             pt = cd[thisLabelIndex];
             pt.v += v;
             pt.pts.push(i);
@@ -92,36 +84,28 @@ exports.calc = function calc(gd, trace) {
         }
     }
 
-    if(trace.sort) cd.sort(function(a, b) { return b.v - a.v; });
+    var shouldSort = (trace.type === 'funnelarea') ? isAggregated : trace.sort;
+    if(shouldSort) cd.sort(function(a, b) { return b.v - a.v; });
 
     // include the sum of all values in the first point
     if(cd[0]) cd[0].vTotal = vTotal;
 
-    // now insert text
-    if(trace.textinfo && trace.textinfo !== 'none') {
-        var hasLabel = trace.textinfo.indexOf('label') !== -1;
-        var hasText = trace.textinfo.indexOf('text') !== -1;
-        var hasValue = trace.textinfo.indexOf('value') !== -1;
-        var hasPercent = trace.textinfo.indexOf('percent') !== -1;
-        var separators = fullLayout.separators;
-
-        var thisText;
-
-        for(i = 0; i < cd.length; i++) {
-            pt = cd[i];
-            thisText = hasLabel ? [pt.label] : [];
-            if(hasText) {
-                var texti = helpers.getFirstFilled(trace.text, pt.pts);
-                if(texti) thisText.push(texti);
-            }
-            if(hasValue) thisText.push(helpers.formatPieValue(pt.v, separators));
-            if(hasPercent) thisText.push(helpers.formatPiePercent(pt.v / vTotal, separators));
-            pt.text = thisText.join('<br>');
-        }
-    }
-
     return cd;
-};
+}
+
+function makePullColorFn(colorMap) {
+    return function pullColor(color, id) {
+        if(!color) return false;
+
+        color = tinycolor(color);
+        if(!color.isValid()) return false;
+
+        color = Color.addOpacity(color, color.getAlpha());
+        if(!colorMap[id]) colorMap[id] = color;
+
+        return color;
+    };
+}
 
 /*
  * `calc` filled in (and collated) explicit colors.
@@ -130,60 +114,68 @@ exports.calc = function calc(gd, trace) {
  * This is done after sorting, so we pick defaults
  * in the order slices will be displayed
  */
-exports.crossTraceCalc = function(gd) {
+function crossTraceCalc(gd, plotinfo) { // TODO: should we name the second argument opts?
+    var desiredType = (plotinfo || {}).type;
+    if(!desiredType) desiredType = 'pie';
+
     var fullLayout = gd._fullLayout;
     var calcdata = gd.calcdata;
-    var pieColorWay = fullLayout.piecolorway;
-    var colorMap = fullLayout._piecolormap;
+    var colorWay = fullLayout[desiredType + 'colorway'];
+    var colorMap = fullLayout['_' + desiredType + 'colormap'];
 
-    if(fullLayout.extendpiecolors) {
-        pieColorWay = generateExtendedColors(pieColorWay);
+    if(fullLayout['extend' + desiredType + 'colors']) {
+        colorWay = generateExtendedColors(colorWay, extendedColorWayList);
     }
     var dfltColorCount = 0;
 
-    var i, j, cd, pt;
-    for(i = 0; i < calcdata.length; i++) {
-        cd = calcdata[i];
-        if(cd[0].trace.type !== 'pie') continue;
+    for(var i = 0; i < calcdata.length; i++) {
+        var cd = calcdata[i];
+        var traceType = cd[0].trace.type;
+        if(traceType !== desiredType) continue;
 
-        for(j = 0; j < cd.length; j++) {
-            pt = cd[j];
+        for(var j = 0; j < cd.length; j++) {
+            var pt = cd[j];
             if(pt.color === false) {
                 // have we seen this label and assigned a color to it in a previous trace?
                 if(colorMap[pt.label]) {
                     pt.color = colorMap[pt.label];
-                }
-                else {
-                    colorMap[pt.label] = pt.color = pieColorWay[dfltColorCount % pieColorWay.length];
+                } else {
+                    colorMap[pt.label] = pt.color = colorWay[dfltColorCount % colorWay.length];
                     dfltColorCount++;
                 }
             }
         }
     }
-};
+}
 
 /**
  * pick a default color from the main default set, augmented by
  * itself lighter then darker before repeating
  */
-var extendedColorWays = {};
-
-function generateExtendedColors(colorList) {
+function generateExtendedColors(colorList, extendedColorWays) {
     var i;
     var colorString = JSON.stringify(colorList);
-    var pieColors = extendedColorWays[colorString];
-    if(!pieColors) {
-        pieColors = colorList.slice();
+    var colors = extendedColorWays[colorString];
+    if(!colors) {
+        colors = colorList.slice();
 
         for(i = 0; i < colorList.length; i++) {
-            pieColors.push(tinycolor(colorList[i]).lighten(20).toHexString());
+            colors.push(tinycolor(colorList[i]).lighten(20).toHexString());
         }
 
         for(i = 0; i < colorList.length; i++) {
-            pieColors.push(tinycolor(colorList[i]).darken(20).toHexString());
+            colors.push(tinycolor(colorList[i]).darken(20).toHexString());
         }
-        extendedColorWays[colorString] = pieColors;
+        extendedColorWays[colorString] = colors;
     }
 
-    return pieColors;
+    return colors;
 }
+
+module.exports = {
+    calc: calc,
+    crossTraceCalc: crossTraceCalc,
+
+    makePullColorFn: makePullColorFn,
+    generateExtendedColors: generateExtendedColors
+};

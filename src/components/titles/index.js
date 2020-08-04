@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -20,10 +20,7 @@ var Color = require('../color');
 var svgTextUtils = require('../../lib/svg_text_utils');
 var interactConstants = require('../../constants/interactions');
 
-module.exports = {
-    draw: draw
-};
-
+var OPPOSITE_SIDE = require('../../constants/alignment').OPPOSITE_SIDE;
 var numStripRE = / [XY][0-9]* /;
 
 /**
@@ -53,6 +50,8 @@ var numStripRE = / [XY][0-9]* /;
  *          offset - shift up/down in the rotated frame (unused?)
  *      containerGroup - if an svg <g> element already exists to hold this
  *          title, include here. Otherwise it will go in fullLayout._infolayer
+ *      _meta {object (optional} - meta key-value to for title with
+ *          Lib.templateString, default to fullLayout._meta, if not provided
  *
  *  @return {selection} d3 selection of title container group
  */
@@ -67,19 +66,21 @@ function draw(gd, titleClass, options) {
     var group = options.containerGroup;
 
     var fullLayout = gd._fullLayout;
-    var titlefont = cont.titlefont || {};
-    var font = titlefont.family;
-    var fontSize = titlefont.size;
-    var fontColor = titlefont.color;
 
     var opacity = 1;
     var isplaceholder = false;
-    var txt = (cont.title || '').trim();
+    var title = cont.title;
+    var txt = (title && title.text ? title.text : '').trim();
+
+    var font = title && title.font ? title.font : {};
+    var fontFamily = font.family;
+    var fontSize = font.size;
+    var fontColor = font.color;
 
     // only make this title editable if we positively identify its property
     // as one that has editing enabled.
     var editAttr;
-    if(prop === 'title') editAttr = 'titleText';
+    if(prop === 'title.text') editAttr = 'titleText';
     else if(prop.indexOf('axis') !== -1) editAttr = 'axisTitleText';
     else if(prop.indexOf('colorbar' !== -1)) editAttr = 'colorbarTitleText';
     var editable = gd._context.edits[editAttr];
@@ -93,6 +94,12 @@ function draw(gd, titleClass, options) {
         opacity = 0.2;
         isplaceholder = true;
         if(!editable) txt = '';
+    }
+
+    if(options._meta) {
+        txt = Lib.templateString(txt, options._meta);
+    } else if(fullLayout._meta) {
+        txt = Lib.templateString(txt, fullLayout._meta);
     }
 
     var elShouldExist = txt || editable;
@@ -137,7 +144,7 @@ function draw(gd, titleClass, options) {
         titleEl.attr('transform', transformVal);
 
         titleEl.style({
-            'font-family': font,
+            'font-family': fontFamily,
             'font-size': d3.round(fontSize, 2) + 'px',
             fill: Color.rgb(fontColor),
             opacity: opacity * Color.opacity(fontColor),
@@ -157,16 +164,10 @@ function draw(gd, titleClass, options) {
 
             // move toward avoid.side (= left, right, top, bottom) if needed
             // can include pad (pixels, default 2)
-            var shift = 0;
-            var backside = {
-                left: 'right',
-                right: 'left',
-                top: 'bottom',
-                bottom: 'top'
-            }[avoid.side];
-            var shiftSign = (['left', 'top'].indexOf(avoid.side) !== -1) ?
-                    -1 : 1;
+            var backside = OPPOSITE_SIDE[avoid.side];
+            var shiftSign = (avoid.side === 'left' || avoid.side === 'top') ? -1 : 1;
             var pad = isNumeric(avoid.pad) ? avoid.pad : 2;
+
             var titlebb = Drawing.bBox(titleGroup.node());
             var paperbb = {
                 left: 0,
@@ -174,12 +175,15 @@ function draw(gd, titleClass, options) {
                 right: fullLayout.width,
                 bottom: fullLayout.height
             };
-            var maxshift = avoid.maxShift || (
-                (paperbb[avoid.side] - titlebb[avoid.side]) *
-                ((avoid.side === 'left' || avoid.side === 'top') ? -1 : 1));
+
+            var maxshift = avoid.maxShift ||
+                shiftSign * (paperbb[avoid.side] - titlebb[avoid.side]);
+            var shift = 0;
+
             // Prevent the title going off the paper
-            if(maxshift < 0) shift = maxshift;
-            else {
+            if(maxshift < 0) {
+                shift = maxshift;
+            } else {
                 // so we don't have to offset each avoided element,
                 // give the title the opposite offset
                 var offsetLeft = avoid.offsetLeft || 0;
@@ -201,6 +205,7 @@ function draw(gd, titleClass, options) {
                 });
                 shift = Math.min(maxshift, shift);
             }
+
             if(shift > 0 || maxshift < 0) {
                 var shiftTemplate = {
                     left: [-shift, 0],
@@ -208,8 +213,7 @@ function draw(gd, titleClass, options) {
                     top: [0, -shift],
                     bottom: [0, shift]
                 }[avoid.side];
-                titleGroup.attr('transform',
-                    'translate(' + shiftTemplate + ')');
+                titleGroup.attr('transform', 'translate(' + shiftTemplate + ')');
             }
         }
     }
@@ -237,9 +241,9 @@ function draw(gd, titleClass, options) {
         el.call(svgTextUtils.makeEditable, {gd: gd})
             .on('edit', function(text) {
                 if(traceIndex !== undefined) {
-                    Registry.call('restyle', gd, prop, text, traceIndex);
+                    Registry.call('_guiRestyle', gd, prop, text, traceIndex);
                 } else {
-                    Registry.call('relayout', gd, prop, text);
+                    Registry.call('_guiRelayout', gd, prop, text);
                 }
             })
             .on('cancel', function() {
@@ -255,3 +259,7 @@ function draw(gd, titleClass, options) {
 
     return group;
 }
+
+module.exports = {
+    draw: draw
+};

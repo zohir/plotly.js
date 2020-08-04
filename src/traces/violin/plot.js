@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -28,7 +28,8 @@ module.exports = function plot(gd, plotinfo, cdViolins, violinLayer) {
             connectGaps: true,
             baseTolerance: 0.75,
             shape: 'spline',
-            simplify: true
+            simplify: true,
+            linearized: true
         });
         return Drawing.smoothopen(segments[0], 1);
     }
@@ -38,29 +39,19 @@ module.exports = function plot(gd, plotinfo, cdViolins, violinLayer) {
         var cd0 = cd[0];
         var t = cd0.t;
         var trace = cd0.trace;
-        if(!plotinfo.isRangePlot) cd0.node3 = plotGroup;
-        var numViolins = fullLayout._numViolins;
-        var group = (fullLayout.violinmode === 'group' && numViolins > 1);
-        var groupFraction = 1 - fullLayout.violingap;
-        // violin max half width
-        var bdPos = t.bdPos = t.dPos * groupFraction * (1 - fullLayout.violingroupgap) / (group ? numViolins : 1);
-        // violin center offset
-        var bPos = t.bPos = group ? 2 * t.dPos * (-0.5 + (t.num + 0.5) / numViolins) * groupFraction : 0;
-        // half-width within which to accept hover for this violin
-        // always split the distance to the closest violin
-        t.wHover = t.dPos * (group ? groupFraction / numViolins : 1);
 
         if(trace.visible !== true || t.empty) {
             plotGroup.remove();
             return;
         }
 
+        var bPos = t.bPos;
+        var bdPos = t.bdPos;
         var valAxis = plotinfo[t.valLetter + 'axis'];
         var posAxis = plotinfo[t.posLetter + 'axis'];
         var hasBothSides = trace.side === 'both';
         var hasPositiveSide = hasBothSides || trace.side === 'positive';
         var hasNegativeSide = hasBothSides || trace.side === 'negative';
-        var groupStats = fullLayout._violinScaleGroupStats[trace.scalegroup];
 
         var violins = plotGroup.selectAll('path.violin').data(Lib.identity);
 
@@ -74,17 +65,17 @@ module.exports = function plot(gd, plotinfo, cdViolins, violinLayer) {
             var pathSel = d3.select(this);
             var density = d.density;
             var len = density.length;
-            var posCenter = d.pos + bPos;
-            var posCenterPx = posAxis.c2p(posCenter);
-            var scale;
+            var posCenter = posAxis.c2l(d.pos + bPos, true);
+            var posCenterPx = posAxis.l2p(posCenter);
 
-            switch(trace.scalemode) {
-                case 'width':
-                    scale = groupStats.maxWidth / bdPos;
-                    break;
-                case 'count':
-                    scale = (groupStats.maxWidth / bdPos) * (groupStats.maxCount / d.pts.length);
-                    break;
+            var scale;
+            if(trace.width) {
+                scale = t.maxKDE / bdPos;
+            } else {
+                var groupStats = fullLayout._violinScaleGroupStats[trace.scalegroup];
+                scale = trace.scalemode === 'count' ?
+                    (groupStats.maxKDE / bdPos) * (groupStats.maxCount / d.pts.length) :
+                    groupStats.maxKDE / bdPos;
             }
 
             var pathPos, pathNeg, path;
@@ -95,7 +86,7 @@ module.exports = function plot(gd, plotinfo, cdViolins, violinLayer) {
                 for(i = 0; i < len; i++) {
                     pt = pts[i] = {};
                     pt[t.posLetter] = posCenter + (density[i].v / scale);
-                    pt[t.valLetter] = density[i].t;
+                    pt[t.valLetter] = valAxis.c2l(density[i].t, true);
                 }
                 pathPos = makePath(pts);
             }
@@ -105,15 +96,14 @@ module.exports = function plot(gd, plotinfo, cdViolins, violinLayer) {
                 for(k = 0, i = len - 1; k < len; k++, i--) {
                     pt = pts[k] = {};
                     pt[t.posLetter] = posCenter - (density[i].v / scale);
-                    pt[t.valLetter] = density[i].t;
+                    pt[t.valLetter] = valAxis.c2l(density[i].t, true);
                 }
                 pathNeg = makePath(pts);
             }
 
             if(hasBothSides) {
                 path = pathPos + 'L' + pathNeg.substr(1) + 'Z';
-            }
-            else {
+            } else {
                 var startPt = [posCenterPx, valAxis.c2p(density[0].t)];
                 var endPt = [posCenterPx, valAxis.c2p(density[len - 1].t)];
 
@@ -138,7 +128,7 @@ module.exports = function plot(gd, plotinfo, cdViolins, violinLayer) {
             d.pathLength = d.path.getTotalLength() / (hasBothSides ? 2 : 1);
         });
 
-        var boxAttrs = trace.box || {};
+        var boxAttrs = trace.box;
         var boxWidth = boxAttrs.width;
         var boxLineWidth = (boxAttrs.line || {}).width;
         var bdPosScaled;
@@ -149,10 +139,10 @@ module.exports = function plot(gd, plotinfo, cdViolins, violinLayer) {
             bPosPxOffset = 0;
         } else if(hasPositiveSide) {
             bdPosScaled = [0, bdPos * boxWidth / 2];
-            bPosPxOffset = -boxLineWidth;
+            bPosPxOffset = boxLineWidth * {x: 1, y: -1}[t.posLetter];
         } else {
             bdPosScaled = [bdPos * boxWidth / 2, 0];
-            bPosPxOffset = boxLineWidth;
+            bPosPxOffset = boxLineWidth * {x: -1, y: 1}[t.posLetter];
         }
 
         // inner box
@@ -170,7 +160,7 @@ module.exports = function plot(gd, plotinfo, cdViolins, violinLayer) {
         });
 
         var fn;
-        if(!(trace.box || {}).visible && (trace.meanline || {}).visible) {
+        if(!trace.box.visible && trace.meanline.visible) {
             fn = Lib.identity;
         }
 

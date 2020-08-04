@@ -1,6 +1,7 @@
 var Plotly = require('@lib');
 var Lib = require('@src/lib');
 
+var d3 = require('d3');
 var createGraphDiv = require('../assets/create_graph_div');
 var destroyGraphDiv = require('../assets/destroy_graph_div');
 var failTest = require('../assets/fail_test');
@@ -114,6 +115,24 @@ describe('Plotly.toImage', function() {
         .then(done);
     });
 
+    it('should use width/height of graph div when width/height are set to *null*', function(done) {
+        var fig = Lib.extendDeep({}, subplotMock);
+
+        gd.style.width = '832px';
+        gd.style.height = '502px';
+
+        Plotly.plot(gd, fig.data, fig.layout).then(function() {
+            expect(gd.layout.width).toBe(undefined, 'user layout width');
+            expect(gd.layout.height).toBe(undefined, 'user layout height');
+            expect(gd._fullLayout.width).toBe(832, 'full layout width');
+            expect(gd._fullLayout.height).toBe(502, 'full layout height');
+        })
+        .then(function() { return Plotly.toImage(gd, {width: null, height: null}); })
+        .then(function(url) { return assertSize(url, 832, 502); })
+        .catch(failTest)
+        .then(done);
+    });
+
     it('should create proper file type', function(done) {
         var fig = Lib.extendDeep({}, subplotMock);
 
@@ -209,5 +228,78 @@ describe('Plotly.toImage', function() {
         })
         .catch(failTest)
         .then(done);
+    });
+
+    it('should work on pages with <base>', function(done) {
+        var parser = new DOMParser();
+
+        var base = d3.select('body')
+            .append('base')
+            .attr('href', 'https://chart-studio.plotly.com');
+
+        Plotly.plot(gd, [{ y: [1, 2, 1] }])
+        .then(function() {
+            return Plotly.toImage(gd, {format: 'svg', imageDataOnly: true});
+        })
+        .then(function(svg) {
+            var svgDOM = parser.parseFromString(svg, 'image/svg+xml');
+            var gSubplot = svgDOM.getElementsByClassName('plot')[0];
+            var clipPath = gSubplot.getAttribute('clip-path');
+            var len = clipPath.length;
+
+            var head = clipPath.substr(0, 5);
+            var tail = clipPath.substr(len - 8, len);
+            expect(head).toBe('url(\'', 'subplot clipPath head');
+            expect(tail).toBe('xyplot\')', 'subplot clipPath tail');
+
+            var middle = clipPath.substr(4, 10);
+            expect(middle.length).toBe(10, 'subplot clipPath uid length');
+            expect(middle.indexOf('http://')).toBe(-1, 'no <base> URL in subplot clipPath!');
+            expect(middle.indexOf('https://')).toBe(-1, 'no <base> URL in subplot clipPath!');
+        })
+        .catch(failTest)
+        .then(function() {
+            base.remove();
+            done();
+        });
+    });
+
+    describe('with format `full-json`', function() {
+        var imgOpts = {format: 'full-json', imageDataOnly: true};
+        var gd;
+
+        beforeEach(function() {
+            gd = createGraphDiv();
+        });
+        afterEach(destroyGraphDiv);
+
+        it('export a graph div', function(done) {
+            Plotly.plot(gd, [{y: [1, 2, 3]}])
+            .then(function(gd) { return Plotly.toImage(gd, imgOpts);})
+            .then(function(fig) {
+                fig = JSON.parse(fig);
+                ['data', 'layout', 'config'].forEach(function(key) {
+                    expect(fig.hasOwnProperty(key)).toBeTruthy('is missing key: ' + key);
+                });
+                expect(fig.data[0].mode).toBe('lines+markers', 'contain default mode');
+                expect(fig.version).toBe(Plotly.version, 'contains Plotly version');
+            })
+            .catch(failTest)
+            .then(done);
+        });
+
+        it('export an object with data/layout/config', function(done) {
+            Plotly.toImage({data: [{y: [1, 2, 3]}]}, imgOpts)
+            .then(function(fig) {
+                fig = JSON.parse(fig);
+                ['data', 'layout', 'config'].forEach(function(key) {
+                    expect(fig.hasOwnProperty(key)).toBeTruthy('is missing key: ' + key);
+                });
+                expect(fig.data[0].mode).toBe('lines+markers', 'contain default mode');
+                expect(fig.version).toBe(Plotly.version, 'contains Plotly version');
+            })
+            .catch(failTest)
+            .then(done);
+        });
     });
 });

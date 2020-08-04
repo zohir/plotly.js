@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -12,6 +12,7 @@
 var isNumeric = require('fast-isnumeric');
 var loggers = require('./loggers');
 var identity = require('./identity');
+var BADNUM = require('../constants/numerical').BADNUM;
 
 // don't trust floating point equality - fraction of bin size to call
 // "on the line" and ensure that they go the right way specified by
@@ -34,8 +35,7 @@ exports.findBin = function(val, bins, linelow) {
         return linelow ?
             Math.ceil((val - bins.start) / bins.size - roundingError) - 1 :
             Math.floor((val - bins.start) / bins.size + roundingError);
-    }
-    else {
+    } else {
         var n1 = 0;
         var n2 = bins.length;
         var c = 0;
@@ -73,22 +73,35 @@ exports.sorterDes = function(a, b) { return b - a; };
  */
 exports.distinctVals = function(valsIn) {
     var vals = valsIn.slice();  // otherwise we sort the original array...
-    vals.sort(exports.sorterAsc);
+    vals.sort(exports.sorterAsc); // undefined listed in the end - also works on IE11
 
-    var l = vals.length - 1,
-        minDiff = (vals[l] - vals[0]) || 1,
-        errDiff = minDiff / (l || 1) / 10000,
-        v2 = [vals[0]];
+    var last;
+    for(last = vals.length - 1; last > -1; last--) {
+        if(vals[last] !== BADNUM) break;
+    }
 
-    for(var i = 0; i < l; i++) {
+    var minDiff = (vals[last] - vals[0]) || 1;
+    var errDiff = minDiff / (last || 1) / 10000;
+    var newVals = [];
+    var preV;
+    for(var i = 0; i <= last; i++) {
+        var v = vals[i];
+
         // make sure values aren't just off by a rounding error
-        if(vals[i + 1] > vals[i] + errDiff) {
-            minDiff = Math.min(minDiff, vals[i + 1] - vals[i]);
-            v2.push(vals[i + 1]);
+        var diff = v - preV;
+
+        if(preV === undefined) {
+            newVals.push(v);
+            preV = v;
+        } else if(diff > errDiff) {
+            minDiff = Math.min(minDiff, diff);
+
+            newVals.push(v);
+            preV = v;
         }
     }
 
-    return {vals: v2, minDiff: minDiff};
+    return {vals: newVals, minDiff: minDiff};
 };
 
 /**
@@ -99,13 +112,13 @@ exports.distinctVals = function(valsIn) {
  * binary search is probably overkill here...
  */
 exports.roundUp = function(val, arrayIn, reverse) {
-    var low = 0,
-        high = arrayIn.length - 1,
-        mid,
-        c = 0,
-        dlow = reverse ? 0 : 1,
-        dhigh = reverse ? 1 : 0,
-        rounded = reverse ? Math.ceil : Math.floor;
+    var low = 0;
+    var high = arrayIn.length - 1;
+    var mid;
+    var c = 0;
+    var dlow = reverse ? 0 : 1;
+    var dhigh = reverse ? 1 : 0;
+    var rounded = reverse ? Math.ceil : Math.floor;
     // c is just to avoid infinite loops if there's an error
     while(low < high && c++ < 100) {
         mid = rounded((low + high) / 2);
@@ -117,6 +130,10 @@ exports.roundUp = function(val, arrayIn, reverse) {
 
 /**
  * Tweak to Array.sort(sortFn) that improves performance for pre-sorted arrays
+ *
+ * Note that newer browsers (such as Chrome v70+) are starting to pick up
+ * on pre-sorted arrays which may render the following optimization unnecessary
+ * in the future.
  *
  * Motivation: sometimes we need to sort arrays but the input is likely to
  * already be sorted. Browsers don't seem to pick up on pre-sorted arrays,

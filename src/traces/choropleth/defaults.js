@@ -1,11 +1,10 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
 * LICENSE file in the root directory of this source tree.
 */
-
 
 'use strict';
 
@@ -25,19 +24,31 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
         traceOut.visible = false;
         return;
     }
+
     traceOut._length = Math.min(locations.length, z.length);
 
-    coerce('locationmode');
+    var geojson = coerce('geojson');
+
+    var locationmodeDflt;
+    if((typeof geojson === 'string' && geojson !== '') || Lib.isPlainObject(geojson)) {
+        locationmodeDflt = 'geojson-id';
+    }
+
+    var locationMode = coerce('locationmode', locationmodeDflt);
+
+    if(locationMode === 'geojson-id') {
+        coerce('featureidkey');
+    }
 
     coerce('text');
+    coerce('hovertext');
+    coerce('hovertemplate');
 
-    coerce('marker.line.color');
-    coerce('marker.line.width');
+    var mlw = coerce('marker.line.width');
+    if(mlw) coerce('marker.line.color');
     coerce('marker.opacity');
 
-    colorscaleDefaults(
-        traceIn, traceOut, layout, coerce, {prefix: '', cLetter: 'z'}
-    );
+    colorscaleDefaults(traceIn, traceOut, layout, coerce, {prefix: '', cLetter: 'z'});
 
     Lib.coerceSelectionMarkerOpacity(traceOut, coerce);
 };

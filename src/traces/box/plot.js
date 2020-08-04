@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -18,25 +18,17 @@ var JITTERCOUNT = 5; // points either side of this to include
 var JITTERSPREAD = 0.01; // fraction of IQR to count as "dense"
 
 function plot(gd, plotinfo, cdbox, boxLayer) {
-    var fullLayout = gd._fullLayout;
     var xa = plotinfo.xaxis;
     var ya = plotinfo.yaxis;
-    var numBoxes = fullLayout._numBoxes;
-    var groupFraction = (1 - fullLayout.boxgap);
-    var group = (fullLayout.boxmode === 'group' && numBoxes > 1);
 
     Lib.makeTraceGroups(boxLayer, cdbox, 'trace boxes').each(function(cd) {
         var plotGroup = d3.select(this);
         var cd0 = cd[0];
         var t = cd0.t;
         var trace = cd0.trace;
-        if(!plotinfo.isRangePlot) cd0.node3 = plotGroup;
-        // box half width
-        var bdPos = t.dPos * groupFraction * (1 - fullLayout.boxgroupgap) / (group ? numBoxes : 1);
-        // box center offset
-        var bPos = group ? 2 * t.dPos * (-0.5 + (t.num + 0.5) / numBoxes) * groupFraction : 0;
+
         // whisker width
-        var wdPos = bdPos * trace.whiskerwidth;
+        t.wdPos = t.bdPos * trace.whiskerwidth;
 
         if(trace.visible !== true || t.empty) {
             plotGroup.remove();
@@ -53,14 +45,6 @@ function plot(gd, plotinfo, cdbox, boxLayer) {
             valAxis = ya;
         }
 
-        // save the box size and box position for use by hover
-        t.bPos = bPos;
-        t.bdPos = bdPos;
-        t.wdPos = wdPos;
-        // half-width within which to accept hover for this box
-        // always split the distance to the closest box
-        t.wHover = t.dPos * (group ? groupFraction / numBoxes : 1);
-
         plotBoxAndWhiskers(plotGroup, {pos: posAxis, val: valAxis}, trace, t);
         plotPoints(plotGroup, {x: xa, y: ya}, trace, t);
         plotBoxMean(plotGroup, {pos: posAxis, val: valAxis}, trace, t);
@@ -68,8 +52,11 @@ function plot(gd, plotinfo, cdbox, boxLayer) {
 }
 
 function plotBoxAndWhiskers(sel, axes, trace, t) {
-    var posAxis = axes.pos;
+    var isHorizontal = trace.orientation === 'h';
     var valAxis = axes.val;
+    var posAxis = axes.pos;
+    var posHasRangeBreaks = !!posAxis.rangebreaks;
+
     var bPos = t.bPos;
     var wdPos = t.wdPos || 0;
     var bPosPxOffset = t.bPosPxOffset || 0;
@@ -90,7 +77,7 @@ function plotBoxAndWhiskers(sel, axes, trace, t) {
 
     var paths = sel.selectAll('path.box').data((
         trace.type !== 'violin' ||
-        trace.box
+        trace.box.visible
     ) ? Lib.identity : []);
 
     paths.enter().append('path')
@@ -100,14 +87,20 @@ function plotBoxAndWhiskers(sel, axes, trace, t) {
     paths.exit().remove();
 
     paths.each(function(d) {
-        var pos = d.pos;
-        var posc = posAxis.c2p(pos + bPos, true) + bPosPxOffset;
-        var pos0 = posAxis.c2p(pos + bPos - bdPos0, true) + bPosPxOffset;
-        var pos1 = posAxis.c2p(pos + bPos + bdPos1, true) + bPosPxOffset;
-        var posw0 = posAxis.c2p(pos + bPos - wdPos, true) + bPosPxOffset;
-        var posw1 = posAxis.c2p(pos + bPos + wdPos, true) + bPosPxOffset;
-        var posm0 = posAxis.c2p(pos + bPos - bdPos0 * nw, true) + bPosPxOffset;
-        var posm1 = posAxis.c2p(pos + bPos + bdPos1 * nw, true) + bPosPxOffset;
+        if(d.empty) return 'M0,0Z';
+
+        var lcenter = posAxis.c2l(d.pos + bPos, true);
+
+        var pos0 = posAxis.l2p(lcenter - bdPos0) + bPosPxOffset;
+        var pos1 = posAxis.l2p(lcenter + bdPos1) + bPosPxOffset;
+        var posc = posHasRangeBreaks ? (pos0 + pos1) / 2 : posAxis.l2p(lcenter) + bPosPxOffset;
+
+        var r = trace.whiskerwidth;
+        var posw0 = posHasRangeBreaks ? pos0 * r + (1 - r) * posc : posAxis.l2p(lcenter - wdPos) + bPosPxOffset;
+        var posw1 = posHasRangeBreaks ? pos1 * r + (1 - r) * posc : posAxis.l2p(lcenter + wdPos) + bPosPxOffset;
+
+        var posm0 = posAxis.l2p(lcenter - bdPos0 * nw) + bPosPxOffset;
+        var posm1 = posAxis.l2p(lcenter + bdPos1 * nw) + bPosPxOffset;
         var q1 = valAxis.c2p(d.q1, true);
         var q3 = valAxis.c2p(d.q3, true);
         // make sure median isn't identical to either of the
@@ -129,30 +122,45 @@ function plotBoxAndWhiskers(sel, axes, trace, t) {
         var ln = valAxis.c2p(d.ln, true);
         var un = valAxis.c2p(d.un, true);
 
-        if(trace.orientation === 'h') {
+        if(isHorizontal) {
             d3.select(this).attr('d',
                 'M' + m + ',' + posm0 + 'V' + posm1 + // median line
                 'M' + q1 + ',' + pos0 + 'V' + pos1 + // left edge
-                (notched ? 'H' + ln + 'L' + m + ',' + posm1 + 'L' + un + ',' + pos1 : '') + // top notched edge
+                (notched ?
+                    'H' + ln + 'L' + m + ',' + posm1 + 'L' + un + ',' + pos1 :
+                    ''
+                ) + // top notched edge
                 'H' + q3 + // end of the top edge
                 'V' + pos0 + // right edge
                 (notched ? 'H' + un + 'L' + m + ',' + posm0 + 'L' + ln + ',' + pos0 : '') + // bottom notched edge
                 'Z' + // end of the box
                 'M' + q1 + ',' + posc + 'H' + lf + 'M' + q3 + ',' + posc + 'H' + uf + // whiskers
-                ((whiskerWidth === 0) ? '' : // whisker caps
-                    'M' + lf + ',' + posw0 + 'V' + posw1 + 'M' + uf + ',' + posw0 + 'V' + posw1));
+                (whiskerWidth === 0 ?
+                    '' : // whisker caps
+                    'M' + lf + ',' + posw0 + 'V' + posw1 + 'M' + uf + ',' + posw0 + 'V' + posw1
+                )
+            );
         } else {
             d3.select(this).attr('d',
                 'M' + posm0 + ',' + m + 'H' + posm1 + // median line
                 'M' + pos0 + ',' + q1 + 'H' + pos1 + // top of the box
-                (notched ? 'V' + ln + 'L' + posm1 + ',' + m + 'L' + pos1 + ',' + un : '') + // notched right edge
+                (notched ?
+                    'V' + ln + 'L' + posm1 + ',' + m + 'L' + pos1 + ',' + un :
+                    ''
+                ) + // notched right edge
                 'V' + q3 + // end of the right edge
                 'H' + pos0 + // bottom of the box
-                (notched ? 'V' + un + 'L' + posm0 + ',' + m + 'L' + pos0 + ',' + ln : '') + // notched left edge
+                (notched ?
+                    'V' + un + 'L' + posm0 + ',' + m + 'L' + pos0 + ',' + ln :
+                    ''
+                ) + // notched left edge
                 'Z' + // end of the box
                 'M' + posc + ',' + q1 + 'V' + lf + 'M' + posc + ',' + q3 + 'V' + uf + // whiskers
-                ((whiskerWidth === 0) ? '' : // whisker caps
-                    'M' + posw0 + ',' + lf + 'H' + posw1 + 'M' + posw0 + ',' + uf + 'H' + posw1));
+                (whiskerWidth === 0 ?
+                    '' : // whisker caps
+                    'M' + posw0 + ',' + lf + 'H' + posw1 + 'M' + posw0 + ',' + uf + 'H' + posw1
+                )
+            );
         }
     });
 }
@@ -190,10 +198,7 @@ function plotPoints(sel, axes, trace, t) {
     var paths = gPoints.selectAll('path')
         .data(function(d) {
             var i;
-
-            var pts = mode === 'all' ?
-                d.pts :
-                d.pts.filter(function(pt) { return (pt.v < d.lf || pt.v > d.uf); });
+            var pts = d.pts2;
 
             // normally use IQR, but if this is 0 or too small, use max-min
             var typicalSpread = Math.max((d.max - d.min) / 10, d.q3 - d.q1);
@@ -271,8 +276,10 @@ function plotPoints(sel, axes, trace, t) {
 }
 
 function plotBoxMean(sel, axes, trace, t) {
-    var posAxis = axes.pos;
     var valAxis = axes.val;
+    var posAxis = axes.pos;
+    var posHasRangeBreaks = !!posAxis.rangebreaks;
+
     var bPos = t.bPos;
     var bPosPxOffset = t.bPosPxOffset || 0;
 
@@ -292,7 +299,7 @@ function plotBoxMean(sel, axes, trace, t) {
 
     var paths = sel.selectAll('path.mean').data((
         (trace.type === 'box' && trace.boxmean) ||
-        (trace.type === 'violin' && trace.box && trace.meanline)
+        (trace.type === 'violin' && trace.box.visible && trace.meanline.visible)
     ) ? Lib.identity : []);
 
     paths.enter().append('path')
@@ -305,9 +312,12 @@ function plotBoxMean(sel, axes, trace, t) {
     paths.exit().remove();
 
     paths.each(function(d) {
-        var posc = posAxis.c2p(d.pos + bPos, true) + bPosPxOffset;
-        var pos0 = posAxis.c2p(d.pos + bPos - bdPos0, true) + bPosPxOffset;
-        var pos1 = posAxis.c2p(d.pos + bPos + bdPos1, true) + bPosPxOffset;
+        var lcenter = posAxis.c2l(d.pos + bPos, true);
+
+        var pos0 = posAxis.l2p(lcenter - bdPos0) + bPosPxOffset;
+        var pos1 = posAxis.l2p(lcenter + bdPos1) + bPosPxOffset;
+        var posc = posHasRangeBreaks ? (pos0 + pos1) / 2 : posAxis.l2p(lcenter) + bPosPxOffset;
+
         var m = valAxis.c2p(d.mean, true);
         var sl = valAxis.c2p(d.mean - d.sd, true);
         var sh = valAxis.c2p(d.mean + d.sd, true);

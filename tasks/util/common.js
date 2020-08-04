@@ -2,9 +2,14 @@ var fs = require('fs');
 var exec = require('child_process').exec;
 var falafel = require('falafel');
 
+function _throw(err) {
+    console.log(err);
+    throw err;
+}
+
 exports.execCmd = function(cmd, cb, errorCb) {
     cb = cb ? cb : function() {};
-    errorCb = errorCb ? errorCb : function(err) { if(err) throw err; };
+    errorCb = errorCb ? errorCb : function(err) { if(err) _throw(err); };
 
     exec(cmd, function(err) {
         errorCb(err);
@@ -15,7 +20,7 @@ exports.execCmd = function(cmd, cb, errorCb) {
 
 exports.writeFile = function(filePath, content, cb) {
     fs.writeFile(filePath, content, function(err) {
-        if(err) throw err;
+        if(err) _throw(err);
         if(cb) cb();
     });
 };
@@ -23,8 +28,7 @@ exports.writeFile = function(filePath, content, cb) {
 exports.doesDirExist = function(dirPath) {
     try {
         if(fs.statSync(dirPath).isDirectory()) return true;
-    }
-    catch(e) {
+    } catch(e) {
         return false;
     }
 
@@ -34,8 +38,7 @@ exports.doesDirExist = function(dirPath) {
 exports.doesFileExist = function(filePath) {
     try {
         if(fs.statSync(filePath).isFile()) return true;
-    }
-    catch(e) {
+    } catch(e) {
         return false;
     }
 
@@ -54,8 +57,8 @@ exports.getTimeLastModified = function(filePath) {
         throw new Error(filePath + ' does not exist');
     }
 
-    var stats = fs.statSync(filePath),
-        formattedTime = exports.formatTime(stats.mtime);
+    var stats = fs.statSync(filePath);
+    var formattedTime = exports.formatTime(stats.mtime);
 
     return formattedTime;
 };
@@ -65,7 +68,7 @@ exports.touch = function(filePath) {
 };
 
 exports.throwOnError = function(err) {
-    if(err) throw err;
+    if(err) _throw(err);
 };
 
 exports.findModuleList = function(pathToIndex) {

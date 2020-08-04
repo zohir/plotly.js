@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -8,8 +8,9 @@
 
 'use strict';
 
-var colorAttributes = require('../../components/colorscale/attributes');
-var colorbarAttrs = require('../../components/colorbar/attributes');
+var texttemplateAttrs = require('../../plots/template_attributes').texttemplateAttrs;
+var hovertemplateAttrs = require('../../plots/template_attributes').hovertemplateAttrs;
+var colorScaleAttrs = require('../../components/colorscale/attributes');
 var fontAttrs = require('../../plots/font_attributes');
 var dash = require('../../components/drawing/attributes').dash;
 
@@ -21,6 +22,7 @@ module.exports = {
     x: {
         valType: 'data_array',
         editType: 'calc+clearAxisTypes',
+        anim: true,
         description: 'Sets the x coordinates.'
     },
     x0: {
@@ -28,6 +30,7 @@ module.exports = {
         dflt: 0,
         role: 'info',
         editType: 'calc+clearAxisTypes',
+        anim: true,
         description: [
             'Alternate to `x`.',
             'Builds a linear space of x coordinates.',
@@ -40,6 +43,7 @@ module.exports = {
         dflt: 1,
         role: 'info',
         editType: 'calc',
+        anim: true,
         description: [
             'Sets the x coordinate step.',
             'See `x0` for more info.'
@@ -48,6 +52,7 @@ module.exports = {
     y: {
         valType: 'data_array',
         editType: 'calc+clearAxisTypes',
+        anim: true,
         description: 'Sets the y coordinates.'
     },
     y0: {
@@ -55,6 +60,7 @@ module.exports = {
         dflt: 0,
         role: 'info',
         editType: 'calc+clearAxisTypes',
+        anim: true,
         description: [
             'Alternate to `y`.',
             'Builds a linear space of y coordinates.',
@@ -67,6 +73,7 @@ module.exports = {
         dflt: 1,
         role: 'info',
         editType: 'calc',
+        anim: true,
         description: [
             'Sets the y coordinate step.',
             'See `y0` for more info.'
@@ -85,7 +92,11 @@ module.exports = {
             'stacked. Stacking also turns `fill` on by default, using *tonexty*',
             '(*tonextx*) if `orientation` is *h* (*v*) and sets the default',
             '`mode` to *lines* irrespective of point count.',
-            'You can only stack on a numeric (linear or log) axis.'
+            'You can only stack on a numeric (linear or log) axis.',
+            'Traces in a `stackgroup` will only fill to (or be filled to) other',
+            'traces in the same group. With multiple `stackgroup`s or some',
+            'traces stacked and some not, if fill-linked traces are not already',
+            'consecutive, the later ones will be pushed down in the drawing order.'
         ].join(' ')
     },
     orientation: {
@@ -156,6 +167,10 @@ module.exports = {
             'these elements will be seen in the hover labels.'
         ].join(' ')
     },
+
+    texttemplate: texttemplateAttrs({}, {
+
+    }),
     hovertext: {
         valType: 'string',
         role: 'info',
@@ -199,11 +214,15 @@ module.exports = {
             'or text, then the default is *fills*, otherwise it is *points*.'
         ].join(' ')
     },
+    hovertemplate: hovertemplateAttrs({}, {
+        keys: constants.eventDataKeys
+    }),
     line: {
         color: {
             valType: 'color',
             role: 'style',
             editType: 'style',
+            anim: true,
             description: 'Sets the line color.'
         },
         width: {
@@ -212,6 +231,7 @@ module.exports = {
             dflt: 2,
             role: 'style',
             editType: 'style',
+            anim: true,
             description: 'Sets the line width (in px).'
         },
         shape: {
@@ -299,13 +319,18 @@ module.exports = {
             '*tonext* fills the space between two traces if one completely',
             'encloses the other (eg consecutive contour lines), and behaves like',
             '*toself* if there is no trace before it. *tonext* should not be',
-            'used if one trace does not enclose the other.'
+            'used if one trace does not enclose the other.',
+            'Traces in a `stackgroup` will only fill to (or be filled to) other',
+            'traces in the same group. With multiple `stackgroup`s or some',
+            'traces stacked and some not, if fill-linked traces are not already',
+            'consecutive, the later ones will be pushed down in the drawing order.'
         ].join(' ')
     },
     fillcolor: {
         valType: 'color',
         role: 'style',
         editType: 'style',
+        anim: true,
         description: [
             'Sets the fill color.',
             'Defaults to a half-transparent variant of the line color,',
@@ -335,6 +360,7 @@ module.exports = {
             arrayOk: true,
             role: 'style',
             editType: 'style',
+            anim: true,
             description: 'Sets the marker opacity.'
         },
         size: {
@@ -344,6 +370,7 @@ module.exports = {
             arrayOk: true,
             role: 'style',
             editType: 'calc',
+            anim: true,
             description: 'Sets the marker size (in px).'
         },
         maxdisplayed: {
@@ -392,8 +419,6 @@ module.exports = {
             ].join(' ')
         },
 
-        colorbar: colorbarAttrs,
-
         line: extendFlat({
             width: {
                 valType: 'number',
@@ -401,11 +426,12 @@ module.exports = {
                 arrayOk: true,
                 role: 'style',
                 editType: 'style',
+                anim: true,
                 description: 'Sets the width (in px) of the lines bounding the marker points.'
             },
             editType: 'calc'
         },
-            colorAttributes('marker.line')
+            colorScaleAttrs('marker.line', {anim: true})
         ),
         gradient: {
             type: {
@@ -434,7 +460,7 @@ module.exports = {
         },
         editType: 'calc'
     },
-        colorAttributes('marker')
+        colorScaleAttrs('marker', {anim: true})
     ),
     selected: {
         marker: {
@@ -536,18 +562,20 @@ module.exports = {
         valType: 'data_array',
         editType: 'calc',
         description: [
-            'For legacy polar chart only.',
-            'Please switch to *scatterpolar* trace type.',
-            'Sets the radial coordinates.'
+            'r coordinates in scatter traces are deprecated!',
+            'Please switch to the *scatterpolar* trace type.',
+            'Sets the radial coordinates',
+            'for legacy polar chart only.'
         ].join('')
     },
     t: {
         valType: 'data_array',
         editType: 'calc',
         description: [
-            'For legacy polar chart only.',
-            'Please switch to *scatterpolar* trace type.',
-            'Sets the angular coordinates.'
+            't coordinates in scatter traces are deprecated!',
+            'Please switch to the *scatterpolar* trace type.',
+            'Sets the angular coordinates',
+            'for legacy polar chart only.'
         ].join('')
     }
 };

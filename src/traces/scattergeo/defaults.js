@@ -1,11 +1,10 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
 * LICENSE file in the root directory of this source tree.
 */
-
 
 'use strict';
 
@@ -19,20 +18,44 @@ var handleFillColorDefaults = require('../scatter/fillcolor_defaults');
 
 var attributes = require('./attributes');
 
-
 module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout) {
     function coerce(attr, dflt) {
         return Lib.coerce(traceIn, traceOut, attributes, attr, dflt);
     }
 
-    var len = handleLonLatLocDefaults(traceIn, traceOut, coerce);
+    var locations = coerce('locations');
+    var len;
+
+    if(locations && locations.length) {
+        var geojson = coerce('geojson');
+        var locationmodeDflt;
+        if((typeof geojson === 'string' && geojson !== '') || Lib.isPlainObject(geojson)) {
+            locationmodeDflt = 'geojson-id';
+        }
+
+        var locationMode = coerce('locationmode', locationmodeDflt);
+
+        if(locationMode === 'geojson-id') {
+            coerce('featureidkey');
+        }
+
+        len = locations.length;
+    } else {
+        var lon = coerce('lon') || [];
+        var lat = coerce('lat') || [];
+        len = Math.min(lon.length, lat.length);
+    }
+
     if(!len) {
         traceOut.visible = false;
         return;
     }
 
+    traceOut._length = len;
+
     coerce('text');
     coerce('hovertext');
+    coerce('hovertemplate');
     coerce('mode');
 
     if(subTypes.hasLines(traceOut)) {
@@ -45,6 +68,7 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     }
 
     if(subTypes.hasText(traceOut)) {
+        coerce('texttemplate');
         handleTextDefaults(traceIn, traceOut, layout, coerce);
     }
 
@@ -55,23 +79,3 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
 
     Lib.coerceSelectionMarkerOpacity(traceOut, coerce);
 };
-
-function handleLonLatLocDefaults(traceIn, traceOut, coerce) {
-    var len = 0,
-        locations = coerce('locations');
-
-    var lon, lat;
-
-    if(locations) {
-        coerce('locationmode');
-        len = locations.length;
-        return len;
-    }
-
-    lon = coerce('lon') || [];
-    lat = coerce('lat') || [];
-    len = Math.min(lon.length, lat.length);
-    traceOut._length = len;
-
-    return len;
-}

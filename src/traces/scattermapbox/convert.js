@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -19,11 +19,15 @@ var Drawing = require('../../components/drawing');
 var makeBubbleSizeFn = require('../scatter/make_bubble_size_func');
 var subTypes = require('../scatter/subtypes');
 var convertTextOpts = require('../../plots/mapbox/convert_text_opts');
+var appendArrayPointValue = require('../../components/fx/helpers').appendArrayPointValue;
 
-module.exports = function convert(calcTrace) {
+var NEWLINES = require('../../lib/svg_text_utils').NEWLINES;
+var BR_TAG_ALL = require('../../lib/svg_text_utils').BR_TAG_ALL;
+
+module.exports = function convert(gd, calcTrace) {
     var trace = calcTrace[0].trace;
 
-    var isVisible = (trace.visible === true);
+    var isVisible = (trace.visible === true && trace._length !== 0);
     var hasFill = (trace.fill !== 'none');
     var hasLines = subTypes.hasLines(trace);
     var hasMarkers = subTypes.hasMarkers(trace);
@@ -87,7 +91,7 @@ module.exports = function convert(calcTrace) {
     }
 
     if(hasSymbols || hasText) {
-        symbol.geojson = makeSymbolGeoJSON(calcTrace);
+        symbol.geojson = makeSymbolGeoJSON(calcTrace, gd);
 
         Lib.extendFlat(symbol.layout, {
             visibility: 'visible',
@@ -100,6 +104,19 @@ module.exports = function convert(calcTrace) {
                 'icon-size': trace.marker.size / 10
             });
 
+            if('angle' in trace.marker && trace.marker.angle !== 'auto') {
+                Lib.extendFlat(symbol.layout, {
+                // unfortunately cant use {angle} do to this issue:
+                // https://github.com/mapbox/mapbox-gl-js/issues/873
+                    'icon-rotate': {
+                        type: 'identity', property: 'angle'
+                    },
+                    'icon-rotation-alignment': 'map'
+                });
+            }
+
+            symbol.layout['icon-allow-overlap'] = trace.marker.allowoverlap;
+
             Lib.extendFlat(symbol.paint, {
                 'icon-opacity': trace.opacity * trace.marker.opacity,
 
@@ -109,8 +126,8 @@ module.exports = function convert(calcTrace) {
         }
 
         if(hasText) {
-            var iconSize = (trace.marker || {}).size,
-                textOpts = convertTextOpts(trace.textposition, iconSize);
+            var iconSize = (trace.marker || {}).size;
+            var textOpts = convertTextOpts(trace.textposition, iconSize);
 
             // all data-driven below !!
 
@@ -157,9 +174,7 @@ function makeCircleOpts(calcTrace) {
     var colorFn;
     if(arrayColor) {
         if(Colorscale.hasColorscale(trace, 'marker')) {
-            colorFn = Colorscale.makeColorScaleFunc(
-                 Colorscale.extractScale(marker.colorscale, marker.cmin, marker.cmax)
-             );
+            colorFn = Colorscale.makeColorScaleFuncFromTrace(marker);
         } else {
             colorFn = Lib.identity;
         }
@@ -231,20 +246,26 @@ function makeCircleOpts(calcTrace) {
     };
 }
 
-function makeSymbolGeoJSON(calcTrace) {
+function makeSymbolGeoJSON(calcTrace, gd) {
+    var fullLayout = gd._fullLayout;
     var trace = calcTrace[0].trace;
 
-    var marker = trace.marker || {},
-        symbol = marker.symbol,
-        text = trace.text;
+    var marker = trace.marker || {};
+    var symbol = marker.symbol;
+    var angle = marker.angle;
 
     var fillSymbol = (symbol !== 'circle') ?
-            getFillFunc(symbol) :
-            blankFillFunc;
+        getFillFunc(symbol) :
+        blankFillFunc;
+
+    var fillAngle = (angle !== 'auto') ?
+        getFillFunc(angle, true) :
+        blankFillFunc;
 
     var fillText = subTypes.hasText(trace) ?
-            getFillFunc(text) :
-            blankFillFunc;
+        getFillFunc(trace.text) :
+        blankFillFunc;
+
 
     var features = [];
 
@@ -253,6 +274,24 @@ function makeSymbolGeoJSON(calcTrace) {
 
         if(isBADNUM(calcPt.lonlat)) continue;
 
+        var texttemplate = trace.texttemplate;
+        var text;
+
+        if(texttemplate) {
+            var tt = Array.isArray(texttemplate) ? (texttemplate[i] || '') : texttemplate;
+            var labels = trace._module.formatLabels(calcPt, trace, fullLayout);
+            var pointValues = {};
+            appendArrayPointValue(pointValues, trace, calcPt.i);
+            var meta = trace._meta || {};
+            text = Lib.texttemplateString(tt, labels, fullLayout._d3locale, pointValues, calcPt, meta);
+        } else {
+            text = fillText(i);
+        }
+
+        if(text) {
+            text = text.replace(NEWLINES, '').replace(BR_TAG_ALL, '\n');
+        }
+
         features.push({
             type: 'Feature',
             geometry: {
@@ -260,8 +299,9 @@ function makeSymbolGeoJSON(calcTrace) {
                 coordinates: calcPt.lonlat
             },
             properties: {
-                symbol: fillSymbol(calcPt.mx),
-                text: fillText(calcPt.tx)
+                symbol: fillSymbol(i),
+                angle: fillAngle(i),
+                text: text
             }
         });
     }
@@ -272,14 +312,15 @@ function makeSymbolGeoJSON(calcTrace) {
     };
 }
 
-function getFillFunc(attr) {
+function getFillFunc(attr, numeric) {
     if(Lib.isArrayOrTypedArray(attr)) {
-        return function(v) { return v; };
-    }
-    else if(attr) {
+        if(numeric) {
+            return function(i) { return isNumeric(attr[i]) ? +attr[i] : 0; };
+        }
+        return function(i) { return attr[i]; };
+    } else if(attr) {
         return function() { return attr; };
-    }
-    else {
+    } else {
         return blankFillFunc;
     }
 }

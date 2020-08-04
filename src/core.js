@@ -1,5 +1,5 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
@@ -8,8 +8,7 @@
 
 'use strict';
 
-// package version injected by `npm run preprocess`
-exports.version = '1.40.1';
+exports.version = require('./version').version;
 
 // inject promise polyfill
 require('es6-promise').polyfill();
@@ -18,7 +17,7 @@ require('es6-promise').polyfill();
 require('../build/plotcss');
 
 // inject default MathJax config
-require('./fonts/mathjax_config');
+require('./fonts/mathjax_config')();
 
 // include registry module and expose register method
 var Registry = require('./registry');
@@ -29,7 +28,8 @@ var plotApi = require('./plot_api');
 var methodNames = Object.keys(plotApi);
 for(var i = 0; i < methodNames.length; i++) {
     var name = methodNames[i];
-    exports[name] = plotApi[name];
+    // _ -> private API methods, but still registered for internal use
+    if(name.charAt(0) !== '_') exports[name] = plotApi[name];
     register({
         moduleType: 'apiMethod',
         name: name,
@@ -42,8 +42,8 @@ register(require('./traces/scatter'));
 
 // register all registrable components modules
 register([
-    require('./components/fx'),
     require('./components/legend'),
+    require('./components/fx'), // fx needs to come after legend
     require('./components/annotations'),
     require('./components/annotations3d'),
     require('./components/shapes'),
@@ -53,7 +53,9 @@ register([
     require('./components/rangeslider'),
     require('./components/rangeselector'),
     require('./components/grid'),
-    require('./components/errorbars')
+    require('./components/errorbars'),
+    require('./components/colorscale'),
+    require('./components/colorbar')
 ]);
 
 // locales en and en-US are required for default behavior
@@ -62,8 +64,14 @@ register([
     require('./locale-en-us')
 ]);
 
+// locales that are present in the window should be loaded
+if(window.PlotlyLocales && Array.isArray(window.PlotlyLocales)) {
+    register(window.PlotlyLocales);
+    delete window.PlotlyLocales;
+}
+
 // plot icons
-exports.Icons = require('../build/ploticon');
+exports.Icons = require('./fonts/ploticon');
 
 // unofficial 'beta' plot methods, use at your own risk
 exports.Plots = require('./plots/plots');

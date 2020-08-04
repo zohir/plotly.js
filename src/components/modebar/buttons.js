@@ -1,20 +1,19 @@
 /**
-* Copyright 2012-2018, Plotly, Inc.
+* Copyright 2012-2020, Plotly, Inc.
 * All rights reserved.
 *
 * This source code is licensed under the MIT license found in the
 * LICENSE file in the root directory of this source tree.
 */
 
-
 'use strict';
 
 var Registry = require('../../registry');
 var Plots = require('../../plots/plots');
 var axisIds = require('../../plots/cartesian/axis_ids');
+var Icons = require('../../fonts/ploticon');
+var eraseActiveShape = require('../shapes/draw').eraseActiveShape;
 var Lib = require('../../lib');
-var Icons = require('../../../build/ploticon');
-
 var _ = Lib._;
 
 var modeBarButtons = module.exports = {};
@@ -44,7 +43,6 @@ var modeBarButtons = module.exports = {};
  * @param {boolean} [toggle]
  *      is the button a toggle button?
  */
-
 modeBarButtons.toImage = {
     name: 'toImage',
     title: function(gd) {
@@ -67,7 +65,7 @@ modeBarButtons.toImage = {
         }
 
         ['filename', 'width', 'height', 'scale'].forEach(function(key) {
-            if(toImageButtonOptions[key]) {
+            if(key in toImageButtonOptions) {
                 opts[key] = toImageButtonOptions[key];
             }
         });
@@ -86,6 +84,15 @@ modeBarButtons.sendDataToCloud = {
     name: 'sendDataToCloud',
     title: function(gd) { return _(gd, 'Edit in Chart Studio'); },
     icon: Icons.disk,
+    click: function(gd) {
+        Plots.sendDataToCloud(gd);
+    }
+};
+
+modeBarButtons.editInChartStudio = {
+    name: 'editInChartStudio',
+    title: function(gd) { return _(gd, 'Edit in Chart Studio'); },
+    icon: Icons.pencil,
     click: function(gd) {
         Plots.sendDataToCloud(gd);
     }
@@ -125,6 +132,58 @@ modeBarButtons.lasso2d = {
     val: 'lasso',
     icon: Icons.lasso,
     click: handleCartesian
+};
+
+modeBarButtons.drawclosedpath = {
+    name: 'drawclosedpath',
+    title: function(gd) { return _(gd, 'Draw closed freeform'); },
+    attr: 'dragmode',
+    val: 'drawclosedpath',
+    icon: Icons.drawclosedpath,
+    click: handleCartesian
+};
+
+modeBarButtons.drawopenpath = {
+    name: 'drawopenpath',
+    title: function(gd) { return _(gd, 'Draw open freeform'); },
+    attr: 'dragmode',
+    val: 'drawopenpath',
+    icon: Icons.drawopenpath,
+    click: handleCartesian
+};
+
+modeBarButtons.drawline = {
+    name: 'drawline',
+    title: function(gd) { return _(gd, 'Draw line'); },
+    attr: 'dragmode',
+    val: 'drawline',
+    icon: Icons.drawline,
+    click: handleCartesian
+};
+
+modeBarButtons.drawrect = {
+    name: 'drawrect',
+    title: function(gd) { return _(gd, 'Draw rectangle'); },
+    attr: 'dragmode',
+    val: 'drawrect',
+    icon: Icons.drawrect,
+    click: handleCartesian
+};
+
+modeBarButtons.drawcircle = {
+    name: 'drawcircle',
+    title: function(gd) { return _(gd, 'Draw circle'); },
+    attr: 'dragmode',
+    val: 'drawcircle',
+    icon: Icons.drawcircle,
+    click: handleCartesian
+};
+
+modeBarButtons.eraseshape = {
+    name: 'eraseshape',
+    title: function(gd) { return _(gd, 'Erase active shape'); },
+    icon: Icons.eraseshape,
+    click: eraseActiveShape
 };
 
 modeBarButtons.zoomIn2d = {
@@ -192,15 +251,14 @@ function handleCartesian(gd, ev) {
     var fullLayout = gd._fullLayout;
     var aobj = {};
     var axList = axisIds.list(gd, null, true);
-    var allSpikesEnabled = 'on';
+    var allSpikesEnabled = fullLayout._cartesianSpikesEnabled;
 
     var ax, i;
 
     if(astr === 'zoom') {
-        var mag = (val === 'in') ? 0.5 : 2,
-            r0 = (1 + mag) / 2,
-            r1 = (1 - mag) / 2;
-
+        var mag = (val === 'in') ? 0.5 : 2;
+        var r0 = (1 + mag) / 2;
+        var r1 = (1 - mag) / 2;
         var axName;
 
         for(i = 0; i < axList.length; i++) {
@@ -208,24 +266,25 @@ function handleCartesian(gd, ev) {
 
             if(!ax.fixedrange) {
                 axName = ax._name;
-                if(val === 'auto') aobj[axName + '.autorange'] = true;
-                else if(val === 'reset') {
+                if(val === 'auto') {
+                    aobj[axName + '.autorange'] = true;
+                } else if(val === 'reset') {
                     if(ax._rangeInitial === undefined) {
                         aobj[axName + '.autorange'] = true;
-                    }
-                    else {
+                    } else {
                         var rangeInitial = ax._rangeInitial.slice();
                         aobj[axName + '.range[0]'] = rangeInitial[0];
                         aobj[axName + '.range[1]'] = rangeInitial[1];
                     }
+
+                    // N.B. "reset" also resets showspikes
                     if(ax._showSpikeInitial !== undefined) {
                         aobj[axName + '.showspikes'] = ax._showSpikeInitial;
                         if(allSpikesEnabled === 'on' && !ax._showSpikeInitial) {
                             allSpikesEnabled = 'off';
                         }
                     }
-                }
-                else {
+                } else {
                     var rangeNow = [
                         ax.r2l(ax.range[0]),
                         ax.r2l(ax.range[1]),
@@ -241,27 +300,19 @@ function handleCartesian(gd, ev) {
                 }
             }
         }
-        fullLayout._cartesianSpikesEnabled = allSpikesEnabled;
-    }
-    else {
+    } else {
         // if ALL traces have orientation 'h', 'hovermode': 'x' otherwise: 'y'
         if(astr === 'hovermode' && (val === 'x' || val === 'y')) {
             val = fullLayout._isHoriz ? 'y' : 'x';
             button.setAttribute('data-val', val);
-        } else if(astr === 'hovermode' && val === 'closest') {
-            for(i = 0; i < axList.length; i++) {
-                ax = axList[i];
-                if(allSpikesEnabled === 'on' && !ax.showspikes) {
-                    allSpikesEnabled = 'off';
-                }
-            }
-            fullLayout._cartesianSpikesEnabled = allSpikesEnabled;
         }
 
         aobj[astr] = val;
     }
 
-    Registry.call('relayout', gd, aobj);
+    fullLayout._cartesianSpikesEnabled = allSpikesEnabled;
+
+    Registry.call('_guiRelayout', gd, aobj);
 }
 
 modeBarButtons.zoom3d = {
@@ -304,7 +355,7 @@ function handleDrag3d(gd, ev) {
     var button = ev.currentTarget;
     var attr = button.getAttribute('data-attr');
     var val = button.getAttribute('data-val') || true;
-    var sceneIds = gd._fullLayout._subplots.gl3d;
+    var sceneIds = gd._fullLayout._subplots.gl3d || [];
     var layoutUpdate = {};
 
     var parts = attr.split('.');
@@ -317,7 +368,7 @@ function handleDrag3d(gd, ev) {
     var val2d = (val === 'pan') ? val : 'zoom';
     layoutUpdate.dragmode = val2d;
 
-    Registry.call('relayout', gd, layoutUpdate);
+    Registry.call('_guiRelayout', gd, layoutUpdate);
 }
 
 modeBarButtons.resetCameraDefault3d = {
@@ -340,23 +391,38 @@ function handleCamera3d(gd, ev) {
     var button = ev.currentTarget;
     var attr = button.getAttribute('data-attr');
     var fullLayout = gd._fullLayout;
-    var sceneIds = fullLayout._subplots.gl3d;
+    var sceneIds = fullLayout._subplots.gl3d || [];
     var aobj = {};
 
     for(var i = 0; i < sceneIds.length; i++) {
-        var sceneId = sceneIds[i],
-            key = sceneId + '.camera',
-            scene = fullLayout[sceneId]._scene;
+        var sceneId = sceneIds[i];
+        var camera = sceneId + '.camera';
+        var aspectratio = sceneId + '.aspectratio';
+        var aspectmode = sceneId + '.aspectmode';
+        var scene = fullLayout[sceneId]._scene;
+        var didUpdate;
 
-        if(attr === 'resetDefault') {
-            aobj[key] = null;
+        if(attr === 'resetLastSave') {
+            aobj[camera + '.up'] = scene.viewInitial.up;
+            aobj[camera + '.eye'] = scene.viewInitial.eye;
+            aobj[camera + '.center'] = scene.viewInitial.center;
+            didUpdate = true;
+        } else if(attr === 'resetDefault') {
+            aobj[camera + '.up'] = null;
+            aobj[camera + '.eye'] = null;
+            aobj[camera + '.center'] = null;
+            didUpdate = true;
         }
-        else if(attr === 'resetLastSave') {
-            aobj[key] = Lib.extendDeep({}, scene.cameraInitial);
+
+        if(didUpdate) {
+            aobj[aspectratio + '.x'] = scene.viewInitial.aspectratio.x;
+            aobj[aspectratio + '.y'] = scene.viewInitial.aspectratio.y;
+            aobj[aspectratio + '.z'] = scene.viewInitial.aspectratio.z;
+            aobj[aspectmode] = scene.viewInitial.aspectmode;
         }
     }
 
-    Registry.call('relayout', gd, aobj);
+    Registry.call('_guiRelayout', gd, aobj);
 }
 
 modeBarButtons.hoverClosest3d = {
@@ -370,54 +436,47 @@ modeBarButtons.hoverClosest3d = {
     click: handleHover3d
 };
 
-function handleHover3d(gd, ev) {
+function getNextHover3d(gd, ev) {
     var button = ev.currentTarget;
-    var val = button._previousVal || false;
-    var layout = gd.layout;
+    var val = button._previousVal;
     var fullLayout = gd._fullLayout;
-    var sceneIds = fullLayout._subplots.gl3d;
+    var sceneIds = fullLayout._subplots.gl3d || [];
 
     var axes = ['xaxis', 'yaxis', 'zaxis'];
-    var spikeAttrs = ['showspikes', 'spikesides', 'spikethickness', 'spikecolor'];
 
     // initialize 'current spike' object to be stored in the DOM
     var currentSpikes = {};
-    var axisSpikes = {};
     var layoutUpdate = {};
 
     if(val) {
-        layoutUpdate = Lib.extendDeep(layout, val);
+        layoutUpdate = val;
         button._previousVal = null;
-    }
-    else {
-        layoutUpdate = {
-            'allaxes.showspikes': false
-        };
-
+    } else {
         for(var i = 0; i < sceneIds.length; i++) {
-            var sceneId = sceneIds[i],
-                sceneLayout = fullLayout[sceneId],
-                sceneSpikes = currentSpikes[sceneId] = {};
+            var sceneId = sceneIds[i];
+            var sceneLayout = fullLayout[sceneId];
 
-            sceneSpikes.hovermode = sceneLayout.hovermode;
-            layoutUpdate[sceneId + '.hovermode'] = false;
+            var hovermodeAStr = sceneId + '.hovermode';
+            currentSpikes[hovermodeAStr] = sceneLayout.hovermode;
+            layoutUpdate[hovermodeAStr] = false;
 
             // copy all the current spike attrs
             for(var j = 0; j < 3; j++) {
                 var axis = axes[j];
-                axisSpikes = sceneSpikes[axis] = {};
-
-                for(var k = 0; k < spikeAttrs.length; k++) {
-                    var spikeAttr = spikeAttrs[k];
-                    axisSpikes[spikeAttr] = sceneLayout[axis][spikeAttr];
-                }
+                var spikeAStr = sceneId + '.' + axis + '.showspikes';
+                layoutUpdate[spikeAStr] = false;
+                currentSpikes[spikeAStr] = sceneLayout[axis].showspikes;
             }
         }
 
-        button._previousVal = Lib.extendDeep({}, currentSpikes);
+        button._previousVal = currentSpikes;
     }
+    return layoutUpdate;
+}
 
-    Registry.call('relayout', gd, layoutUpdate);
+function handleHover3d(gd, ev) {
+    var layoutUpdate = getNextHover3d(gd, ev);
+    Registry.call('_guiRelayout', gd, layoutUpdate);
 }
 
 modeBarButtons.zoomInGeo = {
@@ -463,7 +522,7 @@ function handleGeo(gd, ev) {
     var attr = button.getAttribute('data-attr');
     var val = button.getAttribute('data-val') || true;
     var fullLayout = gd._fullLayout;
-    var geoIds = fullLayout._subplots.geo;
+    var geoIds = fullLayout._subplots.geo || [];
 
     for(var i = 0; i < geoIds.length; i++) {
         var id = geoIds[i];
@@ -473,10 +532,12 @@ function handleGeo(gd, ev) {
             var scale = geoLayout.projection.scale;
             var newScale = (val === 'in') ? 2 * scale : 0.5 * scale;
 
-            Registry.call('relayout', gd, id + '.projection.scale', newScale);
-        } else if(attr === 'reset') {
-            resetView(gd, 'geo');
+            Registry.call('_guiRelayout', gd, id + '.projection.scale', newScale);
         }
+    }
+
+    if(attr === 'reset') {
+        resetView(gd, 'geo');
     }
 }
 
@@ -501,19 +562,41 @@ modeBarButtons.hoverClosestPie = {
     click: toggleHover
 };
 
-function toggleHover(gd) {
+function getNextHover(gd) {
     var fullLayout = gd._fullLayout;
 
-    var onHoverVal;
+    if(fullLayout.hovermode) return false;
+
     if(fullLayout._has('cartesian')) {
-        onHoverVal = fullLayout._isHoriz ? 'y' : 'x';
+        return fullLayout._isHoriz ? 'y' : 'x';
     }
-    else onHoverVal = 'closest';
-
-    var newHover = gd._fullLayout.hovermode ? false : onHoverVal;
-
-    Registry.call('relayout', gd, 'hovermode', newHover);
+    return 'closest';
 }
+
+function toggleHover(gd) {
+    var newHover = getNextHover(gd);
+    Registry.call('_guiRelayout', gd, 'hovermode', newHover);
+}
+
+modeBarButtons.resetViewSankey = {
+    name: 'resetSankeyGroup',
+    title: function(gd) { return _(gd, 'Reset view'); },
+    icon: Icons.home,
+    click: function(gd) {
+        var aObj = {
+            'node.groups': [],
+            'node.x': [],
+            'node.y': []
+        };
+        for(var i = 0; i < gd._fullData.length; i++) {
+            var viewInitial = gd._fullData[i]._viewInitial;
+            aObj['node.groups'].push(viewInitial.node.groups.slice());
+            aObj['node.x'].push(viewInitial.node.x.slice());
+            aObj['node.y'].push(viewInitial.node.y.slice());
+        }
+        Registry.call('restyle', gd, aObj);
+    }
+};
 
 // buttons when more then one plot types are present
 
@@ -526,12 +609,10 @@ modeBarButtons.toggleHover = {
     icon: Icons.tooltip_basic,
     gravity: 'ne',
     click: function(gd, ev) {
-        toggleHover(gd);
+        var layoutUpdate = getNextHover3d(gd, ev);
+        layoutUpdate.hovermode = getNextHover(gd);
 
-        // the 3d hovermode update must come
-        // last so that layout.hovermode update does not
-        // override scene?.hovermode?.layout.
-        handleHover3d(gd, ev);
+        Registry.call('_guiRelayout', gd, layoutUpdate);
     }
 };
 
@@ -562,26 +643,22 @@ modeBarButtons.toggleSpikelines = {
     val: 'on',
     click: function(gd) {
         var fullLayout = gd._fullLayout;
+        var allSpikesEnabled = fullLayout._cartesianSpikesEnabled;
 
-        fullLayout._cartesianSpikesEnabled = fullLayout._cartesianSpikesEnabled === 'on' ? 'off' : 'on';
-
-        var aobj = setSpikelineVisibility(gd);
-
-        Registry.call('relayout', gd, aobj);
+        fullLayout._cartesianSpikesEnabled = allSpikesEnabled === 'on' ? 'off' : 'on';
+        Registry.call('_guiRelayout', gd, setSpikelineVisibility(gd));
     }
 };
 
 function setSpikelineVisibility(gd) {
     var fullLayout = gd._fullLayout;
+    var areSpikesOn = fullLayout._cartesianSpikesEnabled === 'on';
     var axList = axisIds.list(gd, null, true);
     var aobj = {};
 
-    var ax, axName;
-
     for(var i = 0; i < axList.length; i++) {
-        ax = axList[i];
-        axName = ax._name;
-        aobj[axName + '.showspikes'] = fullLayout._cartesianSpikesEnabled === 'on' ? true : ax._showSpikeInitial;
+        var ax = axList[i];
+        aobj[ax._name + '.showspikes'] = areSpikesOn ? true : ax._showSpikeInitial;
     }
 
     return aobj;
@@ -597,9 +674,45 @@ modeBarButtons.resetViewMapbox = {
     }
 };
 
+modeBarButtons.zoomInMapbox = {
+    name: 'zoomInMapbox',
+    title: function(gd) { return _(gd, 'Zoom in'); },
+    attr: 'zoom',
+    val: 'in',
+    icon: Icons.zoom_plus,
+    click: handleMapboxZoom
+};
+
+modeBarButtons.zoomOutMapbox = {
+    name: 'zoomOutMapbox',
+    title: function(gd) { return _(gd, 'Zoom out'); },
+    attr: 'zoom',
+    val: 'out',
+    icon: Icons.zoom_minus,
+    click: handleMapboxZoom
+};
+
+function handleMapboxZoom(gd, ev) {
+    var button = ev.currentTarget;
+    var val = button.getAttribute('data-val');
+    var fullLayout = gd._fullLayout;
+    var subplotIds = fullLayout._subplots.mapbox || [];
+    var scalar = 1.05;
+    var aObj = {};
+
+    for(var i = 0; i < subplotIds.length; i++) {
+        var id = subplotIds[i];
+        var current = fullLayout[id].zoom;
+        var next = (val === 'in') ? scalar * current : current / scalar;
+        aObj[id + '.zoom'] = next;
+    }
+
+    Registry.call('_guiRelayout', gd, aObj);
+}
+
 function resetView(gd, subplotType) {
     var fullLayout = gd._fullLayout;
-    var subplotIds = fullLayout._subplots[subplotType];
+    var subplotIds = fullLayout._subplots[subplotType] || [];
     var aObj = {};
 
     for(var i = 0; i < subplotIds.length; i++) {
@@ -614,5 +727,5 @@ function resetView(gd, subplotType) {
         }
     }
 
-    Registry.call('relayout', gd, aObj);
+    Registry.call('_guiRelayout', gd, aObj);
 }
