@@ -129,7 +129,6 @@ describe('Test TypedArray representations', function() {
 
     describe('encoded figure', function() {
         it('should decode representation as base 64 and Array in encoded figure', function() {
-
             var gd = Plotly.decode(encodedFigure);
 
             // Check x

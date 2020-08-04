@@ -2686,7 +2686,6 @@ function getTypedArrayTypeForDtypeString(dtype) {
  * @returns {TypedArray}
  */
 function decodeTypedArray(v) {
-
     var coercedV;
     var value = v.value;
     var TypeArrayType = getTypedArrayTypeForDtypeString(v.dtype);
