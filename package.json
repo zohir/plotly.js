@@ -51,6 +51,7 @@
   },
   "browserify": {
     "transform": [
+      "bubleify",
       "glslify",
       "./tasks/compress_attributes.js"
     ]
