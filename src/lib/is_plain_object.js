@@ -9,6 +9,8 @@
 
 'use strict';
 
+var isNodeJS = window.name === 'nodejs';
+
 // more info: http://stackoverflow.com/questions/18531624/isplainobject-thing
 module.exports = function isPlainObject(obj) {
     // We need to be a little less strict in the `imagetest` container because
@@ -21,6 +23,6 @@ module.exports = function isPlainObject(obj) {
 
     return (
         Object.prototype.toString.call(obj) === '[object Object]' &&
-        Object.getPrototypeOf(obj) === Object.prototype
+        (isNodeJS || Object.getPrototypeOf(obj) === Object.prototype)
     );
 };
