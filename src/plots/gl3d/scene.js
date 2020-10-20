@@ -148,9 +148,9 @@ proto.tryCreatePlot = function() {
     try {
         scene.glplot = createPlot(opts);
     } catch(e) {
-        if(scene.staticMode) {
+        if(scene.staticMode || !firstInit) {
             success = false;
-        } else if(firstInit) { // try second time
+        } else { // try second time
             try {
                 // invert preserveDrawingBuffer setup which could be resulted from is-mobile not detecting the right device
                 Lib.warn([
