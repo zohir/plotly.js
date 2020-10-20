@@ -136,6 +136,8 @@ proto.prepareOptions = function() {
     return opts;
 };
 
+var firstInit = true;
+
 proto.tryCreatePlot = function() {
     var scene = this;
 
@@ -148,7 +150,7 @@ proto.tryCreatePlot = function() {
     } catch(e) {
         if(scene.staticMode) {
             success = false;
-        } else { // try second time
+        } else if(firstInit) { // try second time
             try {
                 // invert preserveDrawingBuffer setup which could be resulted from is-mobile not detecting the right device
                 Lib.warn([
@@ -158,14 +160,21 @@ proto.tryCreatePlot = function() {
                     'The device may not be supported by is-mobile module!',
                     'Inverting preserveDrawingBuffer option in second attempt to create webgl scene.'
                 ].join(' '));
+
+                // invert is-mobile
                 isMobile = opts.glOptions.preserveDrawingBuffer = !opts.glOptions.preserveDrawingBuffer;
 
                 scene.glplot = createPlot(opts);
             } catch(e) {
+                // revert changes to is-mobile
+                isMobile = opts.glOptions.preserveDrawingBuffer = !opts.glOptions.preserveDrawingBuffer;
+
                 success = false;
             }
         }
     }
+
+    firstInit = false;
 
     return success;
 };
