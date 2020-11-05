@@ -201,7 +201,14 @@ function getAutoRange(gd, ax) {
  */
 function makePadFn(ax) {
     // 5% padding for points that specify extrapad: true
-    var extrappad = ax._length / 20;
+    var extrappad = 0.05 * ax._length;
+
+    // increase padding to make more room for inside tick labels of the counter axis
+    var anchorAxis = (ax._anchorAxis || {});
+    if((anchorAxis.ticklabelposition || '').indexOf('inside') !== -1) {
+        var fontSize = anchorAxis.tickfont ? anchorAxis.tickfont.size : 12;
+        extrappad += fontSize * (ax._id.charAt(0) === 'y' ? 0.5 : 2.5);
+    }
 
     // domain-constrained axes: base extrappad on the unconstrained
     // domain so it's consistent as the domain changes

@@ -54,9 +54,28 @@ module.exports = function handleAxisDefaults(containerIn, containerOut, coerce, 
     var axTemplate = containerOut._template || {};
     var axType = containerOut.type || axTemplate.type || '-';
 
+    var tickLabelMode;
     if(axType === 'date') {
         var handleCalendarDefaults = Registry.getComponentMethod('calendars', 'handleDefaults');
         handleCalendarDefaults(containerIn, containerOut, 'calendar', options.calendar);
+
+        if(!options.noTicklabelmode) {
+            tickLabelMode = coerce('ticklabelmode');
+        }
+    }
+
+    if(!options.noTicklabelposition || axType === 'multicategory') {
+        var hasPeriod = tickLabelMode === 'period';
+        var tickLabelPosition = coerce('ticklabelposition');
+        if(hasPeriod || letter === 'x') {
+            containerOut.ticklabelposition = tickLabelPosition
+                .replace(' top', '')
+                .replace(' bottom', '');
+        } else if(hasPeriod || letter === 'y') {
+            containerOut.ticklabelposition = tickLabelPosition
+                .replace(' left', '')
+                .replace(' right', '');
+        }
     }
 
     setConvert(containerOut, layoutOut);
@@ -126,8 +145,6 @@ module.exports = function handleAxisDefaults(containerIn, containerOut, coerce, 
     }
 
     if(axType === 'date') {
-        if(!options.noTicklabelmode) coerce('ticklabelmode');
-
         handleArrayContainerDefaults(containerIn, containerOut, {
             name: 'rangebreaks',
             inclusionAttr: 'enabled',
