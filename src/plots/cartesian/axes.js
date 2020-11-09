@@ -2508,7 +2508,7 @@ function getTickLabelPosition(ax) {
     var v =
         has('outside') ? 0 :
         // case of inside
-        isX ? -1.2 : 0.12;
+        isX ? -1.25 : 0.25;
 
     var u =
         (has('right') || has('bottom')) ? 1 :
@@ -2573,21 +2573,28 @@ axes.makeTickPath = function(ax, shift, sgn, len) {
  */
 axes.makeLabelFns = function(ax, shift, angle) {
     var axLetter = ax._id.charAt(0);
-    var outsideTicks = ax.ticks === 'outside';
-    var ticksOnOutsideLabels = outsideTicks && ax.tickson !== 'boundaries';
+    var ticklabelposition = (ax.ticklabelposition || '');
+    var insideTickLabels = ticklabelposition.indexOf('inside') !== -1;
+    var labelsOverTicks =
+        (ax.ticks === 'inside' && ticklabelposition === 'inside') ||
+        (ax.ticks === 'outside' && ax.tickson !== 'boundaries');
 
     var labelStandoff = 0;
     var labelShift = 0;
 
-    if(ticksOnOutsideLabels) {
-        labelStandoff += ax.ticklen;
+    var tickLen = labelsOverTicks ? ax.ticklen : 0;
+    if(ticklabelposition === 'inside') tickLen *= -1;
+
+    if(labelsOverTicks) {
+        labelStandoff += tickLen;
+        if(angle) {
+            var rad = Lib.deg2rad(angle);
+            labelStandoff = tickLen * Math.cos(rad) + 1;
+            labelShift = tickLen * Math.sin(rad);
+        }
     }
-    if(angle && outsideTicks) {
-        var rad = Lib.deg2rad(angle);
-        labelStandoff = ax.ticklen * Math.cos(rad) + 1;
-        labelShift = ax.ticklen * Math.sin(rad);
-    }
-    if(ax.showticklabels && (ticksOnOutsideLabels || ax.showline)) {
+
+    if(ax.showticklabels && (labelsOverTicks || ax.showline)) {
         labelStandoff += 0.2 * ax.tickfont.size;
     }
     labelStandoff += (ax.linewidth || 1) / 2;
@@ -2599,13 +2606,12 @@ axes.makeLabelFns = function(ax, shift, angle) {
 
     var x0, y0, ff, flipIt;
 
-    var isLabelInsidePlot = (ax.ticklabelposition || '').indexOf('inside') !== -1;
-
     if(axLetter === 'x') {
-        flipIt = ax.side === 'bottom' ? 1 : -1;
+        var bottomSide = ax.side === 'bottom';
+        flipIt = bottomSide ? 1 : -1;
         x0 = labelShift * flipIt;
         y0 = shift + labelStandoff * flipIt;
-        ff = ax.side === 'bottom' ? 1 : -0.2;
+        ff = bottomSide ? 1 : -0.2;
 
         out.xFn = function(d) { return d.dx + x0; };
         out.yFn = function(d) { return d.dy + y0 + d.fontSize * ff; };
@@ -2614,7 +2620,7 @@ axes.makeLabelFns = function(ax, shift, angle) {
                 return 'middle';
             }
             var whichSide = a * flipIt < 0;
-            if(isLabelInsidePlot) {
+            if(insideTickLabels) {
                 return whichSide ? 'start' : 'end';
             }
             return whichSide ? 'end' : 'start';
@@ -2625,7 +2631,8 @@ axes.makeLabelFns = function(ax, shift, angle) {
                 0;
         };
     } else if(axLetter === 'y') {
-        flipIt = ax.side === 'right' ? 1 : -1;
+        var rightSide = ax.side === 'right';
+        flipIt = rightSide ? 1 : -1;
         x0 = labelStandoff;
         y0 = -labelShift * flipIt;
         ff = Math.abs(ax.tickangle) === 90 ? 0.5 : 0;
@@ -2636,11 +2643,10 @@ axes.makeLabelFns = function(ax, shift, angle) {
             if(isNumeric(a) && Math.abs(a) === 90) {
                 return 'middle';
             }
-            var isRight = ax.side === 'right';
-            if(isLabelInsidePlot) {
-                return isRight ? 'end' : 'start';
+            if(insideTickLabels) {
+                return rightSide ? 'end' : 'start';
             }
-            return isRight ? 'start' : 'end';
+            return rightSide ? 'start' : 'end';
         };
         out.heightFn = function(d, a, h) {
             a *= ax.side === 'left' ? 1 : -1;

@@ -54,28 +54,17 @@ module.exports = function handleAxisDefaults(containerIn, containerOut, coerce, 
     var axTemplate = containerOut._template || {};
     var axType = containerOut.type || axTemplate.type || '-';
 
-    var tickLabelMode;
     if(axType === 'date') {
         var handleCalendarDefaults = Registry.getComponentMethod('calendars', 'handleDefaults');
         handleCalendarDefaults(containerIn, containerOut, 'calendar', options.calendar);
 
         if(!options.noTicklabelmode) {
-            tickLabelMode = coerce('ticklabelmode');
+            coerce('ticklabelmode');
         }
     }
 
     if(!options.noTicklabelposition || axType === 'multicategory') {
-        var hasPeriod = tickLabelMode === 'period';
-        var tickLabelPosition = coerce('ticklabelposition');
-        if(hasPeriod || letter === 'x') {
-            containerOut.ticklabelposition = tickLabelPosition
-                .replace(' top', '')
-                .replace(' bottom', '');
-        } else if(hasPeriod || letter === 'y') {
-            containerOut.ticklabelposition = tickLabelPosition
-                .replace(' left', '')
-                .replace(' right', '');
-        }
+        coerce('ticklabelposition');
     }
 
     setConvert(containerOut, layoutOut);
@@ -134,6 +123,25 @@ module.exports = function handleAxisDefaults(containerIn, containerOut, coerce, 
         var ticksonDflt;
         if(isMultiCategory) ticksonDflt = 'boundaries';
         coerce('tickson', ticksonDflt);
+    }
+
+    if(containerOut.ticklabelposition) {
+        if(
+            containerOut.tickson === 'boundaries' ||
+            containerOut.ticklabelmode === 'period'
+        ) {
+            if(letter === 'x') {
+                containerOut.ticklabelposition =
+                containerOut.ticklabelposition
+                    .replace(' left', '')
+                    .replace(' right', '');
+            } else if(letter === 'y') {
+                containerOut.ticklabelposition =
+                containerOut.ticklabelposition
+                    .replace(' top', '')
+                    .replace(' bottom', '');
+            }
+        }
     }
 
     if(isMultiCategory) {
