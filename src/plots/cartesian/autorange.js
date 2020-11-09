@@ -207,7 +207,7 @@ function makePadFn(ax) {
     var anchorAxis = (ax._anchorAxis || {});
     if((anchorAxis.ticklabelposition || '').indexOf('inside') !== -1) {
         var fontSize = anchorAxis.tickfont ? anchorAxis.tickfont.size : 12;
-        extrappad += fontSize * (ax._id.charAt(0) === 'y' ? 0.5 : 2.5);
+        extrappad += fontSize * (ax._id.charAt(0) === 'y' ? 0.5 : 2);
     }
 
     // domain-constrained axes: base extrappad on the unconstrained

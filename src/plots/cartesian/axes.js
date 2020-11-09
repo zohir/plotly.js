@@ -2508,7 +2508,7 @@ function getTickLabelPosition(ax) {
     var v =
         has('outside') ? 0 :
         // case of inside
-        isX ? -1.5 : 0.5;
+        isX ? -1.2 : 0.12;
 
     var u =
         (has('right') || has('bottom')) ? 1 :
