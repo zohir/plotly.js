@@ -2504,26 +2504,52 @@ function getTickLabelPosition(ax) {
         return ticklabelposition.indexOf(str) !== -1;
     };
 
-    var isX = ax._id.charAt(0) === 'x';
-    var v =
-        has('outside') ? 0 :
-        // case of inside
-        isX ? -1.25 : 0.25;
+    var isTop = has('top');
+    var isLeft = has('left');
+    var isRight = has('right');
+    var isBottom = has('bottom');
+    var isInside = has('inside');
 
-    var u =
-        (has('right') || has('bottom')) ? 1 :
-        (has('left') || has('top')) ? -1 : 0;
+    var isAligned = isBottom || isLeft || isTop || isRight;
 
-    var rng = Lib.simpleMap(ax.range, ax.r2l);
-    if(rng[0] > rng[1]) u = -u;
+    // early return
+    if(!isAligned && !isInside) return [0, 0];
 
-    var side = ax.side;
-    if(side === 'top' || side === 'right') v = -v;
+    var u = 0;
+    var v = 0;
 
     var fontSize = ax.tickfont ? ax.tickfont.size : 12;
+    if(isAligned) {
+        u += fontSize / 2;
+    }
+    v += fontSize * CAP_SHIFT;
+
+    var isX = ax._id.charAt(0) === 'x';
+
+    var dx = (ax.tickwidth || 0) / 2;
+    var dy = (ax.linewidth || 0) / 2;
+    u += isX ? dx : dy;
+    v += isX ? dy : dx;
+
+    if(isX) {
+        v *= 2;
+    }
+
+    var rng = Lib.simpleMap(ax.range, ax.r2l);
+    if(rng[0] > rng[1]) {
+        u = -u;
+    }
+
+    if(isLeft) u = -u;
+    if(isTop) v = -v;
+
+    var side = ax.side;
+    if(side === 'right') u = -u;
+    if(side === 'bottom') v = -v;
+
     return [
-        fontSize * (isX ? u : v),
-        fontSize * (isX ? v : u)
+        isAligned ? u : 0,
+        isInside ? v : 0
     ];
 }
 
@@ -2583,7 +2609,9 @@ axes.makeLabelFns = function(ax, shift, angle) {
     var labelShift = 0;
 
     var tickLen = labelsOverTicks ? ax.ticklen : 0;
-    if(ticklabelposition === 'inside') tickLen *= -1;
+    if(insideTickLabels) {
+        tickLen *= -1;
+    }
 
     if(labelsOverTicks) {
         labelStandoff += tickLen;
@@ -2597,7 +2625,9 @@ axes.makeLabelFns = function(ax, shift, angle) {
     if(ax.showticklabels && (labelsOverTicks || ax.showline)) {
         labelStandoff += 0.2 * ax.tickfont.size;
     }
-    labelStandoff += (ax.linewidth || 1) / 2;
+    if(!insideTickLabels) {
+        labelStandoff += (ax.linewidth || 1) / 2;
+    }
 
     var out = {
         labelStandoff: labelStandoff,
