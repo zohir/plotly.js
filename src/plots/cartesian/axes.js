@@ -2535,17 +2535,10 @@ function getTickLabelPosition(ax) {
         v *= 2;
     }
 
-    var rng = Lib.simpleMap(ax.range, ax.r2l);
-    if(rng[0] > rng[1]) {
-        u *= -1;
-    }
-
-    if(isLeft) u *= -1;
-    if(isTop) u *= -1;
+    if(isLeft || isTop) u = -u;
 
     var side = ax.side;
-    if(side === 'right') v *= -1;
-    if(side === 'bottom') v *= -1;
+    if(side === 'bottom' || side === 'right') v = -v;
 
     return [
         isAligned ? u : 0,
