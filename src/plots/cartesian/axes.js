@@ -2475,21 +2475,21 @@ axes.makeTransTickFn = function(ax) {
 };
 
 axes.makeTransTickLabelFn = function(ax) {
-    var xy = getTickLabelPosition(ax);
-    var x = xy[0];
-    var y = xy[1];
+    var uv = getTickLabelPosition(ax);
+    var u = uv[0];
+    var v = uv[1];
 
     return ax._id.charAt(0) === 'x' ?
         function(d) {
             return strTranslate(
-                x + ax._offset + ax.l2p(getPosX(d)),
-                y
+                u + ax._offset + ax.l2p(getPosX(d)),
+                v
             );
         } :
         function(d) {
             return strTranslate(
-                x,
-                y + ax._offset + ax.l2p(getPosX(d))
+                v,
+                u + ax._offset + ax.l2p(getPosX(d))
             );
         };
 };
@@ -2537,15 +2537,15 @@ function getTickLabelPosition(ax) {
 
     var rng = Lib.simpleMap(ax.range, ax.r2l);
     if(rng[0] > rng[1]) {
-        u = -u;
+        u *= -1;
     }
 
-    if(isLeft) u = -u;
-    if(isTop) v = -v;
+    if(isLeft) u *= -1;
+    if(isTop) u *= -1;
 
     var side = ax.side;
-    if(side === 'right') u = -u;
-    if(side === 'bottom') v = -v;
+    if(side === 'right') v *= -1;
+    if(side === 'bottom') v *= -1;
 
     return [
         isAligned ? u : 0,
