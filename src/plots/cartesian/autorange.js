@@ -13,7 +13,6 @@ var isNumeric = require('fast-isnumeric');
 var Lib = require('../../lib');
 var FP_SAFE = require('../../constants/numerical').FP_SAFE;
 var Registry = require('../../registry');
-var CAP_SHIFT = require('../../constants/alignment').CAP_SHIFT;
 
 module.exports = {
     getAutoRange: getAutoRange,
@@ -227,11 +226,13 @@ function makePadFn(ax, max) {
             )
         )) {
             var fontSize = anchorAxis.tickfont ? anchorAxis.tickfont.size : 12;
-            extrappad += fontSize * (ax._id.charAt(0) === 'x' ? 2 : CAP_SHIFT);
+            var newPad = fontSize * (ax._id.charAt(0) === 'x' ? 4 : 1);
 
             if(anchorAxis.ticks === 'inside' && anchorAxis.ticklabelposition === 'inside') {
-                extrappad += anchorAxis.ticklen || 0;
+                newPad += anchorAxis.ticklen || 0;
             }
+
+            extrappad = Math.max(extrappad, newPad);
         }
     }
 
