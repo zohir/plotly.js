@@ -2632,6 +2632,8 @@ axes.makeLabelFns = function(ax, shift, angle) {
     if(axLetter === 'x') {
         var bottomSide = ax.side === 'bottom';
         flipIt = bottomSide ? 1 : -1;
+        if(insideTickLabels) flipIt *= -1;
+
         x0 = labelShift * flipIt;
         y0 = shift + labelStandoff * flipIt;
         ff = bottomSide ? 1 : -0.2;
@@ -2656,6 +2658,8 @@ axes.makeLabelFns = function(ax, shift, angle) {
     } else if(axLetter === 'y') {
         var rightSide = ax.side === 'right';
         flipIt = rightSide ? 1 : -1;
+        if(insideTickLabels) flipIt *= -1;
+
         x0 = labelStandoff;
         y0 = -labelShift * flipIt;
         ff = Math.abs(ax.tickangle) === 90 ? 0.5 : 0;
