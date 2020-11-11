@@ -2588,8 +2588,8 @@ axes.makeLabelFns = function(ax, shift, angle) {
     var ticklabelposition = (ax.ticklabelposition || '');
     var insideTickLabels = ticklabelposition.indexOf('inside') !== -1;
     var labelsOverTicks =
-        (ax.ticks === 'inside' && ticklabelposition === 'inside') ||
-        (ax.ticks === 'outside' && ax.tickson !== 'boundaries');
+        (ticklabelposition === 'inside' && ax.ticks === 'inside') ||
+        (!insideTickLabels && ax.ticks === 'outside' && ax.tickson !== 'boundaries');
 
     var labelStandoff = 0;
     var labelShift = 0;
