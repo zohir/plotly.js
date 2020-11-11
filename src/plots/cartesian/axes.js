@@ -2629,8 +2629,12 @@ axes.makeLabelFns = function(ax, shift, angle) {
 
     var x0, y0, ff, flipIt;
 
+    var side = ax.side;
     if(axLetter === 'x') {
-        var bottomSide = ax.side === 'bottom';
+        var bottomSide =
+            (!insideTickLabels && side === 'bottom') ||
+            (insideTickLabels && side === 'top');
+
         flipIt = bottomSide ? 1 : -1;
         if(insideTickLabels) flipIt *= -1;
 
@@ -2645,9 +2649,6 @@ axes.makeLabelFns = function(ax, shift, angle) {
                 return 'middle';
             }
             var whichSide = a * flipIt < 0;
-            if(insideTickLabels) {
-                return whichSide ? 'start' : 'end';
-            }
             return whichSide ? 'end' : 'start';
         };
         out.heightFn = function(d, a, h) {
@@ -2656,7 +2657,10 @@ axes.makeLabelFns = function(ax, shift, angle) {
                 0;
         };
     } else if(axLetter === 'y') {
-        var rightSide = ax.side === 'right';
+        var rightSide =
+            (!insideTickLabels && side === 'right') ||
+            (insideTickLabels && side === 'left');
+
         flipIt = rightSide ? 1 : -1;
         if(insideTickLabels) flipIt *= -1;
 
@@ -2669,9 +2673,6 @@ axes.makeLabelFns = function(ax, shift, angle) {
         out.anchorFn = function(d, a) {
             if(isNumeric(a) && Math.abs(a) === 90) {
                 return 'middle';
-            }
-            if(insideTickLabels) {
-                return rightSide ? 'end' : 'start';
             }
             return rightSide ? 'start' : 'end';
         };
