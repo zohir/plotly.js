@@ -2521,17 +2521,19 @@ function getTickLabelPosition(ax) {
 
     var fontSize = ax.tickfont ? ax.tickfont.size : 12;
     if(isAligned) {
-        u += fontSize * CAP_SHIFT;
-        if(isX) u *= 2;
+        if(isX) {
+            u += fontSize * MID_SHIFT;
+            v += fontSize * CAP_SHIFT * 2;
+        } else {
+            u += fontSize * CAP_SHIFT;
+            v += fontSize * MID_SHIFT / 2;
+        }
     }
-    v += fontSize * CAP_SHIFT;
 
     var dx = (ax.tickwidth || 0) / 2;
     var dy = (ax.linewidth || 0) / 2;
     u += isX ? dx : dy;
     v += isX ? dy : dx;
-
-    if(isX) v *= 2;
 
     if(isLeft || isTop) u = -u;
 
