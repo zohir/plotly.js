@@ -508,8 +508,11 @@ module.exports = {
     ticklabelposition: {
         valType: 'enumerated',
         values: [
-            'outside', 'inside', 'inside top', 'inside bottom', 'inside left', 'inside right',
-            'inside', 'inside top', 'inside bottom', 'inside left', 'inside right'
+            'outside', 'inside',
+            'outside top', 'inside top',
+            'outside left', 'inside left',
+            'outside right', 'inside right',
+            'outside bottom', 'inside bottom'
         ],
         dflt: 'outside',
         role: 'info',
