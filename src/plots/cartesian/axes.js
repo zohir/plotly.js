@@ -2922,6 +2922,8 @@ axes.drawLabels = function(gd, ax, opts) {
     }
 
     function positionLabels(s, angle) {
+        var isInside = (ax.ticklabelposition || '').indexOf('inside') !== -1;
+
         s.each(function(d) {
             var thisLabel = d3.select(this);
             var mathjaxGroup = thisLabel.select('.text-math-group');
@@ -2943,15 +2945,51 @@ axes.drawLabels = function(gd, ax, opts) {
             }
 
             if(mathjaxGroup.empty()) {
-                thisLabel.select('text').attr({
+                var thisText = thisLabel.select('text');
+                thisText.attr({
                     transform: transform,
                     'text-anchor': anchor
                 });
+
+                if(isInside) {
+                    // ensure visible
+                    thisText.style({ opacity: 100 });
+                }
             } else {
                 var mjWidth = Drawing.bBox(mathjaxGroup.node()).width;
                 var mjShift = mjWidth * {end: -0.5, start: 0.5}[anchor];
                 mathjaxGroup.attr('transform', transform + strTranslate(mjShift, 0));
             }
+        });
+    }
+
+    function hideLabels(s) {
+        var isInside = (ax.ticklabelposition || '').indexOf('inside') !== -1;
+        if(!isInside) return;
+        var gridLayer = fullLayout._cartesianlayer
+            .select('.subplot.' + ax._subplotsWith[0])
+            .select('.gridlayer');
+
+        var gridBb = Drawing.bBox(gridLayer.node());
+
+        s.each(function() {
+            var thisLabel = d3.select(this);
+            var mathjaxGroup = thisLabel.select('.text-math-group');
+
+            if(mathjaxGroup.empty()) {
+                var hide = '';
+                if(isInside) {
+                    var bb = Drawing.bBox(thisLabel.node());
+                    if(bb.top < gridBb.top) hide += 't';
+                    if(bb.left < gridBb.left) hide += 'l';
+                    if(bb.right > gridBb.right) hide += 'r';
+                    if(bb.bottom > gridBb.bottom) hide += 'b';
+                }
+
+                if(hide) {
+                    thisLabel.select('text').style({ opacity: 0 });
+                }
+            } // TODO: hide mathjax?
         });
     }
 
@@ -3065,6 +3103,10 @@ axes.drawLabels = function(gd, ax, opts) {
                 autoangle;
         });
     }
+
+    seq.push(function() {
+        hideLabels(tickLabels);
+    });
 
     var done = Lib.syncOrAsync(seq);
     if(done && done.then) gd._promises.push(done);
