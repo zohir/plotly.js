@@ -2738,9 +2738,9 @@ function react(gd, data, layout, config) {
         var allNames = Object.getOwnPropertyNames(oldFullLayout);
         for(var q = 0; q < allNames.length; q++) {
             var name = allNames[q];
-            var start = name.substring(0, 5);
-            if(start === 'xaxis' || start === 'yaxis') {
-                var emptyCategories = oldFullLayout[name]._emptyCategories;
+            var oldObj = oldFullLayout[name];
+            if(oldObj && Lib.isPlainObject(oldObj)) {
+                var emptyCategories = oldObj._emptyCategories;
                 if(emptyCategories) emptyCategories();
             }
         }
