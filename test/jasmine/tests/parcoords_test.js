@@ -1400,7 +1400,7 @@ describe('parcoords constraint interactions - without defined axis ranges', func
         expect(dashArray.length).toBe(segmentCount, dashArray);
     }
 
-    it('@noCI @gl snaps ordinal constraints', function(done) {
+    it('@gl snaps ordinal constraints', function(done) {
         // first: drag almost to 2 but not quite - constraint will snap back to [2.75, 4]
         mostOfDrag(105, 165, 105, 190);
         var newDashArray = getDashArray(0);
@@ -1478,7 +1478,7 @@ describe('parcoords constraint interactions - without defined axis ranges', func
         .then(done);
     });
 
-    it('@noCI @gl updates continuous constraints with no snap', function(done) {
+    it('@gl updates continuous constraints with no snap', function(done) {
         // first: extend 7 to 5
         mostOfDrag(295, 160, 295, 200);
         var newDashArray = getDashArray(1);
@@ -1519,7 +1519,7 @@ describe('parcoords constraint interactions - without defined axis ranges', func
         .then(done);
     });
 
-    it('@noCI @gl will only select one region when multiselect is disabled', function(done) {
+    it('@gl will only select one region when multiselect is disabled', function(done) {
         var newDashArray;
 
         Plotly.restyle(gd, {'dimensions[1].multiselect': false})
@@ -1556,7 +1556,7 @@ describe('parcoords constraint interactions - without defined axis ranges', func
         .then(done);
     });
 
-    it('@noCI @gl should keep single point dimension selected', function(done) {
+    it('@gl should keep single point dimension selected', function(done) {
         var testLayer = '.gl-canvas-focus';
 
         Plotly.newPlot(gd, {
@@ -1648,7 +1648,7 @@ describe('parcoords constraint interactions - with defined axis ranges', functio
         .then(done);
     });
 
-    it('@noCI @gl updates constraints above and below axis ranges', function(done) {
+    it('@gl updates constraints above and below axis ranges', function(done) {
         expect(gd.data[0].dimensions[1].constraintrange).toBeCloseToArray([4, 6]);
 
         var x = 295;
@@ -1731,7 +1731,7 @@ describe('parcoords constraint click interactions - with pre-defined constraint 
         .then(done);
     });
 
-    it('@noCI @gl should not drop constraintrange on click', function(done) {
+    it('@gl should not drop constraintrange on click', function(done) {
         expect(gd._fullData[0].dimensions[1].constraintrange).toBeCloseToArray([0.75, 2.25]);
 
         // click to add a new item to the selection
