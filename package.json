@@ -76,7 +76,6 @@
     "d3-interpolate": "^1.4.0",
     "d3-time-format": "^2.2.3",
     "delaunay-triangulate": "^1.1.6",
-    "es6-promise": "^4.2.8",
     "fast-isnumeric": "^1.1.4",
     "gl-cone3d": "^1.5.2",
     "gl-contour2d": "^1.1.7",

@@ -10,9 +10,6 @@
 
 exports.version = require('./version').version;
 
-// inject promise polyfill
-require('es6-promise').polyfill();
-
 // inject plot css
 require('../build/plotcss');
 
