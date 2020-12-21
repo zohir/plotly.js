@@ -218,7 +218,7 @@ describe('end-to-end scattergl tests', function() {
         .then(done);
     });
 
-    it('@gl should change plot type with incomplete data', function(done) {
+    xit('@gl should change plot type with incomplete data', function(done) {
         Plotly.plot(gd, [{}])
         .then(function() {
             expect(function() {

@@ -1066,7 +1066,7 @@ describe('mapbox plots', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('@gl should not wedge graph after reacting to invalid layer', function(done) {
+    xit('@gl should not wedge graph after reacting to invalid layer', function(done) {
         Plotly.react(gd, [{type: 'scattermapbox'}], {
             mapbox: {
                 layers: [{ source: 'invalid' }]
@@ -1140,7 +1140,7 @@ describe('mapbox plots', function() {
         .then(done);
     }, LONG_TIMEOUT_INTERVAL);
 
-    it('@gl should be able to update the access token', function(done) {
+    xit('@gl should be able to update the access token', function(done) {
         Plotly.relayout(gd, 'mapbox.accesstoken', 'wont-work')
         .catch(function(err) {
             expect(gd._fullLayout.mapbox.accesstoken).toEqual('wont-work');
@@ -2056,7 +2056,7 @@ describe('Test mapbox GeoJSON fetching:', function() {
         .then(done);
     });
 
-    it('@gl should fetch GeoJSON using URLs found in the traces', function(done) {
+    xit('@gl should fetch GeoJSON using URLs found in the traces', function(done) {
         var actual = '';
 
         Plotly.plot(gd, [{
