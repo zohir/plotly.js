@@ -480,7 +480,7 @@ describe('Test gl3d modebar handlers - perspective case', function() {
         destroyGraphDiv();
     });
 
-    it('@gl button zoom3d should updates the scene dragmode and dragmode button', function() {
+    it('@gl button zoom3d should updates the scene dragmode and dragmode button', function(done) {
         var buttonTurntable = selectButton(modeBar, 'tableRotation');
         var buttonZoom3d = selectButton(modeBar, 'zoom3d');
 
@@ -499,6 +499,8 @@ describe('Test gl3d modebar handlers - perspective case', function() {
         assertScenes(gd._fullLayout, 'dragmode', 'turntable');
         expect(buttonTurntable.isActive()).toBe(true);
         expect(buttonZoom3d.isActive()).toBe(false);
+
+        done();
     });
 
     it('@gl button pan3d should updates the scene dragmode and dragmode button', function() {
