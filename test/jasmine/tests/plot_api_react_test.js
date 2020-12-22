@@ -19,7 +19,7 @@ var delay = require('../assets/delay');
 
 var MAPBOX_ACCESS_TOKEN = require('@build/credentials.json').MAPBOX_ACCESS_TOKEN;
 
-describe('@noCIdep Plotly.react', function() {
+describe('@noCI Plotly.react', function() {
     var mockedMethods = [
         'doTraceStyle',
         'doColorBars',
@@ -882,7 +882,7 @@ describe('@noCIdep Plotly.react', function() {
     });
 
     mockLists.mapbox.forEach(function(mockSpec) {
-        it('@noCI @gl can redraw "' + mockSpec[0] + '" with no changes as a noop (mapbpox mocks)', function(done) {
+        it('@gl can redraw "' + mockSpec[0] + '" with no changes as a noop (mapbpox mocks)', function(done) {
             Plotly.setPlotConfig({
                 mapboxAccessToken: MAPBOX_ACCESS_TOKEN
             });
@@ -893,7 +893,7 @@ describe('@noCIdep Plotly.react', function() {
     // since CI breaks up gl/svg types, and drops scattermapbox, this test won't work there
     // but I should hope that if someone is doing something as major as adding a new type,
     // they'll run the full test suite locally!
-    it('@noCI tested every trace & transform type at least once', function() {
+    it('tested every trace & transform type at least once', function() {
         for(var itemType in typesTested) {
             expect(typesTested[itemType]).toBeGreaterThan(0, itemType + ' was not tested');
         }

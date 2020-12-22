@@ -1274,7 +1274,7 @@ describe('sankey tests', function() {
                   .then(done);
         });
 
-        it('@noCI should not output hover/unhover event data when node.hoverinfo is skip', function(done) {
+        it('should not output hover/unhover event data when node.hoverinfo is skip', function(done) {
             var fig = Lib.extendDeep({}, mock);
 
             Plotly.plot(gd, fig)

@@ -90,7 +90,7 @@ describe('Test choropleth', function() {
             expect(traceOut.marker.line.color).toBe(undefined, 'mlc');
         });
 
-        it('@noCI should default locationmode to *geojson-id* when a valid *geojson* is provided', function() {
+        it('should default locationmode to *geojson-id* when a valid *geojson* is provided', function() {
             traceIn = {
                 locations: ['CAN', 'USA'],
                 z: [1, 2],
