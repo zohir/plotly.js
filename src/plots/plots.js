@@ -131,7 +131,7 @@ plots.previousPromises = function(gd) {
 
 /**
  * Adds the 'Edit chart' link.
- * Note that now Plotly.plot() calls this so it can regenerate whenever it replots
+ * Note that now _doPlot calls this so it can regenerate whenever it replots
  *
  * Add source links to your graph inside the 'showSources' config argument.
  */
@@ -1766,7 +1766,7 @@ plots.purge = function(gd) {
     delete gd.autoplay; // are we doing an action that doesn't go in undo queue?
     delete gd.changed;
 
-    // these get recreated on Plotly.plot anyway, but just to be safe
+    // these get recreated on _doPlot anyway, but just to be safe
     // (and to have a record of them...)
     delete gd._promises;
     delete gd._redrawTimer;
