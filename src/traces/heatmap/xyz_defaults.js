@@ -45,8 +45,7 @@ module.exports = function handleXYZDefaults(traceIn, traceOut, coerce, layout, x
     }
 
     if(
-        traceIn.type === 'heatmapgl' ||
-        traceIn.type === 'contourgl'
+        traceIn.type === 'heatmapgl'
     ) return true; // skip calendars until we handle them in those traces
 
     var handleCalendarDefaults = Registry.getComponentMethod('calendars', 'handleTraceDefaults');
