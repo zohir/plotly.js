@@ -20,9 +20,8 @@ var mouseEvent = require('../assets/mouse_event');
 
 var mock0 = require('@mocks/gl2d_scatter-continuous-clustering.json');
 var mock1 = require('@mocks/gl2d_14.json');
-var mock2 = require('@mocks/gl2d_pointcloud-basic.json');
 
-var mock3 = {
+var mock2 = {
     data: [{
         x: [1, 2, 3, 4],
         y: [12, 3, 14, 4],
@@ -388,33 +387,6 @@ describe('Test hover and click interactions', function() {
         .then(done, done.fail);
     });
 
-    it('@gl should output correct event data for pointcloud', function(done) {
-        var _mock = Lib.extendDeep({}, mock2);
-
-        _mock.layout.hoverlabel = { font: {size: 8} };
-        _mock.data[2].hoverlabel = {
-            bgcolor: ['red', 'green', 'blue']
-        };
-
-        var run = makeRunner([540, 150], {
-            x: 4.5,
-            y: 9,
-            curveNumber: 2,
-            pointNumber: 1,
-            bgcolor: 'rgb(0, 128, 0)',
-            bordercolor: 'rgb(255, 255, 255)',
-            fontSize: 8,
-            fontFamily: 'Arial',
-            fontColor: 'rgb(255, 255, 255)'
-        }, {
-            msg: 'pointcloud'
-        });
-
-        Plotly.newPlot(gd, _mock)
-        .then(run)
-        .then(done, done.fail);
-    });
-
     it('@gl scatter3d should propagate marker colors to hover labels', function(done) {
         var _mock = Lib.extendDeep({}, mock0);
         _mock.layout.width = 800;
@@ -440,7 +412,7 @@ describe('Test hover and click interactions', function() {
     });
 
     it('@gl should output correct event data for heatmapgl', function(done) {
-        var _mock = Lib.extendDeep({}, mock3);
+        var _mock = Lib.extendDeep({}, mock2);
         _mock.data[0].type = 'heatmapgl';
 
         _mock.data[0].hoverlabel = {

@@ -121,7 +121,7 @@ if(argv['skip-flaky']) {
     });
 }
 
-/* gl2d pointcloud and other non-regl gl2d mock(s)
+/* gl2d other non-regl gl2d mock(s)
  * must be tested first on in order to work;
  * sort them here.
  *
